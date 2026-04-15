@@ -533,3 +533,39 @@ This document records architectural and design decisions made during planning, a
 **Rationale:** One implementation of contributor/admin affordances; consistent UX and queries for “active” fuel activity in a group.
 
 **Trade-off:** Slightly more complex queries (inner join on `vehicles`).
+
+---
+
+## D-037: User profile — auth without active group; service layer; `UserUpdate` validation
+
+**Decision:** (1) Profile routes (`GET/POST /profile`, `POST /profile/change-password`) require only `get_current_user`, not `get_active_group`, so users without a selected group can still view and edit account details and change their password. (2) Business logic lives in `app/services/profile.py` (`update_user_profile`, `change_user_password`). (3) `UserUpdate` gains validators: non-empty stripped `name` when provided, normalized lowercase `email`, and “at least one of name or email” so the schema stays coherent for partial updates. Duplicate email checks compare normalized addresses and skip the uniqueness query when the email is unchanged.
+
+**Context:** Phase 10 implements account settings per the technical spec while matching existing thin-route patterns (Pydantic validation + `first_validation_error_message`, flash on success).
+
+**Rationale:** Profile is account-scoped, not group-scoped; avoiding `get_active_group` prevents unnecessary redirects to `/groups`. Centralized service functions keep bcrypt and uniqueness rules out of the route module.
+
+**Trade-off:** Profile navigation appears for any authenticated user even when no active group is set; this is intentional for account management.
+
+---
+
+## D-038: Summary statistics — pure consumption helper, `_today()` seam, reuse dashboard fuel query
+
+**Decision:** (1) Implement D-004 in `app/services/consumption.py` as `average_consumption_for_vehicle(usage_unit, list[tuple[reading, fuel_L]])` with no database access; sort by reading, form segments between consecutive rows, skip non-positive deltas, then arithmetic mean of segment rates (L/100 km vs L/h). (2) Implement `get_summary_context` in `app/services/summary.py`, reusing `app.services.dashboard._active_fuel_entries_query` for the same “active vehicle + non-deleted entry” scope as the dashboard. (3) Monthly buckets: rolling 12 **calendar months** ending at the anchor month; assign each entry to `(year, month)`; ignore entries before the oldest bucket; entries after the window fall out because their key is not in the bucket map. (4) Add `_today() -> date` in `summary.py` and use it instead of calling `date.today()` inline so tests can patch a stable anchor without breaking `date(y, m, d)` construction. (5) Empty summary message when the group has **no active vehicles** (vehicles with rows but zero fuel still show the table). (6) Navigation: add **Dashboard** and **Summary** next to Vehicles/Fuel when an active group exists.
+
+**Context:** Phase 11 required testable consumption logic, group-scoped aggregates, and alignment with existing dashboard semantics.
+
+**Rationale:** Keeps routes thin; one place for D-004 math; reusing the dashboard query avoids drift on soft-delete rules; `_today()` avoids the common `patch("...date")` pitfall where the `date` constructor is shadowed.
+
+**Trade-off:** Importing “private” `_active_fuel_entries_query` couples summary to dashboard; acceptable until a shared `fuel_scope` module is extracted.
+
+---
+
+## D-039: Refactor — `active_fuel_entries_for_group` + `consumption_unit_label`
+
+**Decision:** (1) Move the shared join/filter for active fuel entries into `app/services/fuel_queries.py` as `active_fuel_entries_for_group(db, group_id)`; `dashboard.py` and `summary.py` import it (replacing the old dashboard-only helper). (2) Add `consumption_unit_label(usage_unit)` next to `average_consumption_for_vehicle` in `consumption.py`, returning explicit labels for `km` and `hours` and “—” for unknown values so corrupted `usage_unit` is not shown as L/h by default.
+
+**Context:** Post–Phase 11 review to remove duplication and a misleading fallback in the summary row builder.
+
+**Rationale:** One query definition for dashboard/summary scope; one place for D-004 display strings.
+
+**Trade-off:** Extra small module file (`fuel_queries.py`).

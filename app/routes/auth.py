@@ -17,7 +17,12 @@ from app.config import settings
 from app.database import get_db
 from app.main import templates
 from app.models import User
-from app.schemas import PasswordResetConfirm, UserCreate, first_validation_error_message
+from app.schemas import (
+    EMAIL_DUPLICATE_MESSAGE,
+    PasswordResetConfirm,
+    UserCreate,
+    first_validation_error_message,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +146,7 @@ async def register(
     if existing:
         return templates.TemplateResponse(
             request, "register.html",
-            context={"error": "Email already registered"},
+            context={"error": EMAIL_DUPLICATE_MESSAGE},
         )
 
     user = User(

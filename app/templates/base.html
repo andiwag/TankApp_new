@@ -21,10 +21,13 @@
                 <!-- Desktop menu -->
                 <div class="hidden md:flex items-center space-x-6">
                     {% if request.state.active_group %}
+                    <a href="/dashboard" class="text-green-100 hover:text-white text-sm transition">Dashboard</a>
+                    <a href="/summary" class="text-green-100 hover:text-white text-sm transition">Summary</a>
                     <a href="/vehicles" class="text-green-100 hover:text-white text-sm transition">Vehicles</a>
                     <a href="/fuel" class="text-green-100 hover:text-white text-sm transition">Fuel</a>
                     <span class="text-green-200 text-sm">{{ request.state.active_group.name }}</span>
                     {% endif %}
+                    <a href="/profile" class="text-green-100 hover:text-white text-sm transition">Profile</a>
                     <span class="text-white text-sm">{{ request.state.user.name }}</span>
                     <form method="post" action="/logout">
                         <button type="submit" class="text-green-200 hover:text-white text-sm transition">Logout</button>
@@ -45,10 +48,13 @@
             <!-- Mobile menu -->
             <div x-show="open" x-transition class="md:hidden pb-4 space-y-2">
                 {% if request.state.active_group %}
+                <a href="/dashboard" class="block text-green-100 hover:text-white text-sm transition">Dashboard</a>
+                <a href="/summary" class="block text-green-100 hover:text-white text-sm transition">Summary</a>
                 <a href="/vehicles" class="block text-green-100 hover:text-white text-sm transition">Vehicles</a>
                 <a href="/fuel" class="block text-green-100 hover:text-white text-sm transition">Fuel</a>
                 <span class="block text-green-200 text-sm">{{ request.state.active_group.name }}</span>
                 {% endif %}
+                <a href="/profile" class="block text-green-100 hover:text-white text-sm transition">Profile</a>
                 <span class="block text-white text-sm">{{ request.state.user.name }}</span>
                 <form method="post" action="/logout">
                     <button type="submit" class="text-green-200 hover:text-white text-sm transition">Logout</button>

@@ -16,6 +16,9 @@ from app.enums import FuelType, VehicleType
 
 MIN_PASSWORD_LENGTH = 8
 
+# Shown when another account already holds this email (registration or profile update).
+EMAIL_DUPLICATE_MESSAGE = "Email already in use"
+
 
 # ── Validation helpers ───────────────────────────────────────────────────────
 
@@ -83,6 +86,37 @@ class UserLogin(BaseModel):
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
+
+    @field_validator("name")
+    @classmethod
+    def name_non_empty_if_set(cls, v: object) -> str | None:
+        if v is None:
+            return None
+        if not isinstance(v, str):
+            return v  # type: ignore[return-value]
+        return _strip_and_require(v)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def email_strip_whitespace(cls, v: object) -> object:
+        if isinstance(v, str):
+            return v.strip()
+        return v
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v: object) -> object:
+        if v is None:
+            return None
+        if isinstance(v, str):
+            return v.lower()
+        return v
+
+    @model_validator(mode="after")
+    def at_least_one_field(self) -> "UserUpdate":
+        if self.name is None and self.email is None:
+            raise ValueError("At least one of name or email must be provided")
+        return self
 
 
 class PasswordChange(BaseModel):

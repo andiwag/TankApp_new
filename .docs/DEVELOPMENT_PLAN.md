@@ -626,11 +626,11 @@ test_delete_fuel_entry_wrong_group_denied
 ## Phase 10: User Profile Management
 
 ### Tasks
-- [ ] Create `app/routes/profile.py`:
+- [x] Create `app/routes/profile.py`:
   - `GET /profile` — render profile page
   - `POST /profile` — update name and/or email
   - `POST /profile/change-password` — change password
-- [ ] Create `app/templates/profile.html`
+- [x] Create `app/templates/profile.html`
 
 ### Tests (write FIRST)
 ```
@@ -655,21 +655,21 @@ test_change_password_requires_auth
 - Password change with wrong current password
 
 ### Acceptance Criteria
-- [ ] Users can view and update their profile
-- [ ] Users can change their password
-- [ ] Email uniqueness is enforced
-- [ ] All profile tests pass
+- [x] Users can view and update their profile
+- [x] Users can change their password
+- [x] Email uniqueness is enforced
+- [x] All profile tests pass
 
 ---
 
 ## Phase 11: Summary & Statistics
 
 ### Tasks
-- [ ] Create `app/routes/summary.py`:
+- [x] Create `app/routes/summary.py`:
   - `GET /summary` — render summary page with statistics
-- [ ] Create `app/templates/summary.html`
-- [ ] Implement consumption calculation logic (see D-004)
-- [ ] Display:
+- [x] Create `app/templates/summary.html`
+- [x] Implement consumption calculation logic (see D-004)
+- [x] Display:
   - Fuel per vehicle (total liters, entry count)
   - Total fuel per month (last 12 months)
   - Consumption averages per vehicle (L/100km or L/h)
@@ -719,11 +719,11 @@ test_summary_empty_group_shows_no_data_message
 - Group with no vehicles at all
 
 ### Acceptance Criteria
-- [ ] Summary shows fuel totals per vehicle
-- [ ] Summary shows monthly fuel totals
-- [ ] Consumption averages are calculated correctly per D-004
-- [ ] Empty states handled gracefully
-- [ ] All summary tests pass
+- [x] Summary shows fuel totals per vehicle
+- [x] Summary shows monthly fuel totals
+- [x] Consumption averages are calculated correctly per D-004
+- [x] Empty states handled gracefully
+- [x] All summary tests pass
 
 ---
 
