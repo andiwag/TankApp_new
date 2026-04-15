@@ -543,17 +543,17 @@ test_delete_vehicle_not_found_404
 ## Phase 9: Fuel Entries CRUD
 
 ### Tasks
-- [ ] Create `app/routes/fuel_entries.py`:
+- [x] Create `app/routes/fuel_entries.py`:
   - `GET /fuel` — list fuel entries (active group, exclude soft-deleted)
   - `GET /fuel/new` — render create form with vehicle dropdown (admin, contributor)
   - `POST /fuel/new` — create fuel entry
   - `GET /fuel/{id}/edit` — render edit form (admin, contributor)
   - `POST /fuel/{id}/edit` — update fuel entry
   - `POST /fuel/{id}/delete` — soft-delete fuel entry (admin only)
-- [ ] Create `app/templates/fuel_entries.html`
-- [ ] Create `app/templates/fuel_entry_form.html`
-- [ ] Validate `group_id` matches `vehicle.group_id` on creation
-- [ ] Vehicle dropdown only shows non-deleted vehicles from active group
+- [x] Create `app/templates/fuel_entries.html`
+- [x] Create `app/templates/fuel_entry_form.html`
+- [x] Validate `group_id` matches `vehicle.group_id` on creation
+- [x] Vehicle dropdown only shows non-deleted vehicles from active group
 
 ### Tests (write FIRST)
 
@@ -613,13 +613,13 @@ test_delete_fuel_entry_wrong_group_denied
 - Notes field with special characters / HTML (must be escaped)
 
 ### Acceptance Criteria
-- [ ] CRUD operations work for fuel entries within active group
-- [ ] `group_id` is auto-set to match the vehicle's group
-- [ ] `user_id` is auto-set from the session
-- [ ] Validation prevents invalid data
-- [ ] Cross-group access is denied
-- [ ] Role-based access is enforced
-- [ ] All fuel entry tests pass
+- [x] CRUD operations work for fuel entries within active group
+- [x] `group_id` is auto-set to match the vehicle's group
+- [x] `user_id` is auto-set from the session
+- [x] Validation prevents invalid data
+- [x] Cross-group access is denied
+- [x] Role-based access is enforced
+- [x] All fuel entry tests pass
 
 ---
 

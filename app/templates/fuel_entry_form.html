@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}{% if mode == 'create' %}New fuel entry{% else %}Edit fuel entry{% endif %} – TankApp{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">
+        {% if mode == 'create' %}New fuel entry{% else %}Edit fuel entry{% endif %}
+    </h1>
+
+    {% if error %}
+    <div class="mb-4 rounded-md p-4 bg-red-50 text-red-800 border border-red-200 text-sm" role="alert">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="post" action="{% if mode == 'create' %}/fuel/new{% else %}/fuel/{{ entry.id }}/edit{% endif %}" class="space-y-6 bg-white rounded-lg shadow p-6">
+        {% if mode == 'create' %}
+        <div>
+            <label for="vehicle_id" class="block text-sm font-medium text-gray-700">Vehicle</label>
+            <select name="vehicle_id" id="vehicle_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border px-3 py-2">
+                <option value="">Select vehicle</option>
+                {% for v in vehicles %}
+                <option value="{{ v.id }}" {% if form_vehicle_id and form_vehicle_id == (v.id ~ '') %}selected{% endif %}>{{ v.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% else %}
+        <div>
+            <p class="text-sm font-medium text-gray-700">Vehicle</p>
+            <p class="mt-1 text-sm text-gray-900">{{ vehicle.name }}</p>
+        </div>
+        {% endif %}
+
+        <div>
+            <label for="fuel_amount_l" class="block text-sm font-medium text-gray-700">Fuel (liters)</label>
+            <input type="text" name="fuel_amount_l" id="fuel_amount_l" required inputmode="decimal"
+                   value="{% if entry %}{{ entry.fuel_amount_l }}{% else %}{{ form_fuel_amount_l }}{% endif %}"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border px-3 py-2" />
+        </div>
+
+        <div>
+            <label for="usage_reading" class="block text-sm font-medium text-gray-700">Usage reading (km or hours)</label>
+            <input type="text" name="usage_reading" id="usage_reading" required inputmode="decimal"
+                   value="{% if entry %}{{ entry.usage_reading }}{% else %}{{ form_usage_reading }}{% endif %}"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border px-3 py-2" />
+        </div>
+
+        <div>
+            <label for="entry_date" class="block text-sm font-medium text-gray-700">Date</label>
+            <input type="date" name="entry_date" id="entry_date" required
+                   value="{% if entry %}{{ entry.entry_date.isoformat() }}{% elif form_entry_date %}{{ form_entry_date }}{% endif %}"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border px-3 py-2" />
+        </div>
+
+        <div>
+            <label for="notes" class="block text-sm font-medium text-gray-700">Notes (optional)</label>
+            <textarea name="notes" id="notes" rows="3" maxlength="500"
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border px-3 py-2">{% if entry %}{{ entry.notes or '' }}{% else %}{{ form_notes }}{% endif %}</textarea>
+        </div>
+
+        <div class="flex gap-3">
+            <button type="submit" class="inline-flex justify-center px-4 py-2 rounded-md bg-green-700 text-white text-sm font-medium hover:bg-green-800 transition">
+                {% if mode == 'create' %}Save{% else %}Update{% endif %}
+            </button>
+            <a href="/fuel" class="inline-flex justify-center px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

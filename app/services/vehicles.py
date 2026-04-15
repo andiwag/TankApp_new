@@ -4,10 +4,9 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from app.dependencies import ROLE_HIERARCHY
-from app.enums import Role
-from app.models import User, UserGroup, Vehicle
+from app.models import User, Vehicle
 from app.schemas import VehicleCreate, VehicleUpdate
+from app.services.membership import group_page_capabilities
 
 
 def list_vehicles_for_group(db: Session, group_id: int) -> list[Vehicle]:
@@ -38,22 +37,9 @@ def get_active_vehicle_in_group(
 
 def vehicles_page_context(db: Session, user: User, group_id: int) -> dict:
     vehicles = list_vehicles_for_group(db, group_id)
-    ug = (
-        db.query(UserGroup)
-        .filter(
-            UserGroup.user_id == user.id,
-            UserGroup.group_id == group_id,
-        )
-        .first()
-    )
-    can_edit = bool(
-        ug and ROLE_HIERARCHY.get(ug.role, 0) >= ROLE_HIERARCHY[Role.contributor.value]
-    )
-    can_delete = bool(ug and ug.role == Role.admin.value)
     return {
         "vehicles": vehicles,
-        "can_edit": can_edit,
-        "can_delete": can_delete,
+        **group_page_capabilities(db, user, group_id),
     }
 
 

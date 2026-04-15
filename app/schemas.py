@@ -166,6 +166,23 @@ class FuelEntryUpdate(BaseModel):
     entry_date: Optional[date] = None
     notes: Optional[str] = Field(default=None, max_length=500)
 
+    @model_validator(mode="after")
+    def require_at_least_one_field(self) -> "FuelEntryUpdate":
+        if (
+            self.fuel_amount_l is None
+            and self.usage_reading is None
+            and self.entry_date is None
+            and self.notes is None
+        ):
+            raise ValueError("At least one field must be provided")
+        return self
+
+    @model_validator(mode="after")
+    def validate_date_not_future(self) -> "FuelEntryUpdate":
+        if self.entry_date is not None and self.entry_date > date.today():
+            raise ValueError("entry_date must not be in the future")
+        return self
+
 
 # ── Group schemas ────────────────────────────────────────────────────────────
 

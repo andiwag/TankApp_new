@@ -497,3 +497,39 @@ This document records architectural and design decisions made during planning, a
 - Centralized vehicle logic lives in `app/services/vehicles.py`; routes validate with `VehicleCreate` / `VehicleUpdate` and delegate to the service.
 
 **Trade-off:** Users distinguish similar names via type, fuel, and usage unit in the list until internal codes or nicknames exist.
+
+---
+
+## D-034: Fuel entries CRUD — align with vehicles (service layer, 404, roles, invalid vehicle UX)
+
+**Decision:** Implement fuel entry listing and mutations in `app/services/fuel_entries.py`. Routes use `FuelEntryCreate` / `FuelEntryUpdate` with `first_validation_error_message` on validation failure. Cross-group or missing fuel entry IDs for edit/delete return **404**. Creating an entry with a `vehicle_id` that is not an active vehicle in the active group (including soft-deleted vehicles) re-renders the create form with **200** and a **red** inline error (same pattern as schema failures), not 404 — the user may have a stale form. Contributors and admins may create and edit; only **admins** may soft-delete fuel entries. `FuelEntryUpdate` requires at least one field and rejects future `entry_date` values (same rule as create). Navigation includes a **Fuel** link next to **Vehicles** when an active group is set.
+
+**Context:** Phase 9 mirrors Phase 8 structure while enforcing D-003 (`group_id` on `FuelEntry` matches the chosen vehicle’s group) and DRY query helpers via reuse of `vehicle_service.get_active_vehicle_in_group` for create.
+
+**Rationale:** Keeps routes thin, matches established SSR error UX, and avoids leaking whether an ID exists in another group for edit/delete (404), while keeping form-based create failures user-recoverable.
+
+**Trade-off:** Invalid `vehicle_id` on POST returns a rendered error page instead of 404; acceptable for HTML forms and clearer for end users.
+
+---
+
+## D-035: Refactor — Fuel entry updates apply all set fields; reuse vehicle list query
+
+**Decision:** (1) Implement `apply_fuel_entry_update` by assigning every attribute in `FuelEntryUpdate.model_dump(exclude_unset=True)` so an explicit `notes=None` clears the notes column (the previous `if data.notes is not None` branch prevented clearing). (2) Remove `list_vehicles_for_fuel_dropdown` and use `vehicles.list_vehicles_for_group` for the fuel create form vehicle dropdown.
+
+**Context:** Post-implementation review found duplicated vehicle-query logic and a real bug when saving an edit with an empty notes field.
+
+**Rationale:** `exclude_unset=True` matches Pydantic’s intended partial-update semantics and fixes note clearing. A single list function for active vehicles avoids two sources of truth for soft-delete and ordering rules.
+
+**Trade-off:** If a future caller constructs `FuelEntryUpdate()` with no fields set, `require_at_least_one_field` still applies; `model_dump(exclude_unset=True)` can be empty and only `updated_at` would change — unlikely for current routes.
+
+---
+
+## D-036: Refactor — `group_page_capabilities` + fuel list aligned with dashboard vehicle scope
+
+**Decision:** (1) Extract duplicated `UserGroup` + `ROLE_HIERARCHY` logic from `vehicles_page_context` and `fuel_entries_page_context` into `app/services/membership.py` as `group_page_capabilities(db, user, group_id)`. (2) Join `Vehicle` on fuel entry list and single-entry lookups; require `Vehicle.deleted_at` null so entries tied to soft-deleted vehicles are omitted from the fuel list and return 404 for edit/delete, matching dashboard statistics scope (D-032).
+
+**Context:** Codebase review found copy-pasted capability checks; fuel list previously showed rows whose vehicle was already soft-deleted, inconsistent with dashboard aggregates.
+
+**Rationale:** One implementation of contributor/admin affordances; consistent UX and queries for “active” fuel activity in a group.
+
+**Trade-off:** Slightly more complex queries (inner join on `vehicles`).

@@ -22,6 +22,7 @@
                 <div class="hidden md:flex items-center space-x-6">
                     {% if request.state.active_group %}
                     <a href="/vehicles" class="text-green-100 hover:text-white text-sm transition">Vehicles</a>
+                    <a href="/fuel" class="text-green-100 hover:text-white text-sm transition">Fuel</a>
                     <span class="text-green-200 text-sm">{{ request.state.active_group.name }}</span>
                     {% endif %}
                     <span class="text-white text-sm">{{ request.state.user.name }}</span>
@@ -45,6 +46,7 @@
             <div x-show="open" x-transition class="md:hidden pb-4 space-y-2">
                 {% if request.state.active_group %}
                 <a href="/vehicles" class="block text-green-100 hover:text-white text-sm transition">Vehicles</a>
+                <a href="/fuel" class="block text-green-100 hover:text-white text-sm transition">Fuel</a>
                 <span class="block text-green-200 text-sm">{{ request.state.active_group.name }}</span>
                 {% endif %}
                 <span class="block text-white text-sm">{{ request.state.user.name }}</span>

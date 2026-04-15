@@ -52,9 +52,11 @@ async def health_check() -> dict[str, str]:
 from app.routes.auth import router as auth_router  # noqa: E402
 from app.routes.dashboard import router as dashboard_router  # noqa: E402
 from app.routes.groups import router as groups_router  # noqa: E402
+from app.routes.fuel_entries import router as fuel_entries_router  # noqa: E402
 from app.routes.vehicles import router as vehicles_router  # noqa: E402
 
 app.include_router(auth_router)
 app.include_router(groups_router)
 app.include_router(dashboard_router)
 app.include_router(vehicles_router)
+app.include_router(fuel_entries_router)
