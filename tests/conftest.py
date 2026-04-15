@@ -1,12 +1,16 @@
+from datetime import date
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.auth import create_session_cookie
+from app.config import settings
 from app.database import Base, get_db
 from app.main import app
-from app.models import Group, User, Vehicle
+from app.models import FuelEntry, Group, User, UserGroup, Vehicle
 
 TEST_DATABASE_URL = "sqlite://"
 
@@ -62,6 +66,14 @@ async def client():
 
 
 @pytest.fixture
+def auth_cookie():
+    def _set(client, user_id: int, active_group_id: int | None = None) -> None:
+        cookie_value = create_session_cookie(user_id, active_group_id)
+        client.cookies.set(settings.SESSION_COOKIE_NAME, cookie_value)
+    return _set
+
+
+@pytest.fixture
 def create_test_user(db):
     def _create(
         email: str = "test@example.com",
@@ -98,6 +110,22 @@ def create_test_group(db):
 
 
 @pytest.fixture
+def create_test_user_group(db):
+    def _create(
+        user_id: int,
+        group_id: int,
+        role: str = "contributor",
+    ) -> UserGroup:
+        ug = UserGroup(user_id=user_id, group_id=group_id, role=role)
+        db.add(ug)
+        db.commit()
+        db.refresh(ug)
+        return ug
+
+    return _create
+
+
+@pytest.fixture
 def create_test_vehicle(db):
     def _create(
         group_id: int = 1,
@@ -115,5 +143,35 @@ def create_test_vehicle(db):
         db.commit()
         db.refresh(vehicle)
         return vehicle
+
+    return _create
+
+
+@pytest.fixture
+def create_test_fuel_entry(db):
+    def _create(
+        vehicle_id: int,
+        group_id: int,
+        user_id: int,
+        fuel_amount_l: float = 50.0,
+        usage_reading: float = 100.0,
+        entry_date: date | None = None,
+        notes: str | None = None,
+    ) -> FuelEntry:
+        if entry_date is None:
+            entry_date = date.today()
+        entry = FuelEntry(
+            vehicle_id=vehicle_id,
+            group_id=group_id,
+            user_id=user_id,
+            fuel_amount_l=fuel_amount_l,
+            usage_reading=usage_reading,
+            notes=notes,
+            entry_date=entry_date,
+        )
+        db.add(entry)
+        db.commit()
+        db.refresh(entry)
+        return entry
 
     return _create

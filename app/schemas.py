@@ -1,12 +1,34 @@
 from datetime import date
 from typing import Annotated, Optional
 
-from pydantic import AfterValidator, BaseModel, EmailStr, Field, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    EmailStr,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from app.enums import FuelType, VehicleType
 
 
 MIN_PASSWORD_LENGTH = 8
+
+
+# ── Validation helpers ───────────────────────────────────────────────────────
+
+
+def first_validation_error_message(exc: ValidationError) -> str:
+    errors = exc.errors()
+    if not errors:
+        return "Invalid input"
+    msg = errors[0]["msg"]
+    prefix = "Value error, "
+    if msg.startswith(prefix):
+        msg = msg[len(prefix):]
+    return msg
 
 
 # ── Reusable annotated types ─────────────────────────────────────────────────
@@ -103,6 +125,22 @@ class VehicleCreate(BaseModel):
 class VehicleUpdate(BaseModel):
     name: Optional[str] = None
     fuel_type: Optional[FuelType] = None
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def normalize_optional_name(cls, v: object) -> object:
+        if v is None:
+            return None
+        if isinstance(v, str):
+            s = v.strip()
+            return s if s else None
+        return v
+
+    @model_validator(mode="after")
+    def require_at_least_one_field(self) -> "VehicleUpdate":
+        if self.name is None and self.fuel_type is None:
+            raise ValueError("At least one of name or fuel_type must be provided")
+        return self
 
 
 # ── FuelEntry schemas ────────────────────────────────────────────────────────

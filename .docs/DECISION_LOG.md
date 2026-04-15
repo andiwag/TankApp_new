@@ -330,3 +330,170 @@ This document records architectural and design decisions made during planning, a
 - When production email is needed, only `_deliver_reset_token` needs updating — no route logic changes.
 
 **Trade-off:** `fastapi-mail` is listed in `requirements.txt` but not yet imported or configured. This is acceptable — it will be integrated when production deployment is set up.
+
+---
+
+## D-023: Refactor — Extract `set_session_cookie` into `app/auth.py`
+
+**Decision:** Move the session-cookie-setting logic out of `app/routes/auth.py` (where it was a private `_set_session_cookie` helper) into a public `set_session_cookie(response, user_id, active_group_id)` function in `app/auth.py`. Both `app/routes/auth.py` and `app/routes/groups.py` import from this single location.
+
+**Context:** Phase 5 introduced `app/routes/groups.py`, which needs to set session cookies after creating, joining, switching, leaving, and deleting groups. Duplicating the 6-line cookie-setting helper across two route modules would violate DRY.
+
+**Rationale:**
+- `app/auth.py` already owns session cookie creation (`create_session_cookie`) and decoding — adding the response-setting step is a natural extension.
+- The function duck-types on `response` (calls `.set_cookie()`), so it doesn't import any FastAPI types, keeping `auth.py` framework-light.
+- Both route modules now call one function with consistent cookie flags (`httponly`, `samesite`).
+
+**Trade-off:** `app/auth.py` now implicitly depends on the response object having a `.set_cookie()` method. This is standard across Starlette/FastAPI response types.
+
+---
+
+## D-024: Refactor — Extract `first_validation_error_message` into `app/schemas.py`
+
+**Decision:** Move the Pydantic `ValidationError` → user-friendly string helper from a private function in `app/routes/auth.py` to a public `first_validation_error_message(exc)` function in `app/schemas.py`. Both route modules import from `schemas.py`.
+
+**Context:** Phase 5 group routes need to display schema validation errors (e.g., empty group name) the same way auth routes do. The helper was previously private to the auth route module.
+
+**Rationale:**
+- `schemas.py` defines the schemas and already imports `ValidationError` — it's the natural home for error message extraction.
+- Prevents the two route modules from each maintaining their own copy of identical logic.
+
+**Trade-off:** None significant. Adds one public function to `schemas.py`.
+
+---
+
+## D-025: Invite code generation — `FARM-XXXXX` format with collision retry
+
+**Decision:** Generate invite codes in the format `FARM-XXXXX` where `X` is a random uppercase alphanumeric character (A-Z, 0-9). Use `secrets.choice` for cryptographic randomness. On collision (code already exists in DB), retry up to 10 times.
+
+**Context:** The technical documentation specifies the invite code format `FARM-82KD9`. The code space is 36^5 ≈ 60 million unique codes, making collisions extremely rare in practice.
+
+**Rationale:**
+- `secrets` module ensures codes are not predictable.
+- The 5-character suffix provides a good balance between readability and uniqueness.
+- Retry logic handles the (extremely unlikely) collision case defensively.
+- The format is human-readable and easy to share verbally.
+
+**Trade-off:** 10 retries is arbitrary but sufficient given the collision probability. If the system ever reaches millions of groups, the retry count or code length could be increased.
+
+---
+
+## D-026: Group error handling — Re-render template with error vs. HTTP status codes
+
+**Decision:** Group routes use two error response patterns:
+1. **Form/business-logic errors** (empty name, invalid invite code, already a member, sole admin leaving): re-render `groups.html` with a 200 status and an `error` context variable, following the same pattern used by auth routes.
+2. **Authorization errors** (not a member, non-admin attempting delete): return 403 Forbidden.
+
+**Context:** In an SSR app, error responses need to be user-visible. The question was whether to redirect with flash messages, return HTTP error codes, or re-render with inline errors.
+
+**Rationale:**
+- Re-rendering with error context is consistent with how login/register handle validation failures — no flash message system needed yet (Phase 6).
+- 403 for authorization failures is standard and doesn't need a rendered page (the exception handler in `main.py` handles it).
+- The `_render_groups_with_error` helper re-queries the user's groups to populate the template, avoiding stale data.
+
+**Trade-off:** Re-rendering requires an additional DB query for the groups list. This is negligible for the expected group count per user.
+
+---
+
+## D-027: Refactor — Shared `auth_cookie` and `create_test_user_group` test fixtures
+
+**Decision:** Move the `auth_cookie` fixture from `tests/test_auth.py` to `tests/conftest.py` and add a new `create_test_user_group` fixture.
+
+**Context:** Phase 5 tests need to authenticate users via session cookies and create user-group memberships — the same operations that Phase 3 tests already performed. The `auth_cookie` fixture was defined locally in `test_auth.py`.
+
+**Rationale:**
+- `conftest.py` is the standard location for shared pytest fixtures.
+- `create_test_user_group` eliminates repetitive `db.add(UserGroup(...)); db.commit()` boilerplate across Phase 5 tests.
+- Avoids duplicating the fixture definition across test modules.
+
+**Trade-off:** None. pytest auto-discovers conftest fixtures for all test files in the same directory.
+
+---
+
+## D-028: `Form("")` default for group name — Accept empty strings for schema validation
+
+**Decision:** Use `name: str = Form("")` instead of `name: str = Form(...)` in the `POST /groups/create` route, allowing empty strings to reach the route handler where `GroupCreate` schema validation rejects them with a clear error message.
+
+**Context:** FastAPI's `Form(...)` (required) returns a 422 Unprocessable Entity for empty form fields before the route handler executes. For an SSR app, a 422 JSON error response is not user-friendly — the user should see the groups page with an inline error message.
+
+**Rationale:**
+- Lets the `GroupCreate` schema's `NonEmptyStr` validator handle the validation with a human-readable error.
+- The route handler catches the `ValidationError` and re-renders the template with the error, consistent with how other validation errors are handled.
+
+**Trade-off:** The field is technically "optional" at the FastAPI level, but the schema enforces non-empty. This is the correct pattern for SSR form validation where we want to control the error UX.
+
+---
+
+## D-029: Flash messages — Cookie-based with middleware auto-injection
+
+**Decision:** Implement flash messages using a JSON cookie (`tankapp_flash`) read by a `FlashMiddleware` that populates `request.state.flash` and auto-clears the cookie after display. Flash is set via `set_flash(response, message, category)`.
+
+**Context:** The app needed a way to display one-time messages after redirects (e.g., "Group created", "Logged out"). Options were: query parameters, session-based storage, or cookies.
+
+**Rationale:**
+- Cookie-based flash survives redirects without server-side session storage, consistent with the stateless architecture (D-001).
+- Middleware initializes `request.state.flash` to `None` on every request, so templates can safely access it without guard clauses.
+- The middleware also initializes `request.state.user` and `request.state.active_group` to `None`, providing a clean default for unauthenticated pages.
+- `set_flash()` is a single helper function used by any route — no per-route boilerplate.
+
+**Trade-off:** Flash data is stored in a plain JSON cookie (not signed). Since it only contains display messages (not security-sensitive data), this is acceptable. Cookie `max_age=60` limits exposure.
+
+---
+
+## D-030: Nav context — Populate `request.state.user` and `request.state.active_group` in dependencies
+
+**Decision:** Extend `get_current_user` to also set `request.state.user` and resolve the active group (via PK lookup) into `request.state.active_group`. The `FlashMiddleware` initializes both to `None` so unauthenticated pages have safe defaults.
+
+**Context:** The base template needs user name and active group name in the navigation bar. Every authenticated page would need to pass these explicitly to the template context, violating DRY.
+
+**Rationale:**
+- `request.state` is the standard Starlette mechanism for per-request data sharing.
+- Since `get_current_user` already runs for every authenticated route, adding the active group lookup there avoids extra dependencies or context-building helpers.
+- Templates access `request.state.user` and `request.state.active_group` directly — no need for route handlers to pass nav context.
+
+**Trade-off:** `get_current_user` now performs an additional DB query (active group PK lookup) on every authenticated request. This is a cheap query and eliminates duplication across all authenticated routes.
+
+---
+
+## D-031: Refactor — Simplify `get_active_group` to use `request.state`
+
+**Decision:** Simplify `get_active_group` to read from `request.state.active_group` (set by `get_current_user`) instead of re-querying the database. Remove the `db: Session` parameter since the query is no longer needed.
+
+**Context:** After D-030, `get_current_user` already resolves the active group and stores it on `request.state`. The original `get_active_group` performed the same PK lookup redundantly.
+
+**Rationale:**
+- Eliminates a duplicate query for the same group object within a single request.
+- Simplifies the dependency to a 3-line function.
+- `get_active_group` still depends on `get_current_user` (via `Depends`), so the resolution order is guaranteed.
+
+**Trade-off:** `get_active_group` now implicitly depends on `get_current_user` having populated `request.state.active_group`. This coupling is enforced via `Depends(get_current_user)` in the function signature.
+
+---
+
+## D-032: Dashboard statistics — service module and soft-delete rules
+
+**Decision:** Implement dashboard aggregates in `app/services/dashboard.py` (`get_dashboard_context`). Vehicle counts exclude soft-deleted vehicles. Fuel entry counts, total liters, and the recent list exclude soft-deleted fuel entries and additionally require a non-deleted vehicle (JOIN), so entries tied to a soft-deleted vehicle do not appear in totals or recent activity. Recent rows are ordered by `entry_date` descending, then `FuelEntry.id` descending, limited to 10.
+
+**Context:** Phase 7 needs group-scoped stats without duplicating filter logic in the route handler.
+
+**Rationale:**
+- Keeps the route thin and centralizes query rules for reuse and testing.
+- Joining `Vehicle` ensures dashboard numbers stay consistent when a vehicle is hidden but orphan rows could theoretically exist.
+- Ordering by `entry_date` matches user expectations for “recent” activity; tie-breaking by `id` makes order deterministic.
+
+**Trade-off:** Slightly more complex query than filtering `FuelEntry` alone; acceptable for correct semantics.
+
+---
+
+## D-033: Vehicles CRUD — duplicate names, 404 for cross-group IDs, `VehicleUpdate` rules
+
+**Decision:** (1) Allow multiple vehicles with the same display name within one group — no uniqueness constraint beyond the primary key. (2) When a user requests edit or delete for a vehicle ID that belongs to another group or is soft-deleted, return **404 Not Found** (not 403) so existence of that ID is not leaked across groups. (3) `VehicleUpdate` keeps optional `name` and `fuel_type`; at least one must be present after validation. Optional `name` is normalized in a field validator (strip; all-whitespace becomes `None`). HTML edit forms submit both fields.
+
+**Context:** Phase 8 implements vehicle list/create/edit/delete with contributor-or-higher for mutations and admin-only soft delete. The plan’s Phase 8 “Authorization” tests reuse names from the groups phase (`test_create_group_any_authenticated_user`, `test_delete_group_requires_admin`) but assert vehicle route behavior.
+
+**Rationale:**
+- Duplicate names match real farms (e.g. two tractors with the same model name); uniqueness is unnecessary for MVP.
+- 404 for wrong-group or soft-deleted vehicle IDs satisfies “denied” tests while avoiding cross-group information disclosure.
+- Centralized vehicle logic lives in `app/services/vehicles.py`; routes validate with `VehicleCreate` / `VehicleUpdate` and delegate to the service.
+
+**Trade-off:** Users distinguish similar names via type, fuel, and usage unit in the list until internal codes or nicknames exist.

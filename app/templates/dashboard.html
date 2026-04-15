@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard – TankApp{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+        <div class="bg-white rounded-lg shadow p-6">
+            <p class="text-sm font-medium text-gray-500">Vehicles</p>
+            <p class="mt-2 text-3xl font-semibold text-gray-900"><span id="stat-vehicles">{{ vehicle_count }}</span></p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <p class="text-sm font-medium text-gray-500">Fuel entries</p>
+            <p class="mt-2 text-3xl font-semibold text-gray-900"><span id="stat-entries">{{ fuel_entry_count }}</span></p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <p class="text-sm font-medium text-gray-500">Total fuel (L)</p>
+            <p class="mt-2 text-3xl font-semibold text-gray-900"><span id="stat-liters">{{ '%.1f'|format(total_fuel_liters) }}</span></p>
+        </div>
+    </div>
+
+    <section id="recent-fuel-entries" class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Recent fuel entries</h2>
+        </div>
+        {% if recent_fuel_entries %}
+        <ul class="divide-y divide-gray-200">
+            {% for entry in recent_fuel_entries %}
+            <li class="px-6 py-4 flex flex-wrap gap-4 justify-between items-baseline">
+                <div>
+                    <span class="font-medium text-gray-900">{{ entry.vehicle.name }}</span>
+                    <span class="text-gray-500 text-sm ml-2">{{ entry.entry_date.isoformat() }}</span>
+                </div>
+                <div class="text-sm text-gray-700">
+                    <span>{{ entry.fuel_amount_l }} L</span>
+                    <span class="text-gray-400 mx-2">·</span>
+                    <span>{{ entry.user.name }}</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="px-6 py-8 text-gray-500 text-sm">No fuel entries yet.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

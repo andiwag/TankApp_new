@@ -56,6 +56,16 @@ def decode_password_reset_token(token: str) -> dict | None:
         return None
 
 
+def set_session_cookie(response, user_id: int, active_group_id: int | None = None) -> None:
+    cookie = create_session_cookie(user_id, active_group_id)
+    response.set_cookie(
+        settings.SESSION_COOKIE_NAME,
+        cookie,
+        httponly=True,
+        samesite="lax",
+    )
+
+
 def verify_reset_token_data(password_hash: str, token_data: dict) -> bool:
     """Check that the password-hash fingerprint in the token still matches the user's current hash."""
     return password_hash[:_PASSWORD_HASH_PREFIX_LEN] == token_data.get("ph")

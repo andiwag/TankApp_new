@@ -7,9 +7,9 @@ from sqlalchemy.orm import Session
 
 from app.auth import (
     create_password_reset_token,
-    create_session_cookie,
     decode_password_reset_token,
     hash_password,
+    set_session_cookie,
     verify_password,
     verify_reset_token_data,
 )
@@ -17,7 +17,7 @@ from app.config import settings
 from app.database import get_db
 from app.main import templates
 from app.models import User
-from app.schemas import PasswordResetConfirm, UserCreate
+from app.schemas import PasswordResetConfirm, UserCreate, first_validation_error_message
 
 logger = logging.getLogger(__name__)
 
@@ -27,31 +27,6 @@ _INVALID_RESET_LINK = "Invalid or expired reset link"
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
-
-
-def _first_validation_message(exc: ValidationError) -> str:
-    errors = exc.errors()
-    if not errors:
-        return "Invalid input"
-    msg = errors[0]["msg"]
-    prefix = "Value error, "
-    if msg.startswith(prefix):
-        msg = msg[len(prefix):]
-    return msg
-
-
-def _set_session_cookie(
-    response: RedirectResponse,
-    user_id: int,
-    active_group_id: int | None = None,
-) -> None:
-    cookie = create_session_cookie(user_id, active_group_id)
-    response.set_cookie(
-        settings.SESSION_COOKIE_NAME,
-        cookie,
-        httponly=True,
-        samesite="lax",
-    )
 
 
 def _get_reset_user(db: Session, token_data: dict) -> User | None:
@@ -138,7 +113,7 @@ async def login(
         )
 
     response = RedirectResponse(url="/dashboard", status_code=303)
-    _set_session_cookie(response, user.id)
+    set_session_cookie(response, user.id)
     return response
 
 
@@ -158,7 +133,7 @@ async def register(
     except ValidationError as exc:
         return templates.TemplateResponse(
             request, "register.html",
-            context={"error": _first_validation_message(exc)},
+            context={"error": first_validation_error_message(exc)},
         )
 
     normalized_email = user_data.email.lower()
@@ -179,7 +154,7 @@ async def register(
     db.refresh(user)
 
     response = RedirectResponse(url="/groups", status_code=303)
-    _set_session_cookie(response, user.id)
+    set_session_cookie(response, user.id)
     return response
 
 
@@ -235,7 +210,7 @@ async def reset_password(
     except ValidationError as exc:
         return templates.TemplateResponse(
             request, "reset_password.html",
-            context={"error": _first_validation_message(exc), "token": token},
+            context={"error": first_validation_error_message(exc), "token": token},
         )
 
     user.password_hash = hash_password(new_password)

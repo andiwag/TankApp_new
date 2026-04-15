@@ -319,15 +319,15 @@ test_reset_password_used_token_cannot_reuse
 ## Phase 5: Group System
 
 ### Tasks
-- [ ] Create `app/routes/groups.py`:
+- [x] Create `app/routes/groups.py`:
   - `GET /groups` — list user's groups, show create/join forms
   - `POST /groups/create` — create group, set user as admin
   - `POST /groups/join` — join via invite code, set as contributor
   - `POST /groups/switch/{id}` — switch active group in session
   - `POST /groups/leave/{id}` — leave group (admin can't leave if sole admin)
   - `POST /groups/delete/{id}` — soft-delete group (admin only)
-- [ ] Generate invite codes (format: `FARM-XXXXX`, alphanumeric)
-- [ ] After registration: redirect to group selection if no groups exist
+- [x] Generate invite codes (format: `FARM-XXXXX`, alphanumeric)
+- [x] After registration: redirect to group selection if no groups exist
 
 ### Tests (write FIRST)
 
@@ -376,20 +376,20 @@ test_delete_group_requires_admin
 - User with no groups → forced to group selection page
 
 ### Acceptance Criteria
-- [ ] Users can create groups and become admin
-- [ ] Users can join groups via invite code
-- [ ] Users can switch between groups
-- [ ] Users can leave groups (with sole-admin protection)
-- [ ] Admins can soft-delete groups
-- [ ] Group context is maintained in session
-- [ ] All group tests pass
+- [x] Users can create groups and become admin
+- [x] Users can join groups via invite code
+- [x] Users can switch between groups
+- [x] Users can leave groups (with sole-admin protection)
+- [x] Admins can soft-delete groups
+- [x] Group context is maintained in session
+- [x] All group tests pass
 
 ---
 
 ## Phase 6: Base Template & Layout
 
 ### Tasks
-- [ ] Create `app/templates/base.html`:
+- [x] Create `app/templates/base.html`:
   - Tailwind CSS (CDN)
   - Alpine.js (CDN)
   - Navigation bar (responsive, mobile hamburger menu)
@@ -398,11 +398,11 @@ test_delete_group_requires_admin
   - User name display
   - Logout button
   - Footer
-- [ ] Create `app/templates/login.html`
-- [ ] Create `app/templates/register.html`
-- [ ] Create `app/templates/groups.html`
-- [ ] Set up static file serving in FastAPI
-- [ ] Implement flash message system (via cookie or query param)
+- [x] Create `app/templates/login.html`
+- [x] Create `app/templates/register.html`
+- [x] Create `app/templates/groups.html`
+- [x] Set up static file serving in FastAPI
+- [x] Implement flash message system (via cookie or query param)
 
 ### Tests (write FIRST)
 ```
@@ -417,25 +417,25 @@ test_flash_message_displayed_after_redirect
 ```
 
 ### Acceptance Criteria
-- [ ] All pages inherit from base template
-- [ ] Navigation is responsive (mobile-friendly)
-- [ ] Flash messages appear after actions (success/error)
-- [ ] Active group name visible in nav
-- [ ] All template tests pass
+- [x] All pages inherit from base template
+- [x] Navigation is responsive (mobile-friendly)
+- [x] Flash messages appear after actions (success/error)
+- [x] Active group name visible in nav
+- [x] All template tests pass
 
 ---
 
 ## Phase 7: Dashboard
 
 ### Tasks
-- [ ] Create `app/routes/dashboard.py`:
+- [x] Create `app/routes/dashboard.py`:
   - `GET /dashboard` — render dashboard with statistics
-- [ ] Create `app/templates/dashboard.html`:
+- [x] Create `app/templates/dashboard.html`:
   - Total vehicles count
   - Total fuel entries count
   - Total fuel liters
   - Recent fuel entries (last 5–10)
-- [ ] Dashboard scoped to active group
+- [x] Dashboard scoped to active group
 
 ### Tests (write FIRST)
 ```
@@ -457,25 +457,25 @@ test_dashboard_empty_group_shows_zeros
 - User switches groups → dashboard reflects new group data
 
 ### Acceptance Criteria
-- [ ] Dashboard displays correct counts for active group
-- [ ] Soft-deleted records are excluded
-- [ ] Empty state is handled gracefully
-- [ ] All dashboard tests pass
+- [x] Dashboard displays correct counts for active group
+- [x] Soft-deleted records are excluded
+- [x] Empty state is handled gracefully
+- [x] All dashboard tests pass
 
 ---
 
 ## Phase 8: Vehicles CRUD
 
 ### Tasks
-- [ ] Create `app/routes/vehicles.py`:
+- [x] Create `app/routes/vehicles.py`:
   - `GET /vehicles` — list vehicles (active group, exclude soft-deleted)
   - `GET /vehicles/new` — render create form (admin, contributor)
   - `POST /vehicles/new` — create vehicle (auto-set usage_unit)
   - `GET /vehicles/{id}/edit` — render edit form (admin, contributor)
   - `POST /vehicles/{id}/edit` — update vehicle
   - `POST /vehicles/{id}/delete` — soft-delete vehicle (admin only)
-- [ ] Create `app/templates/vehicles.html`
-- [ ] Create `app/templates/vehicle_form.html`
+- [x] Create `app/templates/vehicles.html`
+- [x] Create `app/templates/vehicle_form.html`
 
 ### Tests (write FIRST)
 
@@ -531,12 +531,12 @@ test_delete_vehicle_not_found_404
 - Duplicate vehicle names within same group (allowed or not?)
 
 ### Acceptance Criteria
-- [ ] CRUD operations work for vehicles within active group
-- [ ] `usage_unit` is auto-set from `vtype`, not editable
-- [ ] Soft delete preserves data, hides from list
-- [ ] Role-based access is enforced
-- [ ] Cross-group access is denied
-- [ ] All vehicle tests pass
+- [x] CRUD operations work for vehicles within active group
+- [x] `usage_unit` is auto-set from `vtype`, not editable
+- [x] Soft delete preserves data, hides from list
+- [x] Role-based access is enforced
+- [x] Cross-group access is denied
+- [x] All vehicle tests pass
 
 ---
 

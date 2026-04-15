@@ -4,11 +4,9 @@ import time
 from datetime import datetime, timezone
 from unittest.mock import patch
 
-import pytest
 from fastapi import Depends
 
 from app.auth import (
-    SESSION_MAX_AGE,
     create_password_reset_token,
     create_session_cookie,
     decode_password_reset_token,
@@ -38,18 +36,6 @@ async def _test_admin_route(user: User = Depends(require_role("admin"))):
 @app.get("/test/contributor-min")
 async def _test_contributor_route(user: User = Depends(require_role("contributor"))):
     return {"user_id": user.id}
-
-
-# ── Fixtures ─────────────────────────────────────────────────────────────────
-
-
-@pytest.fixture
-def auth_cookie():
-    """Set a valid session cookie on the given httpx client."""
-    def _set(client, user_id: int, active_group_id: int | None = None) -> None:
-        cookie_value = create_session_cookie(user_id, active_group_id)
-        client.cookies.set(settings.SESSION_COOKIE_NAME, cookie_value)
-    return _set
 
 
 # ── Unit tests: password hashing ─────────────────────────────────────────────

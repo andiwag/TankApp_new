@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Groups – TankApp{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">Your Groups</h1>
+
+    {% if error %}
+    <div class="bg-red-50 text-red-800 border border-red-200 rounded-md p-4 mb-4">
+        <p class="text-sm">{{ error }}</p>
+    </div>
+    {% endif %}
+
+    {% if groups %}
+    <div class="bg-white rounded-lg shadow overflow-hidden mb-8">
+        <ul class="divide-y divide-gray-200">
+        {% for item in groups %}
+            <li class="px-6 py-4 flex items-center justify-between">
+                <div>
+                    <span class="font-medium text-gray-900">{{ item.group.name }}</span>
+                    <span class="ml-2 inline-block text-xs px-2 py-0.5 rounded-full
+                        {% if item.role == 'admin' %}bg-purple-100 text-purple-700
+                        {% elif item.role == 'contributor' %}bg-blue-100 text-blue-700
+                        {% else %}bg-gray-100 text-gray-700{% endif %}
+                    ">{{ item.role }}</span>
+                    {% if item.group.id == active_group_id %}
+                    <span class="ml-2 inline-block text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Active</span>
+                    {% endif %}
+                </div>
+                <div class="flex items-center space-x-2">
+                    {% if item.group.id != active_group_id %}
+                    <form method="post" action="/groups/switch/{{ item.group.id }}">
+                        <button type="submit" class="text-sm text-green-600 hover:text-green-700 font-medium">Switch</button>
+                    </form>
+                    {% endif %}
+                    <form method="post" action="/groups/leave/{{ item.group.id }}">
+                        <button type="submit" class="text-sm text-red-600 hover:text-red-700 font-medium">Leave</button>
+                    </form>
+                </div>
+            </li>
+        {% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow p-6 mb-8 text-center text-gray-500">
+        <p>You are not a member of any groups yet.</p>
+    </div>
+    {% endif %}
+
+    <div class="grid gap-6 md:grid-cols-2">
+        <!-- Create Group -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Create Group</h2>
+            <form method="post" action="/groups/create" class="space-y-4">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Group Name</label>
+                    <input type="text" id="name" name="name" required
+                           class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-500">
+                </div>
+                <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition font-medium">
+                    Create
+                </button>
+            </form>
+        </div>
+
+        <!-- Join Group -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Join Group</h2>
+            <form method="post" action="/groups/join" class="space-y-4">
+                <div>
+                    <label for="invite_code" class="block text-sm font-medium text-gray-700 mb-1">Invite Code</label>
+                    <input type="text" id="invite_code" name="invite_code" required
+                           class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-500">
+                </div>
+                <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition font-medium">
+                    Join
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

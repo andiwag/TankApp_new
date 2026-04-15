@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Vehicles – TankApp{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">Vehicles</h1>
+        {% if can_edit %}
+        <a href="/vehicles/new" class="inline-flex justify-center items-center px-4 py-2 rounded-md bg-green-700 text-white text-sm font-medium hover:bg-green-800 transition">
+            Add vehicle
+        </a>
+        {% endif %}
+    </div>
+
+    <div id="vehicle-list" class="bg-white rounded-lg shadow overflow-hidden">
+        {% if vehicles %}
+        <ul class="divide-y divide-gray-200">
+            {% for v in vehicles %}
+            <li class="px-6 py-4 flex flex-wrap gap-4 justify-between items-center">
+                <div>
+                    <p class="font-medium text-gray-900">{{ v.name }}</p>
+                    <p class="text-sm text-gray-500 mt-1">
+                        {{ v.vtype }} · {{ v.fuel_type }} · {{ v.usage_unit }}
+                    </p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    {% if can_edit %}
+                    <a href="/vehicles/{{ v.id }}/edit" class="text-sm text-green-700 hover:text-green-900 font-medium">Edit</a>
+                    {% endif %}
+                    {% if can_delete %}
+                    <form method="post" action="/vehicles/{{ v.id }}/delete" class="inline" onsubmit="return confirm('Remove this vehicle?');">
+                        <button type="submit" class="text-sm text-red-600 hover:text-red-800 font-medium">Delete</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="px-6 py-10 text-gray-500 text-sm">No vehicles yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

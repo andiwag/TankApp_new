@@ -45,26 +45,26 @@ def get_current_user(
         raise NotAuthenticatedException()
 
     request.state.session_data = data
+    request.state.user = user
+
+    active_group_id = data.get("active_group_id")
+    if active_group_id:
+        group = db.query(Group).filter(
+            Group.id == active_group_id,
+            Group.deleted_at == None,  # noqa: E711
+        ).first()
+        request.state.active_group = group
+
     return user
 
 
 def get_active_group(
     request: Request,
-    db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ) -> Group:
-    session_data = request.state.session_data
-    active_group_id = session_data.get("active_group_id")
-    if not active_group_id:
-        raise NoActiveGroupException()
-
-    group = db.query(Group).filter(
-        Group.id == active_group_id,
-        Group.deleted_at == None,  # noqa: E711
-    ).first()
+    group = request.state.active_group
     if not group:
         raise NoActiveGroupException()
-
     return group
 
 

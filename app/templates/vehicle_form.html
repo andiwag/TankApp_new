@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}{% if mode == 'create' %}New vehicle{% else %}Edit vehicle{% endif %} – TankApp{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">
+        {% if mode == 'create' %}New vehicle{% else %}Edit vehicle{% endif %}
+    </h1>
+
+    {% if error %}
+    <div class="mb-4 rounded-md p-4 bg-red-50 text-red-800 border border-red-200 text-sm" role="alert">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="post" action="{% if mode == 'create' %}/vehicles/new{% else %}/vehicles/{{ vehicle.id }}/edit{% endif %}" class="space-y-6 bg-white rounded-lg shadow p-6">
+        <div>
+            <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+            <input type="text" name="name" id="name" required
+                   value="{% if vehicle %}{{ vehicle.name }}{% else %}{{ form_name }}{% endif %}"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border px-3 py-2" />
+        </div>
+
+        {% if mode == 'create' %}
+        <div>
+            <label for="vtype" class="block text-sm font-medium text-gray-700">Type</label>
+            <select name="vtype" id="vtype" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border px-3 py-2">
+                <option value="">Select type</option>
+                <option value="car" {% if form_vtype == 'car' %}selected{% endif %}>Car</option>
+                <option value="motorcycle" {% if form_vtype == 'motorcycle' %}selected{% endif %}>Motorcycle</option>
+                <option value="tractor" {% if form_vtype == 'tractor' %}selected{% endif %}>Tractor</option>
+                <option value="machine" {% if form_vtype == 'machine' %}selected{% endif %}>Machine</option>
+            </select>
+        </div>
+        {% endif %}
+
+        <div>
+            <label for="fuel_type" class="block text-sm font-medium text-gray-700">Fuel</label>
+            <select name="fuel_type" id="fuel_type" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border px-3 py-2">
+                <option value="">Select fuel</option>
+                <option value="diesel" {% if vehicle and vehicle.fuel_type == 'diesel' %}selected{% elif form_fuel_type == 'diesel' %}selected{% endif %}>Diesel</option>
+                <option value="petrol" {% if vehicle and vehicle.fuel_type == 'petrol' %}selected{% elif form_fuel_type == 'petrol' %}selected{% endif %}>Petrol</option>
+            </select>
+        </div>
+
+        <div class="flex gap-3">
+            <button type="submit" class="inline-flex justify-center px-4 py-2 rounded-md bg-green-700 text-white text-sm font-medium hover:bg-green-800 transition">
+                {% if mode == 'create' %}Create{% else %}Save{% endif %}
+            </button>
+            <a href="/vehicles" class="inline-flex justify-center px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
