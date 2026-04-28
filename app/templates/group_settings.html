@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import role_badge %}
+{% from "_macros.html" import csrf_field, role_badge with context %}
 
 {% block title %}Group Settings – TankApp{% endblock %}
 
@@ -31,6 +31,7 @@
                 </button>
                 {% if is_admin %}
                 <form method="post" action="{{ request.url_for('regenerate_invite_code_post') }}" onsubmit="return confirm('Regenerate invite code? The old code will stop working.');">
+                    {{ csrf_field() }}
                     <button type="submit" class="px-4 py-2 rounded-md bg-green-700 text-white text-sm font-medium hover:bg-green-800">
                         Regenerate
                     </button>
@@ -58,6 +59,7 @@
                 {% if is_admin and membership.user_id != request.state.user.id %}
                 <div class="flex flex-wrap gap-2">
                     <form method="post" action="{{ request.url_for('change_member_role_post', user_id=membership.user_id) }}" class="flex gap-2" data-testid="member-role-form">
+                        {{ csrf_field() }}
                         <label class="sr-only" for="role-{{ membership.user_id }}">Role</label>
                         <select id="role-{{ membership.user_id }}" name="role"
                                 class="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-500">
@@ -70,6 +72,7 @@
                         </button>
                     </form>
                     <form method="post" action="{{ request.url_for('remove_member_post', user_id=membership.user_id) }}" data-testid="member-remove-form" onsubmit="return confirm('Remove this member?');">
+                        {{ csrf_field() }}
                         <button type="submit" class="px-3 py-2 rounded-md border border-red-300 text-red-700 text-sm font-medium hover:bg-red-50">
                             Remove
                         </button>
@@ -86,6 +89,7 @@
         <h2 class="text-lg font-semibold text-red-800">Danger Zone</h2>
         <p class="mt-1 text-sm text-gray-500">Deleting a group hides it and clears it from the active session.</p>
         <form method="post" action="{{ request.url_for('delete_group', group_id=group.id) }}" class="mt-4" onsubmit="return confirm('Delete this group?');">
+            {{ csrf_field() }}
             <button type="submit" class="px-4 py-2 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700">
                 Delete group
             </button>

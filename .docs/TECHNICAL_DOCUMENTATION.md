@@ -450,7 +450,7 @@ AuditLog
 
 id          int PK
 
-group_id    FK -> Group.id
+group_id    FK -> Group.id nullable
 user_id     FK -> User.id
 
 action      string
@@ -464,7 +464,7 @@ Logged events: `user.register`, `group.create`, `group.delete`, `group.join`, `g
 
 Not logged: `fuel_entry.*`, `vehicle.edit`, `user.login`, `user.logout`
 
-See DECISION_LOG.md D-006 for rationale.
+See DECISION_LOG.md D-006 and D-042 for rationale.
 
 ---
 
@@ -896,7 +896,7 @@ Session cookies:
 * sameSite
 
 CSRF protection:
-fastapi-csrf-protect (required — all POST forms include CSRF token)
+fastapi-csrf-protect (all unsafe requests require a valid signed-cookie + form-field CSRF token)
 
 Soft deletes:
 `deleted_at` fields on User, Group, Vehicle, FuelEntry

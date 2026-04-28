@@ -5,3 +5,7 @@
     {% else %}bg-gray-100 text-gray-700{% endif %}
 ">{{ role }}</span>
 {%- endmacro %}
+
+{% macro csrf_field() -%}
+<input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+{%- endmacro %}

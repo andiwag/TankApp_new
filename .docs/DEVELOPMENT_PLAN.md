@@ -788,10 +788,10 @@ test_remove_member_not_in_group_404
 ## Phase 13: Audit Logging
 
 ### Tasks
-- [ ] Create `app/audit.py`:
+- [x] Create `app/audit.py`:
   - `log_event(db, group_id, user_id, action, entity_type, entity_id)` helper function
-- [ ] Integrate audit logging into relevant route handlers (see D-006 for event list)
-- [ ] Optionally: display recent audit events in group settings
+- [x] Integrate audit logging into relevant route handlers (see D-006 for event list)
+- [x] Optional audit display intentionally skipped for MVP; audit records remain backend-only
 
 ### Tests (write FIRST)
 ```
@@ -811,20 +811,20 @@ test_audit_log_stores_correct_user_id
 ```
 
 ### Acceptance Criteria
-- [ ] Important events are logged per D-006
-- [ ] Routine operations are NOT logged
-- [ ] Audit log entries have correct metadata
-- [ ] All audit tests pass
+- [x] Important events are logged per D-006
+- [x] Routine operations are NOT logged
+- [x] Audit log entries have correct metadata
+- [x] All audit tests pass
 
 ---
 
 ## Phase 14: CSRF Protection
 
 ### Tasks
-- [ ] Install and configure `fastapi-csrf-protect`
-- [ ] Add CSRF token to all forms in templates
-- [ ] Validate CSRF token on all POST routes
-- [ ] Ensure CSRF token is included in test client requests
+- [x] Install and configure `fastapi-csrf-protect`
+- [x] Add CSRF token to all forms in templates
+- [x] Validate CSRF token on all POST routes
+- [x] Ensure CSRF token is included in test client requests
 
 ### Tests (write FIRST)
 ```
@@ -835,10 +835,10 @@ test_csrf_token_present_in_all_forms
 ```
 
 ### Acceptance Criteria
-- [ ] All POST requests require a valid CSRF token
-- [ ] Forms include hidden CSRF token field
-- [ ] All existing tests updated to include CSRF tokens
-- [ ] All CSRF tests pass
+- [x] All POST requests require a valid CSRF token
+- [x] Forms include hidden CSRF token field
+- [x] All existing tests updated to include CSRF tokens
+- [x] All CSRF tests pass
 
 ---
 

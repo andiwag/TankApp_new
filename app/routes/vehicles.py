@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
+from app.audit import log_event
 from app.database import get_db
 from app.dependencies import get_active_group, require_role
 from app.enums import Role
@@ -68,7 +69,7 @@ async def create_vehicle_post(
     fuel_type: str = Form(""),
     db: Session = Depends(get_db),
     group: Group = Depends(get_active_group),
-    _user=Depends(require_role(Role.contributor.value)),
+    user=Depends(require_role(Role.contributor.value)),
 ):
     try:
         data = VehicleCreate(name=name, vtype=vtype, fuel_type=fuel_type)
@@ -81,8 +82,11 @@ async def create_vehicle_post(
             form_vtype=vtype,
             form_fuel_type=fuel_type,
         )
-    vehicle_service.create_vehicle(db, group.id, data)
+    vehicle = vehicle_service.create_vehicle(db, group.id, data)
     response = RedirectResponse(url="/vehicles", status_code=303)
+    log_event(db, group.id, user.id, "vehicle.create", "vehicle", vehicle.id)
+    db.commit()
+    db.refresh(vehicle)
     set_flash(response, "Vehicle created.", "success")
     return response
 
@@ -139,7 +143,7 @@ async def delete_vehicle_post(
     vehicle_id: int,
     db: Session = Depends(get_db),
     group: Group = Depends(get_active_group),
-    _user=Depends(require_role(Role.admin.value)),
+    user=Depends(require_role(Role.admin.value)),
 ):
     vehicle = vehicle_service.get_active_vehicle_in_group(db, vehicle_id, group.id)
     if not vehicle:
@@ -147,5 +151,15 @@ async def delete_vehicle_post(
 
     vehicle_service.soft_delete_vehicle(db, vehicle)
     response = RedirectResponse(url="/vehicles", status_code=303)
+    log_event(
+        db,
+        group.id,
+        user.id,
+        "vehicle.delete",
+        "vehicle",
+        vehicle.id,
+    )
+    db.commit()
+    db.refresh(vehicle)
     set_flash(response, "Vehicle removed.", "success")
     return response

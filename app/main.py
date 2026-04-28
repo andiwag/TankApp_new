@@ -1,20 +1,26 @@
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.csrf import CsrfTokenMiddleware, validate_csrf
 from app.flash import FlashMiddleware
 from app.responses import forbidden_response
 from app.templating import templates
 
-app = FastAPI(title="TankApp", version="0.1.0")
+app = FastAPI(
+    title="TankApp",
+    version="0.1.0",
+    dependencies=[Depends(validate_csrf)],
+)
 
 _static_dir = Path(__file__).parent / "static"
 _static_dir.mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
 app.add_middleware(FlashMiddleware)
+app.add_middleware(CsrfTokenMiddleware)
 
 
 # ── Exception handlers ───────────────────────────────────────────────────────

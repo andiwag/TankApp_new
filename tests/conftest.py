@@ -8,6 +8,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.auth import create_session_cookie
 from app.config import settings
+from app.csrf import CSRF_COOKIE_NAME, CSRF_FIELD_NAME, UNSAFE_METHODS, create_csrf_tokens
 from app.database import Base, get_db
 from app.main import app
 from app.models import FuelEntry, Group, User, UserGroup, Vehicle
@@ -21,6 +22,32 @@ test_engine = create_engine(
 )
 
 TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+
+
+class CsrfAsyncClient(AsyncClient):
+    async def request(self, method: str, url, **kwargs):
+        if method.upper() in UNSAFE_METHODS:
+            kwargs, signed_token = _with_csrf(kwargs)
+            if signed_token is not None:
+                self.cookies.delete(CSRF_COOKIE_NAME)
+                self.cookies.set(CSRF_COOKIE_NAME, signed_token)
+        return await super().request(method, url, **kwargs)
+
+
+def _with_csrf(kwargs: dict) -> tuple[dict, str | None]:
+    token, signed_token = create_csrf_tokens()
+    data = kwargs.get("data")
+    if isinstance(data, dict):
+        data = {**data, CSRF_FIELD_NAME: token}
+    elif isinstance(data, list):
+        data = [*data, (CSRF_FIELD_NAME, token)]
+    elif data is None:
+        data = {CSRF_FIELD_NAME: token}
+    else:
+        return kwargs, None
+
+    kwargs["data"] = data
+    return kwargs, signed_token
 
 
 def override_get_db():
@@ -61,7 +88,7 @@ def clean_tables(db):
 @pytest.fixture
 async def client():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+    async with CsrfAsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 
 

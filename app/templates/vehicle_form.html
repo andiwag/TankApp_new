@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_macros.html" import csrf_field with context %}
 
 {% block title %}{% if mode == 'create' %}New vehicle{% else %}Edit vehicle{% endif %} – TankApp{% endblock %}
 
@@ -15,6 +16,7 @@
     {% endif %}
 
     <form method="post" action="{% if mode == 'create' %}/vehicles/new{% else %}/vehicles/{{ vehicle.id }}/edit{% endif %}" class="space-y-6 bg-white rounded-lg shadow p-6">
+        {{ csrf_field() }}
         <div>
             <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
             <input type="text" name="name" id="name" required

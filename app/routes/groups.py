@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
+from app.audit import log_event
 from app.auth import set_session_cookie
 from app.database import get_db
 from app.dependencies import get_current_user
@@ -80,6 +81,9 @@ async def create_group(
         )
 
     response = RedirectResponse(url="/groups", status_code=303)
+    log_event(db, group.id, user.id, "group.create", "group", group.id)
+    db.commit()
+    db.refresh(group)
     set_session_cookie(response, user.id, group.id)
     return response
 
@@ -103,6 +107,8 @@ async def join_group(
         )
 
     response = RedirectResponse(url="/groups", status_code=303)
+    log_event(db, group.id, user.id, "group.join", "group", group.id)
+    db.commit()
     set_session_cookie(response, user.id, group.id)
     return response
 
@@ -144,6 +150,8 @@ async def leave_group(
 
     session_data = request.state.session_data
     response = RedirectResponse(url="/groups", status_code=303)
+    log_event(db, group_id, user.id, "group.leave", "group", group_id)
+    db.commit()
     if session_data.get("active_group_id") == group_id:
         set_session_cookie(response, user.id, None)
     return response
@@ -166,6 +174,9 @@ async def delete_group(
 
     session_data = request.state.session_data
     response = RedirectResponse(url="/groups", status_code=303)
+    log_event(db, group.id, user.id, "group.delete", "group", group.id)
+    db.commit()
+    db.refresh(group)
     if session_data.get("active_group_id") == group_id:
         set_session_cookie(response, user.id, None)
     return response

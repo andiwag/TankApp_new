@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
+from app.audit import log_event
 from app.database import get_db
 from app.dependencies import get_active_group, require_role
 from app.enums import Role
@@ -87,6 +88,15 @@ async def change_member_role_post(
         return not_found_response()
 
     response = RedirectResponse(url="/settings/group", status_code=303)
+    log_event(
+        db,
+        group.id,
+        admin.id,
+        "member.role_change",
+        "user_group",
+        user_id,
+    )
+    db.commit()
     set_flash(response, "Member role updated.")
     return response
 
@@ -113,5 +123,14 @@ async def remove_member_post(
         return not_found_response()
 
     response = RedirectResponse(url="/settings/group", status_code=303)
+    log_event(
+        db,
+        group.id,
+        admin.id,
+        "member.remove",
+        "user_group",
+        user_id,
+    )
+    db.commit()
     set_flash(response, "Member removed.")
     return response

@@ -601,3 +601,27 @@ This document records architectural and design decisions made during planning, a
 - Invite-code exhaustion now raises a domain-specific exception that routes can render as a recoverable form error.
 
 **Trade-off:** Adds several small modules (`templating.py`, `responses.py`, `services/groups.py`) and keeps simple response helpers plain-text for now rather than introducing full error pages.
+
+---
+
+## D-042: Audit logging — Backend-only events, nullable group context, and member entity IDs
+
+**Decision:** Implement `app/audit.py` with `log_event(db, group_id, user_id, action, entity_type, entity_id)` and call it from successful route handlers for the D-006 event list. `log_event()` only adds and flushes the audit row; audited route handlers commit the business mutation and audit row together. `AuditLog.group_id` is nullable so account-level events like `user.register` can be recorded before the user belongs to a group. For `member.role_change` and `member.remove`, store the affected member's `user_id` in `entity_id` with `entity_type="user_group"`. Do not display audit events in group settings for MVP.
+
+**Context:** Phase 13 requires audit rows for registration, group membership changes, group deletion, and vehicle create/delete, while routine fuel-entry operations and vehicle edits must not be logged. The existing `AuditLog` model required `group_id`, but registration has no group context.
+
+**Rationale:** Route-level calls keep audit behavior close to the successful HTTP action without duplicating raw insert code. Flushing instead of committing inside the helper keeps audited mutations atomic at the request level. Nullable `group_id` preserves registration auditing without inventing a placeholder group. Using member `user_id` for user-group events provides a stable identifier because the `UserGroup` table has a composite key and no surrogate ID.
+
+**Trade-off:** Audited service functions now rely on their route handlers to commit after logging, so they are less self-contained than non-audited mutation helpers. This is acceptable because current audited services are only called from routes.
+
+---
+
+## D-043: CSRF protection — Global body-token validation with auto-CSRF test client
+
+**Decision:** Configure `fastapi-csrf-protect` in `app/csrf.py` with a signed HTTP-only cookie (`tankapp_csrf`) and a hidden form field named `csrf_token`. A global FastAPI dependency validates CSRF on unsafe methods (`POST`, `PUT`, `PATCH`, `DELETE`), while `CsrfTokenMiddleware` reuses a valid existing signed cookie for templates and only creates a new token/cookie when missing or invalid. Templates render the hidden field via a shared `csrf_field()` macro. Tests use a `CsrfAsyncClient` that injects a valid token and cookie for unsafe requests unless a test intentionally uses a raw client.
+
+**Context:** Phase 14 requires every POST route to reject missing/invalid CSRF tokens and every form to include a token. The existing test suite has many route behavior tests that post form data directly.
+
+**Rationale:** A global dependency guarantees all current and future unsafe route handlers are covered without per-route boilerplate. Body-token validation matches server-rendered HTML forms. Reusing a valid token avoids breaking forms opened in another tab or submitted after using the browser back button. The macro prevents future forms from needing to duplicate raw hidden-input markup. The auto-CSRF test client keeps existing tests focused on their original behavior while dedicated CSRF tests cover missing, invalid, and stale-form token cases.
+
+**Trade-off:** The test client abstracts away CSRF setup for most tests, so new tests must use a raw `AsyncClient` when they specifically need to assert CSRF failures. Reusing the existing CSRF token reduces cookie churn but means a stolen valid token remains usable until its configured max age expires.

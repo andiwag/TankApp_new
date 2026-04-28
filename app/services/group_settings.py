@@ -57,8 +57,7 @@ def change_member_role(
         return False
 
     membership.role = role
-    db.commit()
-    db.refresh(membership)
+    db.flush()
     return True
 
 
@@ -77,5 +76,5 @@ def remove_member(
         return False
 
     db.delete(membership)
-    db.commit()
+    db.flush()
     return True

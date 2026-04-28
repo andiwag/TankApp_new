@@ -51,8 +51,7 @@ def create_vehicle(db: Session, group_id: int, data: VehicleCreate) -> Vehicle:
         fuel_type=data.fuel_type.value,
     )
     db.add(vehicle)
-    db.commit()
-    db.refresh(vehicle)
+    db.flush()
     return vehicle
 
 
@@ -68,5 +67,4 @@ def apply_vehicle_update(db: Session, vehicle: Vehicle, data: VehicleUpdate) -> 
 
 def soft_delete_vehicle(db: Session, vehicle: Vehicle) -> None:
     vehicle.deleted_at = datetime.now(timezone.utc)
-    db.commit()
-    db.refresh(vehicle)
+    db.flush()

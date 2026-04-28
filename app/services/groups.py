@@ -42,8 +42,7 @@ def create_group(db: Session, user: User, data: GroupCreate) -> Group:
     db.add(group)
     db.flush()
     db.add(UserGroup(user_id=user.id, group_id=group.id, role=Role.admin.value))
-    db.commit()
-    db.refresh(group)
+    db.flush()
     return group
 
 
@@ -69,7 +68,7 @@ def join_group_by_invite_code(db: Session, user: User, invite_code: str) -> Grou
             role=Role.contributor.value,
         )
     )
-    db.commit()
+    db.flush()
     return group
 
 
@@ -102,7 +101,7 @@ def leave_group(db: Session, user: User, group_id: int) -> bool:
         )
 
     db.delete(membership)
-    db.commit()
+    db.flush()
     return True
 
 
@@ -125,6 +124,5 @@ def soft_delete_group_as_admin(
         return None
 
     group.deleted_at = datetime.now(timezone.utc)
-    db.commit()
-    db.refresh(group)
+    db.flush()
     return group

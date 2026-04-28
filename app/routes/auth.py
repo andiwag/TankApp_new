@@ -5,6 +5,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
+from app.audit import log_event
 from app.auth import (
     create_password_reset_token,
     decode_password_reset_token,
@@ -155,6 +156,8 @@ async def register(
         password_hash=hash_password(user_data.password),
     )
     db.add(user)
+    db.flush()
+    log_event(db, None, user.id, "user.register", "user", user.id)
     db.commit()
     db.refresh(user)
 
