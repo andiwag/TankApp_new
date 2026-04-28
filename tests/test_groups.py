@@ -2,7 +2,6 @@
 
 from datetime import datetime, timezone
 
-import pytest
 
 from app.auth import decode_session_cookie
 from app.config import settings

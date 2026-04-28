@@ -1,0 +1,130 @@
+"""Group listing and membership mutations."""
+
+from datetime import datetime, timezone
+
+from sqlalchemy.orm import Session
+
+from app.enums import Role
+from app.models import Group, User, UserGroup
+from app.schemas import GroupCreate
+from app.services.invite_codes import generate_unique_invite_code
+from app.services.membership import count_group_admins, get_membership
+
+
+class GroupActionError(Exception):
+    """User-recoverable group action error for SSR form rendering."""
+
+
+def user_groups_context(
+    db: Session, user: User, active_group_id: int | None
+) -> dict:
+    rows = (
+        db.query(Group, UserGroup.role)
+        .join(UserGroup, UserGroup.group_id == Group.id)
+        .filter(
+            UserGroup.user_id == user.id,
+            Group.deleted_at == None,  # noqa: E711
+        )
+        .all()
+    )
+    return {
+        "groups": [{"group": g, "role": r} for g, r in rows],
+        "active_group_id": active_group_id,
+    }
+
+
+def create_group(db: Session, user: User, data: GroupCreate) -> Group:
+    group = Group(
+        name=data.name,
+        invite_code=generate_unique_invite_code(db),
+        created_by=user.id,
+    )
+    db.add(group)
+    db.flush()
+    db.add(UserGroup(user_id=user.id, group_id=group.id, role=Role.admin.value))
+    db.commit()
+    db.refresh(group)
+    return group
+
+
+def join_group_by_invite_code(db: Session, user: User, invite_code: str) -> Group:
+    group = (
+        db.query(Group)
+        .filter(
+            Group.invite_code == invite_code,
+            Group.deleted_at == None,  # noqa: E711
+        )
+        .first()
+    )
+    if not group:
+        raise GroupActionError("Invalid invite code")
+
+    if get_membership(db, user.id, group.id):
+        raise GroupActionError("You are already a member of this group")
+
+    db.add(
+        UserGroup(
+            user_id=user.id,
+            group_id=group.id,
+            role=Role.contributor.value,
+        )
+    )
+    db.commit()
+    return group
+
+
+def switchable_group_for_user(
+    db: Session, user: User, group_id: int
+) -> Group | None:
+    if not get_membership(db, user.id, group_id):
+        return None
+    return (
+        db.query(Group)
+        .filter(
+            Group.id == group_id,
+            Group.deleted_at == None,  # noqa: E711
+        )
+        .first()
+    )
+
+
+def leave_group(db: Session, user: User, group_id: int) -> bool:
+    membership = get_membership(db, user.id, group_id)
+    if not membership:
+        return False
+
+    if (
+        membership.role == Role.admin.value
+        and count_group_admins(db, group_id) <= 1
+    ):
+        raise GroupActionError(
+            "You cannot leave as the sole admin. Promote another admin first."
+        )
+
+    db.delete(membership)
+    db.commit()
+    return True
+
+
+def soft_delete_group_as_admin(
+    db: Session, user: User, group_id: int
+) -> Group | None:
+    membership = get_membership(db, user.id, group_id)
+    if not membership or membership.role != Role.admin.value:
+        raise PermissionError("Forbidden")
+
+    group = (
+        db.query(Group)
+        .filter(
+            Group.id == group_id,
+            Group.deleted_at == None,  # noqa: E711
+        )
+        .first()
+    )
+    if not group:
+        return None
+
+    group.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(group)
+    return group

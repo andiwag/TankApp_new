@@ -569,3 +569,35 @@ This document records architectural and design decisions made during planning, a
 **Rationale:** One query definition for dashboard/summary scope; one place for D-004 display strings.
 
 **Trade-off:** Extra small module file (`fuel_queries.py`).
+
+---
+
+## D-040: Group settings — service layer, shared invite-code helper, no self-management
+
+**Decision:** Implement Phase 12 group settings with `app/routes/group_settings.py` as a thin route layer and `app/services/group_settings.py` for member-management mutations. Extract invite-code generation into `app/services/invite_codes.py` so group creation and invite regeneration use the same `FARM-XXXXX` collision-retry logic. Admins cannot change their own role or remove themselves from the settings page; they must use the existing leave-group flow for self-removal.
+
+**Context:** Phase 12 adds invite-code regeneration, member role changes, and member removal. Existing group creation had private invite-code helpers inside `app/routes/groups.py`, and the plan calls out self-demotion/removal protection.
+
+**Rationale:**
+- Keeps settings routes consistent with the established thin-route/fat-service pattern.
+- Avoids duplicating invite-code generation and collision handling.
+- Blocking all self role changes/removal keeps the settings page simple and prevents accidental lockout of the active admin account.
+
+**Trade-off:** An admin with other admins still cannot self-demote from group settings. This is stricter than only preventing sole-admin demotion, but the existing leave-group route remains the intentional self-service path.
+
+---
+
+## D-041: Refactor — Shared templating, responses, membership, and group services
+
+**Decision:** Move Jinja setup into `app/templating.py`, common plain-text error responses into `app/responses.py`, group membership helpers into `app/services/membership.py`, and group create/join/switch/leave/delete logic into `app/services/groups.py`. Keep route modules responsible for HTTP concerns only: dependencies, form parsing, template rendering, redirects, flash messages, and status mapping.
+
+**Context:** A clean-code review found that newer Phase 12 code followed the thin-route/service pattern, while older `app/routes/groups.py` still contained direct queries and mutations. It also found repeated `templates` imports from `app.main`, duplicated 403/404 response construction, repeated membership queries, duplicated role badge markup, repeated test auth-group setup, and redundant `@pytest.mark.asyncio` decorators despite `asyncio_mode = "auto"`.
+
+**Rationale:**
+- Route modules no longer depend on `app.main` for templates, reducing import-order coupling.
+- Membership rules and group mutations have single homes, reducing drift between groups, settings, and list-page capability checks.
+- Role badge markup is shared through a Jinja macro.
+- Tests rely on pytest-asyncio auto mode consistently and share authenticated group setup.
+- Invite-code exhaustion now raises a domain-specific exception that routes can render as a recoverable form error.
+
+**Trade-off:** Adds several small modules (`templating.py`, `responses.py`, `services/groups.py`) and keeps simple response helpers plain-text for now rather than introducing full error pages.

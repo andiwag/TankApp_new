@@ -15,7 +15,6 @@ from app.auth import (
 )
 from app.config import settings
 from app.database import get_db
-from app.main import templates
 from app.models import User
 from app.schemas import (
     EMAIL_DUPLICATE_MESSAGE,
@@ -23,6 +22,7 @@ from app.schemas import (
     UserCreate,
     first_validation_error_message,
 )
+from app.templating import templates
 
 logger = logging.getLogger(__name__)
 

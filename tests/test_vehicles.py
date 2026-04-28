@@ -2,39 +2,22 @@
 
 from datetime import datetime, timezone
 
-import pytest
 
 from app.models import Vehicle
+from tests.conftest import create_authenticated_group
 
-
-def _auth_group(
-    client,
-    create_test_user,
-    create_test_group,
-    create_test_user_group,
-    auth_cookie,
-    *,
-    role: str = "admin",
-):
-    user = create_test_user()
-    group = create_test_group(created_by=user.id)
-    create_test_user_group(user.id, group.id, role=role)
-    auth_cookie(client, user.id, group.id)
-    return user, group
 
 
 class TestListVehicles:
-    @pytest.mark.asyncio
     async def test_list_vehicles_requires_auth(self, client):
         response = await client.get("/vehicles", follow_redirects=False)
         assert response.status_code == 303
         assert response.headers.get("location") == "/login"
 
-    @pytest.mark.asyncio
     async def test_list_vehicles_returns_200(
         self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
     ):
-        _auth_group(
+        create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -44,7 +27,6 @@ class TestListVehicles:
         response = await client.get("/vehicles")
         assert response.status_code == 200
 
-    @pytest.mark.asyncio
     async def test_list_vehicles_scoped_to_active_group(
         self,
         client,
@@ -67,7 +49,6 @@ class TestListVehicles:
         assert "Only A" in response.text
         assert "Only B" not in response.text
 
-    @pytest.mark.asyncio
     async def test_list_vehicles_excludes_soft_deleted(
         self,
         client,
@@ -78,7 +59,7 @@ class TestListVehicles:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -99,7 +80,6 @@ class TestListVehicles:
 
 
 class TestCreateVehicle:
-    @pytest.mark.asyncio
     async def test_create_vehicle_valid_car(
         self,
         client,
@@ -109,7 +89,7 @@ class TestCreateVehicle:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -130,7 +110,6 @@ class TestCreateVehicle:
         assert v.usage_unit == "km"
         assert v.fuel_type == "petrol"
 
-    @pytest.mark.asyncio
     async def test_create_vehicle_valid_tractor(
         self,
         client,
@@ -140,7 +119,7 @@ class TestCreateVehicle:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -159,7 +138,6 @@ class TestCreateVehicle:
         assert v.vtype == "tractor"
         assert v.usage_unit == "hours"
 
-    @pytest.mark.asyncio
     async def test_create_vehicle_sets_usage_unit_km_for_car(
         self,
         client,
@@ -169,7 +147,7 @@ class TestCreateVehicle:
         auth_cookie,
         db,
     ):
-        _auth_group(
+        create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -185,7 +163,6 @@ class TestCreateVehicle:
         v = db.query(Vehicle).filter(Vehicle.name == "C1").one()
         assert v.usage_unit == "km"
 
-    @pytest.mark.asyncio
     async def test_create_vehicle_sets_usage_unit_km_for_motorcycle(
         self,
         client,
@@ -195,7 +172,7 @@ class TestCreateVehicle:
         auth_cookie,
         db,
     ):
-        _auth_group(
+        create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -211,7 +188,6 @@ class TestCreateVehicle:
         v = db.query(Vehicle).filter(Vehicle.name == "M1").one()
         assert v.usage_unit == "km"
 
-    @pytest.mark.asyncio
     async def test_create_vehicle_sets_usage_unit_hours_for_tractor(
         self,
         client,
@@ -221,7 +197,7 @@ class TestCreateVehicle:
         auth_cookie,
         db,
     ):
-        _auth_group(
+        create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -237,7 +213,6 @@ class TestCreateVehicle:
         v = db.query(Vehicle).filter(Vehicle.name == "T1").one()
         assert v.usage_unit == "hours"
 
-    @pytest.mark.asyncio
     async def test_create_vehicle_sets_usage_unit_hours_for_machine(
         self,
         client,
@@ -247,7 +222,7 @@ class TestCreateVehicle:
         auth_cookie,
         db,
     ):
-        _auth_group(
+        create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -263,7 +238,6 @@ class TestCreateVehicle:
         v = db.query(Vehicle).filter(Vehicle.name == "Mach1").one()
         assert v.usage_unit == "hours"
 
-    @pytest.mark.asyncio
     async def test_create_vehicle_sets_group_id_from_session(
         self,
         client,
@@ -273,7 +247,7 @@ class TestCreateVehicle:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -289,7 +263,6 @@ class TestCreateVehicle:
         v = db.query(Vehicle).filter(Vehicle.name == "Scoped").one()
         assert v.group_id == group.id
 
-    @pytest.mark.asyncio
     async def test_create_vehicle_invalid_vtype_fails(
         self,
         client,
@@ -298,7 +271,7 @@ class TestCreateVehicle:
         create_test_user_group,
         auth_cookie,
     ):
-        _auth_group(
+        create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -314,7 +287,6 @@ class TestCreateVehicle:
         assert "bg-red-50" in response.text
         assert "Input should" in response.text
 
-    @pytest.mark.asyncio
     async def test_create_vehicle_empty_name_fails(
         self,
         client,
@@ -323,7 +295,7 @@ class TestCreateVehicle:
         create_test_user_group,
         auth_cookie,
     ):
-        _auth_group(
+        create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -338,7 +310,6 @@ class TestCreateVehicle:
         assert response.status_code == 200
         assert "empty" in response.text.lower() or "Name" in response.text
 
-    @pytest.mark.asyncio
     async def test_create_vehicle_requires_contributor_role(
         self,
         client,
@@ -347,7 +318,7 @@ class TestCreateVehicle:
         create_test_user_group,
         auth_cookie,
     ):
-        _auth_group(
+        create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -364,7 +335,6 @@ class TestCreateVehicle:
         )
         assert r_post.status_code == 403
 
-    @pytest.mark.asyncio
     async def test_create_vehicle_reader_denied(
         self,
         client,
@@ -373,7 +343,7 @@ class TestCreateVehicle:
         create_test_user_group,
         auth_cookie,
     ):
-        _auth_group(
+        create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -390,7 +360,6 @@ class TestCreateVehicle:
 
 
 class TestEditVehicle:
-    @pytest.mark.asyncio
     async def test_edit_vehicle_valid(
         self,
         client,
@@ -401,7 +370,7 @@ class TestEditVehicle:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -422,7 +391,6 @@ class TestEditVehicle:
         assert v.vtype == "tractor"
         assert v.usage_unit == "hours"
 
-    @pytest.mark.asyncio
     async def test_edit_vehicle_name_only(
         self,
         client,
@@ -433,7 +401,7 @@ class TestEditVehicle:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -451,7 +419,6 @@ class TestEditVehicle:
         assert v.name == "Renamed"
         assert v.fuel_type == "diesel"
 
-    @pytest.mark.asyncio
     async def test_edit_vehicle_fuel_type_only(
         self,
         client,
@@ -462,7 +429,7 @@ class TestEditVehicle:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -480,7 +447,6 @@ class TestEditVehicle:
         assert v.name == "Same"
         assert v.fuel_type == "petrol"
 
-    @pytest.mark.asyncio
     async def test_edit_vehicle_partial_update(
         self,
         client,
@@ -491,7 +457,7 @@ class TestEditVehicle:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -509,7 +475,6 @@ class TestEditVehicle:
         assert v.name == "V2"
         assert v.fuel_type == "diesel"
 
-    @pytest.mark.asyncio
     async def test_edit_vehicle_wrong_group_denied(
         self,
         client,
@@ -533,7 +498,6 @@ class TestEditVehicle:
         )
         assert response.status_code == 404
 
-    @pytest.mark.asyncio
     async def test_edit_vehicle_requires_contributor_role(
         self,
         client,
@@ -543,7 +507,7 @@ class TestEditVehicle:
         create_test_vehicle,
         auth_cookie,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -561,7 +525,6 @@ class TestEditVehicle:
         )
         assert r_post.status_code == 403
 
-    @pytest.mark.asyncio
     async def test_edit_vehicle_reader_denied(
         self,
         client,
@@ -571,7 +534,7 @@ class TestEditVehicle:
         create_test_vehicle,
         auth_cookie,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -587,7 +550,6 @@ class TestEditVehicle:
         )
         assert response.status_code == 403
 
-    @pytest.mark.asyncio
     async def test_edit_vehicle_not_found_404(
         self,
         client,
@@ -596,7 +558,7 @@ class TestEditVehicle:
         create_test_user_group,
         auth_cookie,
     ):
-        _auth_group(
+        create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -611,7 +573,6 @@ class TestEditVehicle:
         )
         assert response.status_code == 404
 
-    @pytest.mark.asyncio
     async def test_edit_soft_deleted_vehicle_404(
         self,
         client,
@@ -622,7 +583,7 @@ class TestEditVehicle:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -644,7 +605,6 @@ class TestEditVehicle:
 
 
 class TestDeleteVehicle:
-    @pytest.mark.asyncio
     async def test_delete_vehicle_as_admin(
         self,
         client,
@@ -655,7 +615,7 @@ class TestDeleteVehicle:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -669,7 +629,6 @@ class TestDeleteVehicle:
         db.refresh(v)
         assert v.deleted_at is not None
 
-    @pytest.mark.asyncio
     async def test_delete_vehicle_as_contributor_denied(
         self,
         client,
@@ -679,7 +638,7 @@ class TestDeleteVehicle:
         create_test_vehicle,
         auth_cookie,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -691,7 +650,6 @@ class TestDeleteVehicle:
         response = await client.post(f"/vehicles/{v.id}/delete", follow_redirects=False)
         assert response.status_code == 403
 
-    @pytest.mark.asyncio
     async def test_delete_vehicle_as_reader_denied(
         self,
         client,
@@ -701,7 +659,7 @@ class TestDeleteVehicle:
         create_test_vehicle,
         auth_cookie,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -713,7 +671,6 @@ class TestDeleteVehicle:
         response = await client.post(f"/vehicles/{v.id}/delete", follow_redirects=False)
         assert response.status_code == 403
 
-    @pytest.mark.asyncio
     async def test_delete_vehicle_sets_deleted_at(
         self,
         client,
@@ -724,7 +681,7 @@ class TestDeleteVehicle:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -738,7 +695,6 @@ class TestDeleteVehicle:
         db.refresh(v)
         assert v.deleted_at is not None
 
-    @pytest.mark.asyncio
     async def test_delete_vehicle_wrong_group_denied(
         self,
         client,
@@ -758,7 +714,6 @@ class TestDeleteVehicle:
         response = await client.post(f"/vehicles/{v_in_b.id}/delete", follow_redirects=False)
         assert response.status_code == 404
 
-    @pytest.mark.asyncio
     async def test_delete_vehicle_not_found_404(
         self,
         client,
@@ -767,7 +722,7 @@ class TestDeleteVehicle:
         create_test_user_group,
         auth_cookie,
     ):
-        _auth_group(
+        create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -780,7 +735,6 @@ class TestDeleteVehicle:
 
 
 class TestGroupRoutesAuth:
-    @pytest.mark.asyncio
     async def test_group_routes_require_authentication(
         self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
     ):
@@ -788,7 +742,6 @@ class TestGroupRoutesAuth:
         assert response.status_code == 303
         assert response.headers.get("location") == "/login"
 
-    @pytest.mark.asyncio
     async def test_create_group_any_authenticated_user(
         self,
         client,
@@ -798,7 +751,7 @@ class TestGroupRoutesAuth:
         auth_cookie,
     ):
         """Plan name: any authenticated user may access group-scoped list (vehicles list)."""
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -809,7 +762,6 @@ class TestGroupRoutesAuth:
         response = await client.get("/vehicles")
         assert response.status_code == 200
 
-    @pytest.mark.asyncio
     async def test_delete_group_requires_admin(
         self,
         client,
@@ -820,7 +772,7 @@ class TestGroupRoutesAuth:
         auth_cookie,
     ):
         """Vehicle delete requires admin (mirrors plan's delete_group_requires_admin pattern)."""
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,

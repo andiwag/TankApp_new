@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% from "_macros.html" import role_badge %}
+
+{% block title %}Group Settings – TankApp{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Group Settings</h1>
+        <p class="mt-1 text-sm text-gray-500">{{ group.name }}</p>
+    </div>
+
+    {% if error %}
+    <div class="bg-red-50 text-red-800 border border-red-200 rounded-md p-4">
+        <p class="text-sm">{{ error }}</p>
+    </div>
+    {% endif %}
+
+    <section class="bg-white rounded-lg shadow p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900">Invite Code</h2>
+                <p class="mt-2 font-mono text-xl tracking-wide text-gray-900">{{ group.invite_code }}</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button type="button"
+                        x-data
+                        class="px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        @click="navigator.clipboard && navigator.clipboard.writeText('{{ group.invite_code }}')">
+                    Copy
+                </button>
+                {% if is_admin %}
+                <form method="post" action="{{ request.url_for('regenerate_invite_code_post') }}" onsubmit="return confirm('Regenerate invite code? The old code will stop working.');">
+                    <button type="submit" class="px-4 py-2 rounded-md bg-green-700 text-white text-sm font-medium hover:bg-green-800">
+                        Regenerate
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Members</h2>
+        </div>
+        <ul class="divide-y divide-gray-200">
+            {% for membership in members %}
+            <li class="px-6 py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+                data-testid="member-row"
+                data-member-role="{{ membership.role }}">
+                <div>
+                    <p class="font-medium text-gray-900">{{ membership.user.name }}</p>
+                    <p class="text-sm text-gray-500">{{ membership.user.email }}</p>
+                    <span class="mt-2">{{ role_badge(membership.role) }}</span>
+                </div>
+
+                {% if is_admin and membership.user_id != request.state.user.id %}
+                <div class="flex flex-wrap gap-2">
+                    <form method="post" action="{{ request.url_for('change_member_role_post', user_id=membership.user_id) }}" class="flex gap-2" data-testid="member-role-form">
+                        <label class="sr-only" for="role-{{ membership.user_id }}">Role</label>
+                        <select id="role-{{ membership.user_id }}" name="role"
+                                class="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-500">
+                            {% for role in roles %}
+                            <option value="{{ role }}" {% if membership.role == role %}selected{% endif %}>{{ role }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="px-3 py-2 rounded-md bg-green-700 text-white text-sm font-medium hover:bg-green-800">
+                            Save
+                        </button>
+                    </form>
+                    <form method="post" action="{{ request.url_for('remove_member_post', user_id=membership.user_id) }}" data-testid="member-remove-form" onsubmit="return confirm('Remove this member?');">
+                        <button type="submit" class="px-3 py-2 rounded-md border border-red-300 text-red-700 text-sm font-medium hover:bg-red-50">
+                            Remove
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    {% if is_admin %}
+    <section class="bg-white rounded-lg shadow p-6 border border-red-100">
+        <h2 class="text-lg font-semibold text-red-800">Danger Zone</h2>
+        <p class="mt-1 text-sm text-gray-500">Deleting a group hides it and clears it from the active session.</p>
+        <form method="post" action="{{ request.url_for('delete_group', group_id=group.id) }}" class="mt-4" onsubmit="return confirm('Delete this group?');">
+            <button type="submit" class="px-4 py-2 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700">
+                Delete group
+            </button>
+        </form>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

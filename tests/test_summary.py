@@ -327,13 +327,11 @@ class TestSummaryMonthly:
 
 
 class TestSummaryPageAuth:
-    @pytest.mark.asyncio
     async def test_summary_requires_auth(self, client):
         r = await client.get("/summary", follow_redirects=False)
         assert r.status_code == 303
         assert r.headers.get("location") == "/login"
 
-    @pytest.mark.asyncio
     async def test_summary_requires_active_group(self, client, create_test_user, auth_cookie):
         user = create_test_user()
         auth_cookie(client, user.id, active_group_id=None)
@@ -343,7 +341,6 @@ class TestSummaryPageAuth:
 
 
 class TestSummaryPageContent:
-    @pytest.mark.asyncio
     async def test_summary_fuel_per_vehicle_total_liters(
         self,
         client,
@@ -369,7 +366,6 @@ class TestSummaryPageContent:
         assert r.status_code == 200
         assert _find_vehicle_liters(r.text, v.id) == pytest.approx(50.0)
 
-    @pytest.mark.asyncio
     async def test_summary_fuel_per_vehicle_entry_count(
         self,
         client,
@@ -391,7 +387,6 @@ class TestSummaryPageContent:
         r = await client.get("/summary")
         assert _find_vehicle_count(r.text, v.id) == 1
 
-    @pytest.mark.asyncio
     @patch("app.services.summary._today", return_value=date(2026, 6, 15))
     async def test_summary_monthly_totals_last_12_months(
         self,
@@ -420,7 +415,6 @@ class TestSummaryPageContent:
         assert r.status_code == 200
         assert _month_liters(r.text, 2026, 6) == pytest.approx(33.0)
 
-    @pytest.mark.asyncio
     async def test_summary_empty_group_shows_no_data_message(
         self,
         client,

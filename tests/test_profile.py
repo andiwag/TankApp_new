@@ -1,13 +1,11 @@
 """Tests for Phase 10: User Profile Management."""
 
-import pytest
 
 from app.auth import verify_password
 from app.models import User
 
 
 class TestProfilePage:
-    @pytest.mark.asyncio
     async def test_get_profile_page_returns_200(
         self, client, create_test_user, auth_cookie
     ):
@@ -16,7 +14,6 @@ class TestProfilePage:
         response = await client.get("/profile")
         assert response.status_code == 200
 
-    @pytest.mark.asyncio
     async def test_get_profile_shows_current_name_and_email(
         self, client, create_test_user, auth_cookie
     ):
@@ -29,7 +26,6 @@ class TestProfilePage:
         assert "Pat Farmer" in response.text
         assert "farmer@example.com" in response.text
 
-    @pytest.mark.asyncio
     async def test_update_profile_requires_auth(self, client):
         response = await client.get("/profile", follow_redirects=False)
         assert response.status_code == 303
@@ -37,7 +33,6 @@ class TestProfilePage:
 
 
 class TestProfileUpdate:
-    @pytest.mark.asyncio
     async def test_update_profile_name(
         self, client, create_test_user, auth_cookie, db
     ):
@@ -55,7 +50,6 @@ class TestProfileUpdate:
         assert u.name == "New Name"
         assert u.email == user.email
 
-    @pytest.mark.asyncio
     async def test_update_profile_email(
         self, client, create_test_user, auth_cookie, db
     ):
@@ -71,7 +65,6 @@ class TestProfileUpdate:
         u = db.query(User).filter(User.id == user.id).first()
         assert u.email == "new@example.com"
 
-    @pytest.mark.asyncio
     async def test_update_profile_duplicate_email_fails(
         self, client, create_test_user, auth_cookie, db
     ):
@@ -93,7 +86,6 @@ class TestProfileUpdate:
 
 
 class TestProfilePassword:
-    @pytest.mark.asyncio
     async def test_change_password_valid(
         self, client, create_test_user, auth_cookie, db
     ):
@@ -114,7 +106,6 @@ class TestProfilePassword:
         u = db.query(User).filter(User.id == user.id).first()
         assert verify_password("newpass12x", u.password_hash)
 
-    @pytest.mark.asyncio
     async def test_change_password_wrong_current_password_fails(
         self, client, create_test_user, auth_cookie, db
     ):
@@ -135,7 +126,6 @@ class TestProfilePassword:
         u = db.query(User).filter(User.id == user.id).first()
         assert verify_password("correct12", u.password_hash)
 
-    @pytest.mark.asyncio
     async def test_change_password_mismatch_confirmation_fails(
         self, client, create_test_user, auth_cookie, db
     ):
@@ -156,7 +146,6 @@ class TestProfilePassword:
         u = db.query(User).filter(User.id == user.id).first()
         assert verify_password("correct12", u.password_hash)
 
-    @pytest.mark.asyncio
     async def test_change_password_short_password_fails(
         self, client, create_test_user, auth_cookie, db
     ):
@@ -177,7 +166,6 @@ class TestProfilePassword:
         u = db.query(User).filter(User.id == user.id).first()
         assert verify_password("correct12", u.password_hash)
 
-    @pytest.mark.asyncio
     async def test_change_password_requires_auth(self, client):
         response = await client.post(
             "/profile/change-password",

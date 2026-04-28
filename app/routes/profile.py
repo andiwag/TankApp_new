@@ -6,10 +6,10 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.flash import set_flash
-from app.main import templates
 from app.models import User
 from app.schemas import PasswordChange, UserUpdate, first_validation_error_message
 from app.services import profile as profile_service
+from app.templating import templates
 
 router = APIRouter()
 

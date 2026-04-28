@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import RedirectResponse, Response
+from fastapi.responses import RedirectResponse
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
@@ -7,10 +7,11 @@ from app.database import get_db
 from app.dependencies import get_active_group, require_role
 from app.enums import Role
 from app.flash import set_flash
-from app.main import templates
 from app.models import Group
+from app.responses import not_found_response
 from app.schemas import VehicleCreate, VehicleUpdate, first_validation_error_message
 from app.services import vehicles as vehicle_service
+from app.templating import templates
 
 router = APIRouter()
 
@@ -96,7 +97,7 @@ async def edit_vehicle_form(
 ):
     vehicle = vehicle_service.get_active_vehicle_in_group(db, vehicle_id, group.id)
     if not vehicle:
-        return Response("Not found", status_code=404)
+        return not_found_response()
     return _vehicle_form_response(request, mode="edit", vehicle=vehicle)
 
 
@@ -112,7 +113,7 @@ async def edit_vehicle_post(
 ):
     vehicle = vehicle_service.get_active_vehicle_in_group(db, vehicle_id, group.id)
     if not vehicle:
-        return Response("Not found", status_code=404)
+        return not_found_response()
 
     try:
         data = VehicleUpdate(
@@ -142,7 +143,7 @@ async def delete_vehicle_post(
 ):
     vehicle = vehicle_service.get_active_vehicle_in_group(db, vehicle_id, group.id)
     if not vehicle:
-        return Response("Not found", status_code=404)
+        return not_found_response()
 
     vehicle_service.soft_delete_vehicle(db, vehicle)
     response = RedirectResponse(url="/vehicles", status_code=303)

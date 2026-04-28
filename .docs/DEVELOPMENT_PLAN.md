@@ -730,12 +730,12 @@ test_summary_empty_group_shows_no_data_message
 ## Phase 12: Group Settings
 
 ### Tasks
-- [ ] Create `app/routes/group_settings.py`:
+- [x] Create `app/routes/group_settings.py`:
   - `GET /settings/group` — render group settings page
   - `POST /settings/group/regenerate-code` — regenerate invite code (admin)
   - `POST /settings/group/members/{user_id}/role` — change member role (admin)
   - `POST /settings/group/members/{user_id}/remove` — remove member (admin)
-- [ ] Create `app/templates/group_settings.html`:
+- [x] Create `app/templates/group_settings.html`:
   - Invite code display + copy button
   - Member list with roles
   - Role change dropdown (admin only)
@@ -776,12 +776,12 @@ test_remove_member_not_in_group_404
 - Last admin tries to change own role to contributor
 
 ### Acceptance Criteria
-- [ ] Group settings page shows invite code and members
-- [ ] Admins can regenerate invite codes
-- [ ] Admins can change member roles
-- [ ] Admins can remove members
-- [ ] Self-demotion/removal is prevented for sole admins
-- [ ] All group settings tests pass
+- [x] Group settings page shows invite code and members
+- [x] Admins can regenerate invite codes
+- [x] Admins can change member roles
+- [x] Admins can remove members
+- [x] Self-demotion/removal is prevented for sole admins
+- [x] All group settings tests pass
 
 ---
 

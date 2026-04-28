@@ -1,7 +1,7 @@
 from datetime import date
 
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import RedirectResponse, Response
+from fastapi.responses import RedirectResponse
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
@@ -9,11 +9,12 @@ from app.database import get_db
 from app.dependencies import get_active_group, require_role
 from app.enums import Role
 from app.flash import set_flash
-from app.main import templates
 from app.models import Group
+from app.responses import not_found_response
 from app.schemas import FuelEntryCreate, FuelEntryUpdate, first_validation_error_message
 from app.services import fuel_entries as fuel_entry_service
 from app.services import vehicles as vehicle_service
+from app.templating import templates
 
 router = APIRouter()
 
@@ -139,7 +140,7 @@ async def edit_fuel_entry_form(
 ):
     entry = fuel_entry_service.get_active_fuel_entry_in_group(db, entry_id, group.id)
     if not entry:
-        return Response("Not found", status_code=404)
+        return not_found_response()
     return _fuel_form_response(
         request,
         mode="edit",
@@ -163,7 +164,7 @@ async def edit_fuel_entry_post(
 ):
     entry = fuel_entry_service.get_active_fuel_entry_in_group(db, entry_id, group.id)
     if not entry:
-        return Response("Not found", status_code=404)
+        return not_found_response()
 
     try:
         data = FuelEntryUpdate(
@@ -202,7 +203,7 @@ async def delete_fuel_entry_post(
 ):
     entry = fuel_entry_service.get_active_fuel_entry_in_group(db, entry_id, group.id)
     if not entry:
-        return Response("Not found", status_code=404)
+        return not_found_response()
 
     fuel_entry_service.soft_delete_fuel_entry(db, entry)
     response = RedirectResponse(url="/fuel", status_code=303)

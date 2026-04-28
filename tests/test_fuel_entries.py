@@ -2,35 +2,18 @@
 
 from datetime import date, datetime, timedelta, timezone
 
-import pytest
 
 from app.models import FuelEntry, Vehicle
+from tests.conftest import create_authenticated_group
 
-
-def _auth_group(
-    client,
-    create_test_user,
-    create_test_group,
-    create_test_user_group,
-    auth_cookie,
-    *,
-    role: str = "admin",
-):
-    user = create_test_user()
-    group = create_test_group(created_by=user.id)
-    create_test_user_group(user.id, group.id, role=role)
-    auth_cookie(client, user.id, group.id)
-    return user, group
 
 
 class TestListFuelEntries:
-    @pytest.mark.asyncio
     async def test_list_fuel_entries_requires_auth(self, client):
         response = await client.get("/fuel", follow_redirects=False)
         assert response.status_code == 303
         assert response.headers.get("location") == "/login"
 
-    @pytest.mark.asyncio
     async def test_list_fuel_entries_requires_active_group(
         self,
         client,
@@ -47,11 +30,10 @@ class TestListFuelEntries:
         assert response.status_code == 303
         assert response.headers.get("location") == "/groups"
 
-    @pytest.mark.asyncio
     async def test_list_fuel_entries_returns_200(
         self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
     ):
-        _auth_group(
+        create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -61,7 +43,6 @@ class TestListFuelEntries:
         response = await client.get("/fuel")
         assert response.status_code == 200
 
-    @pytest.mark.asyncio
     async def test_list_fuel_entries_scoped_to_active_group(
         self,
         client,
@@ -99,7 +80,6 @@ class TestListFuelEntries:
         assert "Tractor A" in response.text
         assert "Tractor B" not in response.text
 
-    @pytest.mark.asyncio
     async def test_list_fuel_entries_excludes_soft_deleted(
         self,
         client,
@@ -111,7 +91,7 @@ class TestListFuelEntries:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -143,7 +123,6 @@ class TestListFuelEntries:
         assert "5" in response.text or "5.0" in response.text
         assert "876.54" not in response.text
 
-    @pytest.mark.asyncio
     async def test_list_fuel_entries_excludes_entries_for_soft_deleted_vehicle(
         self,
         client,
@@ -155,7 +134,7 @@ class TestListFuelEntries:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -188,7 +167,6 @@ class TestListFuelEntries:
         assert "StillHere" in response.text
         assert "333.44" not in response.text
 
-    @pytest.mark.asyncio
     async def test_list_fuel_entries_shows_vehicle_name(
         self,
         client,
@@ -199,7 +177,7 @@ class TestListFuelEntries:
         create_test_fuel_entry,
         auth_cookie,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -216,7 +194,6 @@ class TestListFuelEntries:
         assert response.status_code == 200
         assert "UniqueVehicleNameXYZ" in response.text
 
-    @pytest.mark.asyncio
     async def test_list_fuel_entries_shows_user_name(
         self,
         client,
@@ -243,7 +220,6 @@ class TestListFuelEntries:
 
 
 class TestCreateFuelEntry:
-    @pytest.mark.asyncio
     async def test_create_fuel_entry_valid(
         self,
         client,
@@ -254,7 +230,7 @@ class TestCreateFuelEntry:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -285,7 +261,6 @@ class TestCreateFuelEntry:
         assert e.entry_date == d
         assert e.notes is None
 
-    @pytest.mark.asyncio
     async def test_create_fuel_entry_sets_group_id_from_vehicle(
         self,
         client,
@@ -296,7 +271,7 @@ class TestCreateFuelEntry:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -319,7 +294,6 @@ class TestCreateFuelEntry:
         e = db.query(FuelEntry).one()
         assert e.group_id == v.group_id == group.id
 
-    @pytest.mark.asyncio
     async def test_create_fuel_entry_sets_user_id_from_session(
         self,
         client,
@@ -330,7 +304,7 @@ class TestCreateFuelEntry:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -353,7 +327,6 @@ class TestCreateFuelEntry:
         e = db.query(FuelEntry).one()
         assert e.user_id == user.id
 
-    @pytest.mark.asyncio
     async def test_create_fuel_entry_with_notes(
         self,
         client,
@@ -364,7 +337,7 @@ class TestCreateFuelEntry:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -388,7 +361,6 @@ class TestCreateFuelEntry:
         e = db.query(FuelEntry).one()
         assert e.notes == "Filled at station"
 
-    @pytest.mark.asyncio
     async def test_create_fuel_entry_without_notes(
         self,
         client,
@@ -399,7 +371,7 @@ class TestCreateFuelEntry:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -422,7 +394,6 @@ class TestCreateFuelEntry:
         e = db.query(FuelEntry).one()
         assert e.notes is None
 
-    @pytest.mark.asyncio
     async def test_create_fuel_entry_vehicle_from_other_group_denied(
         self,
         client,
@@ -452,7 +423,6 @@ class TestCreateFuelEntry:
         assert response.status_code == 200
         assert "bg-red-50" in response.text
 
-    @pytest.mark.asyncio
     async def test_create_fuel_entry_soft_deleted_vehicle_denied(
         self,
         client,
@@ -463,7 +433,7 @@ class TestCreateFuelEntry:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -489,7 +459,6 @@ class TestCreateFuelEntry:
         assert response.status_code == 200
         assert "bg-red-50" in response.text
 
-    @pytest.mark.asyncio
     async def test_create_fuel_entry_negative_amount_fails(
         self,
         client,
@@ -499,7 +468,7 @@ class TestCreateFuelEntry:
         create_test_vehicle,
         auth_cookie,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -521,7 +490,6 @@ class TestCreateFuelEntry:
         assert response.status_code == 200
         assert "bg-red-50" in response.text
 
-    @pytest.mark.asyncio
     async def test_create_fuel_entry_zero_amount_fails(
         self,
         client,
@@ -531,7 +499,7 @@ class TestCreateFuelEntry:
         create_test_vehicle,
         auth_cookie,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -553,7 +521,6 @@ class TestCreateFuelEntry:
         assert response.status_code == 200
         assert "bg-red-50" in response.text
 
-    @pytest.mark.asyncio
     async def test_create_fuel_entry_negative_reading_fails(
         self,
         client,
@@ -563,7 +530,7 @@ class TestCreateFuelEntry:
         create_test_vehicle,
         auth_cookie,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -585,7 +552,6 @@ class TestCreateFuelEntry:
         assert response.status_code == 200
         assert "bg-red-50" in response.text
 
-    @pytest.mark.asyncio
     async def test_create_fuel_entry_future_date_fails(
         self,
         client,
@@ -595,7 +561,7 @@ class TestCreateFuelEntry:
         create_test_vehicle,
         auth_cookie,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -617,7 +583,6 @@ class TestCreateFuelEntry:
         assert response.status_code == 200
         assert "bg-red-50" in response.text
 
-    @pytest.mark.asyncio
     async def test_create_fuel_entry_requires_contributor_role(
         self,
         client,
@@ -627,7 +592,7 @@ class TestCreateFuelEntry:
         create_test_vehicle,
         auth_cookie,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -651,7 +616,6 @@ class TestCreateFuelEntry:
         )
         assert r_post.status_code == 403
 
-    @pytest.mark.asyncio
     async def test_create_fuel_entry_reader_denied(
         self,
         client,
@@ -661,7 +625,7 @@ class TestCreateFuelEntry:
         create_test_vehicle,
         auth_cookie,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -685,7 +649,6 @@ class TestCreateFuelEntry:
 
 
 class TestEditFuelEntry:
-    @pytest.mark.asyncio
     async def test_edit_fuel_entry_valid(
         self,
         client,
@@ -697,7 +660,7 @@ class TestEditFuelEntry:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -730,7 +693,6 @@ class TestEditFuelEntry:
         assert e.usage_reading == 200.0
         assert e.notes == "updated"
 
-    @pytest.mark.asyncio
     async def test_edit_fuel_entry_partial_update(
         self,
         client,
@@ -742,7 +704,7 @@ class TestEditFuelEntry:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -778,7 +740,6 @@ class TestEditFuelEntry:
         assert e.entry_date == d0
         assert e.notes == "keep"
 
-    @pytest.mark.asyncio
     async def test_edit_fuel_entry_clears_notes(
         self,
         client,
@@ -790,7 +751,7 @@ class TestEditFuelEntry:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -821,7 +782,6 @@ class TestEditFuelEntry:
         db.refresh(e)
         assert e.notes is None
 
-    @pytest.mark.asyncio
     async def test_edit_fuel_entry_wrong_group_denied(
         self,
         client,
@@ -856,7 +816,6 @@ class TestEditFuelEntry:
         )
         assert response.status_code == 404
 
-    @pytest.mark.asyncio
     async def test_edit_fuel_entry_requires_contributor_role(
         self,
         client,
@@ -867,7 +826,7 @@ class TestEditFuelEntry:
         create_test_fuel_entry,
         auth_cookie,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -895,7 +854,6 @@ class TestEditFuelEntry:
         )
         assert r_post.status_code == 403
 
-    @pytest.mark.asyncio
     async def test_edit_fuel_entry_not_found_404(
         self,
         client,
@@ -904,7 +862,7 @@ class TestEditFuelEntry:
         create_test_user_group,
         auth_cookie,
     ):
-        _auth_group(
+        create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -924,7 +882,6 @@ class TestEditFuelEntry:
         )
         assert response.status_code == 404
 
-    @pytest.mark.asyncio
     async def test_edit_soft_deleted_fuel_entry_404(
         self,
         client,
@@ -936,7 +893,7 @@ class TestEditFuelEntry:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -968,7 +925,6 @@ class TestEditFuelEntry:
 
 
 class TestDeleteFuelEntry:
-    @pytest.mark.asyncio
     async def test_delete_fuel_entry_as_admin(
         self,
         client,
@@ -980,7 +936,7 @@ class TestDeleteFuelEntry:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -999,7 +955,6 @@ class TestDeleteFuelEntry:
         db.refresh(e)
         assert e.deleted_at is not None
 
-    @pytest.mark.asyncio
     async def test_delete_fuel_entry_as_contributor_denied(
         self,
         client,
@@ -1010,7 +965,7 @@ class TestDeleteFuelEntry:
         create_test_fuel_entry,
         auth_cookie,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -1027,7 +982,6 @@ class TestDeleteFuelEntry:
         response = await client.post(f"/fuel/{e.id}/delete", follow_redirects=False)
         assert response.status_code == 403
 
-    @pytest.mark.asyncio
     async def test_delete_fuel_entry_as_reader_denied(
         self,
         client,
@@ -1038,7 +992,7 @@ class TestDeleteFuelEntry:
         create_test_fuel_entry,
         auth_cookie,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -1055,7 +1009,6 @@ class TestDeleteFuelEntry:
         response = await client.post(f"/fuel/{e.id}/delete", follow_redirects=False)
         assert response.status_code == 403
 
-    @pytest.mark.asyncio
     async def test_delete_fuel_entry_sets_deleted_at(
         self,
         client,
@@ -1067,7 +1020,7 @@ class TestDeleteFuelEntry:
         auth_cookie,
         db,
     ):
-        user, group = _auth_group(
+        user, group = create_authenticated_group(
             client,
             create_test_user,
             create_test_group,
@@ -1086,7 +1039,6 @@ class TestDeleteFuelEntry:
         db.refresh(e)
         assert e.deleted_at is not None
 
-    @pytest.mark.asyncio
     async def test_delete_fuel_entry_wrong_group_denied(
         self,
         client,

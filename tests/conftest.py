@@ -175,3 +175,40 @@ def create_test_fuel_entry(db):
         return entry
 
     return _create
+
+
+@pytest.fixture
+def auth_group(
+    client,
+    create_test_user,
+    create_test_group,
+    create_test_user_group,
+    auth_cookie,
+):
+    def _create(*, role: str = "admin"):
+        return create_authenticated_group(
+            client,
+            create_test_user,
+            create_test_group,
+            create_test_user_group,
+            auth_cookie,
+            role=role,
+        )
+
+    return _create
+
+
+def create_authenticated_group(
+    client,
+    create_test_user,
+    create_test_group,
+    create_test_user_group,
+    auth_cookie,
+    *,
+    role: str = "admin",
+):
+    user = create_test_user()
+    group = create_test_group(created_by=user.id)
+    create_test_user_group(user.id, group.id, role=role)
+    auth_cookie(client, user.id, group.id)
+    return user, group

@@ -3,9 +3,9 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_active_group
-from app.main import templates
 from app.models import Group
 from app.services.dashboard import get_dashboard_context
+from app.templating import templates
 
 router = APIRouter()
 

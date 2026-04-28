@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_macros.html" import role_badge %}
 
 {% block title %}Groups – TankApp{% endblock %}
 
@@ -19,11 +20,7 @@
             <li class="px-6 py-4 flex items-center justify-between">
                 <div>
                     <span class="font-medium text-gray-900">{{ item.group.name }}</span>
-                    <span class="ml-2 inline-block text-xs px-2 py-0.5 rounded-full
-                        {% if item.role == 'admin' %}bg-purple-100 text-purple-700
-                        {% elif item.role == 'contributor' %}bg-blue-100 text-blue-700
-                        {% else %}bg-gray-100 text-gray-700{% endif %}
-                    ">{{ item.role }}</span>
+                    <span class="ml-2">{{ role_badge(item.role) }}</span>
                     {% if item.group.id == active_group_id %}
                     <span class="ml-2 inline-block text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Active</span>
                     {% endif %}

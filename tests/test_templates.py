@@ -2,19 +2,16 @@
 
 import json
 
-import pytest
 
 FLASH_COOKIE_NAME = "tankapp_flash"
 
 
 class TestBaseTemplateIncludes:
-    @pytest.mark.asyncio
     async def test_base_template_includes_tailwind(self, client):
         response = await client.get("/login")
         assert response.status_code == 200
         assert "tailwindcss" in response.text
 
-    @pytest.mark.asyncio
     async def test_base_template_includes_alpine(self, client):
         response = await client.get("/login")
         assert response.status_code == 200
@@ -22,7 +19,6 @@ class TestBaseTemplateIncludes:
 
 
 class TestLoginPageFields:
-    @pytest.mark.asyncio
     async def test_login_page_has_email_and_password_fields(self, client):
         response = await client.get("/login")
         assert response.status_code == 200
@@ -34,7 +30,6 @@ class TestLoginPageFields:
 
 
 class TestRegisterPageFields:
-    @pytest.mark.asyncio
     async def test_register_page_has_name_email_password_fields(self, client):
         response = await client.get("/register")
         assert response.status_code == 200
@@ -46,7 +41,6 @@ class TestRegisterPageFields:
 
 
 class TestAuthenticatedPageElements:
-    @pytest.mark.asyncio
     async def test_authenticated_page_shows_user_name(
         self, client, create_test_user, auth_cookie
     ):
@@ -56,7 +50,6 @@ class TestAuthenticatedPageElements:
         assert response.status_code == 200
         assert "Alice Farmer" in response.text
 
-    @pytest.mark.asyncio
     async def test_authenticated_page_shows_active_group(
         self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
     ):
@@ -68,7 +61,6 @@ class TestAuthenticatedPageElements:
         assert response.status_code == 200
         assert "Green Farm" in response.text
 
-    @pytest.mark.asyncio
     async def test_authenticated_page_has_logout_button(
         self, client, create_test_user, auth_cookie
     ):
@@ -80,7 +72,6 @@ class TestAuthenticatedPageElements:
 
 
 class TestFlashMessages:
-    @pytest.mark.asyncio
     async def test_flash_message_displayed_after_redirect(self, client):
         client.cookies.set(
             FLASH_COOKIE_NAME,

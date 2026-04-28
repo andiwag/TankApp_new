@@ -21,13 +21,11 @@ def _stat_float(html: str, stat_id: str) -> float:
 
 
 class TestDashboardAuth:
-    @pytest.mark.asyncio
     async def test_dashboard_requires_auth(self, client):
         response = await client.get("/dashboard", follow_redirects=False)
         assert response.status_code == 303
         assert response.headers.get("location") == "/login"
 
-    @pytest.mark.asyncio
     async def test_dashboard_requires_active_group(
         self, client, create_test_user, auth_cookie
     ):
@@ -39,7 +37,6 @@ class TestDashboardAuth:
 
 
 class TestDashboardStats:
-    @pytest.mark.asyncio
     async def test_dashboard_shows_vehicle_count(
         self,
         client,
@@ -60,7 +57,6 @@ class TestDashboardStats:
         assert response.status_code == 200
         assert _stat(response.text, "stat-vehicles") == 2
 
-    @pytest.mark.asyncio
     async def test_dashboard_shows_entry_count(
         self,
         client,
@@ -87,7 +83,6 @@ class TestDashboardStats:
         assert response.status_code == 200
         assert _stat(response.text, "stat-entries") == 2
 
-    @pytest.mark.asyncio
     async def test_dashboard_shows_total_liters(
         self,
         client,
@@ -114,7 +109,6 @@ class TestDashboardStats:
         assert response.status_code == 200
         assert _stat_float(response.text, "stat-liters") == pytest.approx(35.5)
 
-    @pytest.mark.asyncio
     async def test_dashboard_shows_recent_entries(
         self,
         client,
@@ -152,7 +146,6 @@ class TestDashboardStats:
         assert "45" in html and "20" in html
         assert "recent-fuel-entries" in html
 
-    @pytest.mark.asyncio
     async def test_dashboard_scoped_to_active_group(
         self,
         client,
@@ -194,7 +187,6 @@ class TestDashboardStats:
         assert _stat(r_b.text, "stat-entries") == 1
         assert _stat_float(r_b.text, "stat-liters") == pytest.approx(99.0)
 
-    @pytest.mark.asyncio
     async def test_dashboard_excludes_soft_deleted_vehicles(
         self,
         client,
@@ -222,7 +214,6 @@ class TestDashboardStats:
         assert response.status_code == 200
         assert _stat(response.text, "stat-vehicles") == 1
 
-    @pytest.mark.asyncio
     async def test_dashboard_excludes_soft_deleted_entries(
         self,
         client,
@@ -257,7 +248,6 @@ class TestDashboardStats:
         assert _stat(response.text, "stat-entries") == 1
         assert _stat_float(response.text, "stat-liters") == pytest.approx(10.0)
 
-    @pytest.mark.asyncio
     async def test_dashboard_empty_group_shows_zeros(
         self,
         client,
