@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}TankApp{% endblock %}</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#15803d">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 </head>
@@ -31,9 +33,9 @@
                     {% endif %}
                     <a href="/profile" class="text-green-100 hover:text-white text-sm transition">Profile</a>
                     <span class="text-white text-sm">{{ request.state.user.name }}</span>
-                    <form method="post" action="/logout">
+                    <form method="post" action="/logout" x-data="{ submitting: false }" @submit="submitting = true">
                         {{ csrf_field() }}
-                        <button type="submit" class="text-green-200 hover:text-white text-sm transition">Logout</button>
+                        <button type="submit" :disabled="submitting" class="text-green-200 hover:text-white text-sm transition disabled:opacity-60">Logout</button>
                     </form>
                 </div>
 
@@ -60,9 +62,9 @@
                 {% endif %}
                 <a href="/profile" class="block text-green-100 hover:text-white text-sm transition">Profile</a>
                 <span class="block text-white text-sm">{{ request.state.user.name }}</span>
-                <form method="post" action="/logout">
+                <form method="post" action="/logout" x-data="{ submitting: false }" @submit="submitting = true">
                     {{ csrf_field() }}
-                    <button type="submit" class="text-green-200 hover:text-white text-sm transition">Logout</button>
+                    <button type="submit" :disabled="submitting" class="text-green-200 hover:text-white text-sm transition disabled:opacity-60">Logout</button>
                 </form>
             </div>
             {% endif %}
@@ -102,5 +104,12 @@
         <p class="text-center text-sm text-gray-500">&copy; 2026 TankApp</p>
     </footer>
 
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/sw.js');
+            });
+        }
+    </script>
 </body>
 </html>

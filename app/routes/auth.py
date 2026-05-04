@@ -17,6 +17,12 @@ from app.auth import (
 from app.config import settings
 from app.database import get_db
 from app.models import User
+from app.rate_limit import (
+    RATE_LIMIT_MESSAGE,
+    login_rate_limiter,
+    password_reset_rate_limiter,
+    register_rate_limiter,
+)
 from app.schemas import (
     EMAIL_DUPLICATE_MESSAGE,
     PasswordResetConfirm,
@@ -33,6 +39,11 @@ _INVALID_RESET_LINK = "Invalid or expired reset link"
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
+
+
+def _rate_limit_key(request: Request, action: str, identifier: str) -> str:
+    host = request.client.host if request.client else "unknown"
+    return f"{action}:{host}:{identifier.lower().strip()}"
 
 
 def _get_reset_user(db: Session, token_data: dict) -> User | None:
@@ -108,16 +119,28 @@ async def login(
     db: Session = Depends(get_db),
 ):
     email = email.lower().strip()
+    rate_limit_key = _rate_limit_key(request, "login", email)
+    if login_rate_limiter.is_limited(rate_limit_key):
+        logger.warning("Rate limited login attempt for %s", email)
+        return templates.TemplateResponse(
+            request,
+            "login.html",
+            context={"error": RATE_LIMIT_MESSAGE},
+            status_code=429,
+        )
+
     user = db.query(User).filter(
         User.email == email,
         User.deleted_at == None,  # noqa: E711
     ).first()
 
     if not user or not verify_password(password, user.password_hash):
+        login_rate_limiter.record_attempt(rate_limit_key)
         return templates.TemplateResponse(
             request, "login.html", context={"error": "Invalid email or password"},
         )
 
+    login_rate_limiter.clear(rate_limit_key)
     response = RedirectResponse(url="/dashboard", status_code=303)
     set_session_cookie(response, user.id)
     return response
@@ -132,6 +155,17 @@ async def register(
     password_confirm: str = Form(...),
     db: Session = Depends(get_db),
 ):
+    rate_limit_key = _rate_limit_key(request, "register", email)
+    if register_rate_limiter.is_limited(rate_limit_key):
+        logger.warning("Rate limited registration attempt for %s", email)
+        return templates.TemplateResponse(
+            request,
+            "register.html",
+            context={"error": RATE_LIMIT_MESSAGE},
+            status_code=429,
+        )
+    register_rate_limiter.record_attempt(rate_limit_key)
+
     try:
         user_data = UserCreate(
             email=email, name=name, password=password, password_confirm=password_confirm
@@ -161,6 +195,7 @@ async def register(
     db.commit()
     db.refresh(user)
 
+    register_rate_limiter.clear(rate_limit_key)
     response = RedirectResponse(url="/groups", status_code=303)
     set_session_cookie(response, user.id)
     return response
@@ -173,6 +208,17 @@ async def forgot_password(
     db: Session = Depends(get_db),
 ):
     email = email.lower().strip()
+    rate_limit_key = _rate_limit_key(request, "password-reset", email)
+    if password_reset_rate_limiter.is_limited(rate_limit_key):
+        logger.warning("Rate limited password reset attempt for %s", email)
+        return templates.TemplateResponse(
+            request,
+            "forgot_password.html",
+            context={"error": RATE_LIMIT_MESSAGE},
+            status_code=429,
+        )
+    password_reset_rate_limiter.record_attempt(rate_limit_key)
+
     user = db.query(User).filter(
         User.email == email,
         User.deleted_at == None,  # noqa: E711

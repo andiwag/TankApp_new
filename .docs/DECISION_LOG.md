@@ -625,3 +625,27 @@ This document records architectural and design decisions made during planning, a
 **Rationale:** A global dependency guarantees all current and future unsafe route handlers are covered without per-route boilerplate. Body-token validation matches server-rendered HTML forms. Reusing a valid token avoids breaking forms opened in another tab or submitted after using the browser back button. The macro prevents future forms from needing to duplicate raw hidden-input markup. The auto-CSRF test client keeps existing tests focused on their original behavior while dedicated CSRF tests cover missing, invalid, and stale-form token cases.
 
 **Trade-off:** The test client abstracts away CSRF setup for most tests, so new tests must use a raw `AsyncClient` when they specifically need to assert CSRF failures. Reusing the existing CSRF token reduces cookie churn but means a stolen valid token remains usable until its configured max age expires.
+
+---
+
+## D-044: PWA support — Static manifest, generated PNG icons, cache-first service worker
+
+**Decision:** Implement Phase 15 PWA support with static assets under `app/static`: `manifest.json`, `sw.js`, `icon-192.png`, and `icon-512.png`. The base template links the manifest, sets the theme color, and registers `/static/sw.js` on page load. The service worker pre-caches the manifest and icon files, then uses cache-first handling for `/static/` requests only.
+
+**Context:** The plan requires an installable mobile web app without adding a frontend build pipeline or external asset dependency.
+
+**Rationale:** Keeping the manifest and service worker as plain static files matches the existing SSR architecture and FastAPI static-file mount. Limiting the service worker to static assets avoids caching authenticated HTML pages or form responses. Generated PNG icons satisfy installability requirements while keeping the project self-contained.
+
+**Trade-off:** The service worker does not offline-cache application pages, so offline behavior is limited to static assets for MVP. If offline support becomes a product priority, a versioned app-shell or network-first page strategy can be added later.
+
+---
+
+## D-045: Validation polish — HTML5 constraints, Alpine submit state, and in-memory auth rate limits
+
+**Decision:** Add client-side HTML5 constraints where they mirror server rules (`minlength`, numeric `min`/`step`, required fields, and notes `maxlength`), and use small Alpine.js submit state blocks to disable submit buttons after form submission. Add a small in-memory rate limiter for login, registration, and password-reset attempts, with warning logs when limits are hit.
+
+**Context:** Phase 16 requires validation polish, clearer errors, loading states, N+1 review, and rate limiting on auth-sensitive routes without introducing new dependencies.
+
+**Rationale:** HTML5 constraints give immediate browser feedback while existing Pydantic and route validation remain the source of truth. Disabling submit buttons prevents duplicate submissions in common slow-network cases. The in-memory limiter is enough for the local MVP and keeps the dependency set stable; keys include client host and action-specific identifiers so ordinary test and user flows are not throttled globally.
+
+**Trade-off:** In-memory rate limits reset when the process restarts and are not shared across workers. A production deployment should replace this with a shared store such as Redis or an edge/proxy rate limit.

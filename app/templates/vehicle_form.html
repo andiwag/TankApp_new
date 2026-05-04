@@ -15,7 +15,7 @@
     </div>
     {% endif %}
 
-    <form method="post" action="{% if mode == 'create' %}/vehicles/new{% else %}/vehicles/{{ vehicle.id }}/edit{% endif %}" class="space-y-6 bg-white rounded-lg shadow p-6">
+    <form method="post" action="{% if mode == 'create' %}/vehicles/new{% else %}/vehicles/{{ vehicle.id }}/edit{% endif %}" class="space-y-6 bg-white rounded-lg shadow p-6" x-data="{ submitting: false }" @submit="submitting = true">
         {{ csrf_field() }}
         <div>
             <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
@@ -47,7 +47,7 @@
         </div>
 
         <div class="flex gap-3">
-            <button type="submit" class="inline-flex justify-center px-4 py-2 rounded-md bg-green-700 text-white text-sm font-medium hover:bg-green-800 transition">
+            <button type="submit" :disabled="submitting" class="inline-flex justify-center px-4 py-2 rounded-md bg-green-700 text-white text-sm font-medium hover:bg-green-800 transition disabled:opacity-60">
                 {% if mode == 'create' %}Create{% else %}Save{% endif %}
             </button>
             <a href="/vehicles" class="inline-flex justify-center px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">Cancel</a>

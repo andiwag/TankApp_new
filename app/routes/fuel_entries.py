@@ -19,6 +19,27 @@ from app.templating import templates
 router = APIRouter()
 
 
+def _parse_int(value: str, field_label: str) -> int:
+    try:
+        return int(value)
+    except ValueError as exc:
+        raise ValueError(f"{field_label} must be selected") from exc
+
+
+def _parse_float(value: str, field_label: str) -> float:
+    try:
+        return float(value)
+    except ValueError as exc:
+        raise ValueError(f"{field_label} must be a number") from exc
+
+
+def _parse_date(value: str, field_label: str) -> date:
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError(f"{field_label} must be a valid date") from exc
+
+
 def _fuel_form_response(
     request: Request,
     *,
@@ -107,14 +128,14 @@ async def create_fuel_entry_post(
 
     try:
         data = FuelEntryCreate(
-            vehicle_id=int(vehicle_id),
-            fuel_amount_l=float(fuel_amount_l),
-            usage_reading=float(usage_reading),
-            entry_date=date.fromisoformat(entry_date),
+            vehicle_id=_parse_int(vehicle_id, "Vehicle"),
+            fuel_amount_l=_parse_float(fuel_amount_l, "Fuel amount"),
+            usage_reading=_parse_float(usage_reading, "Usage reading"),
+            entry_date=_parse_date(entry_date, "Entry date"),
             notes=notes.strip() or None,
         )
-    except ValueError:
-        return _error_form("Invalid input")
+    except ValueError as exc:
+        return _error_form(str(exc))
     except ValidationError as exc:
         return _error_form(first_validation_error_message(exc))
 
@@ -168,14 +189,14 @@ async def edit_fuel_entry_post(
 
     try:
         data = FuelEntryUpdate(
-            fuel_amount_l=float(fuel_amount_l),
-            usage_reading=float(usage_reading),
-            entry_date=date.fromisoformat(entry_date),
+            fuel_amount_l=_parse_float(fuel_amount_l, "Fuel amount"),
+            usage_reading=_parse_float(usage_reading, "Usage reading"),
+            entry_date=_parse_date(entry_date, "Entry date"),
             notes=notes.strip() or None,
         )
     except (ValueError, ValidationError) as exc:
         msg = (
-            "Invalid input"
+            str(exc)
             if isinstance(exc, ValueError)
             else first_validation_error_message(exc)
         )

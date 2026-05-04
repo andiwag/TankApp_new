@@ -34,9 +34,9 @@
                     <a href="/fuel/{{ e.id }}/edit" class="text-sm text-green-700 hover:text-green-900 font-medium">Edit</a>
                     {% endif %}
                     {% if can_delete %}
-                    <form method="post" action="/fuel/{{ e.id }}/delete" class="inline" onsubmit="return confirm('Remove this fuel entry?');">
+                    <form method="post" action="/fuel/{{ e.id }}/delete" class="inline" x-data="{ submitting: false }" @submit="if (!confirm('Remove this fuel entry?')) { $event.preventDefault(); return; } submitting = true">
                         {{ csrf_field() }}
-                        <button type="submit" class="text-sm text-red-600 hover:text-red-800 font-medium">Delete</button>
+                        <button type="submit" :disabled="submitting" class="text-sm text-red-600 hover:text-red-800 font-medium disabled:opacity-60">Delete</button>
                     </form>
                     {% endif %}
                 </div>

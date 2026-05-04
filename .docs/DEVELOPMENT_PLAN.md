@@ -845,11 +845,11 @@ test_csrf_token_present_in_all_forms
 ## Phase 15: PWA Support
 
 ### Tasks
-- [ ] Create `app/static/manifest.json`
-- [ ] Create `app/static/sw.js` (service worker)
-- [ ] Create/add PWA icons (192x192, 512x512)
-- [ ] Add manifest link and service worker registration to `base.html`
-- [ ] Configure cache strategy (cache-first for static assets)
+- [x] Create `app/static/manifest.json`
+- [x] Create `app/static/sw.js` (service worker)
+- [x] Create/add PWA icons (192x192, 512x512)
+- [x] Add manifest link and service worker registration to `base.html`
+- [x] Configure cache strategy (cache-first for static assets)
 
 ### Tests (write FIRST)
 ```
@@ -862,25 +862,25 @@ test_pwa_icons_accessible
 ```
 
 ### Acceptance Criteria
-- [ ] App is installable on mobile devices
-- [ ] manifest.json is valid and served correctly
-- [ ] Service worker caches static assets
-- [ ] PWA icons are present and correctly sized
-- [ ] All PWA tests pass
+- [x] App is installable on mobile devices
+- [x] manifest.json is valid and served correctly
+- [x] Service worker caches static assets
+- [x] PWA icons are present and correctly sized
+- [x] All PWA tests pass
 
 ---
 
 ## Phase 16: Validation & Polish
 
 ### Tasks
-- [ ] Review all form validation — client-side (HTML5 + Alpine.js) AND server-side
-- [ ] Add user-friendly error messages for all validation failures
-- [ ] Add loading states / disabled buttons on form submission
-- [ ] Ensure all flash messages are clear and actionable
-- [ ] Test all flows end-to-end manually
-- [ ] Review all queries for N+1 issues (use `joinedload` where needed)
-- [ ] Add rate limiting on login/register/password-reset routes
-- [ ] Add logging (Python `logging` module) for errors and important events
+- [x] Review all form validation — client-side (HTML5 + Alpine.js) AND server-side
+- [x] Add user-friendly error messages for all validation failures
+- [x] Add loading states / disabled buttons on form submission
+- [x] Ensure all flash messages are clear and actionable
+- [x] Test all flows end-to-end manually
+- [x] Review all queries for N+1 issues (use `joinedload` where needed)
+- [x] Add rate limiting on login/register/password-reset routes
+- [x] Add logging (Python `logging` module) for errors and important events
 
 ### Tests (write FIRST)
 ```
@@ -894,11 +894,11 @@ test_no_n_plus_1_queries_on_fuel_entry_list
 ```
 
 ### Acceptance Criteria
-- [ ] No unhandled exceptions on any user flow
-- [ ] All validation errors show user-friendly messages
-- [ ] No N+1 query issues
-- [ ] Login/register routes are rate-limited
-- [ ] All polish tests pass
+- [x] No unhandled exceptions on any user flow
+- [x] All validation errors show user-friendly messages
+- [x] No N+1 query issues
+- [x] Login/register routes are rate-limited
+- [x] All polish tests pass
 
 ---
 

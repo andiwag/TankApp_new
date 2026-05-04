@@ -27,14 +27,14 @@
                 </div>
                 <div class="flex items-center space-x-2">
                     {% if item.group.id != active_group_id %}
-                    <form method="post" action="/groups/switch/{{ item.group.id }}">
+                    <form method="post" action="/groups/switch/{{ item.group.id }}" x-data="{ submitting: false }" @submit="submitting = true">
                         {{ csrf_field() }}
-                        <button type="submit" class="text-sm text-green-600 hover:text-green-700 font-medium">Switch</button>
+                        <button type="submit" :disabled="submitting" class="text-sm text-green-600 hover:text-green-700 font-medium disabled:opacity-60">Switch</button>
                     </form>
                     {% endif %}
-                    <form method="post" action="/groups/leave/{{ item.group.id }}">
+                    <form method="post" action="/groups/leave/{{ item.group.id }}" x-data="{ submitting: false }" @submit="submitting = true">
                         {{ csrf_field() }}
-                        <button type="submit" class="text-sm text-red-600 hover:text-red-700 font-medium">Leave</button>
+                        <button type="submit" :disabled="submitting" class="text-sm text-red-600 hover:text-red-700 font-medium disabled:opacity-60">Leave</button>
                     </form>
                 </div>
             </li>
@@ -51,14 +51,14 @@
         <!-- Create Group -->
         <div class="bg-white rounded-lg shadow p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Create Group</h2>
-            <form method="post" action="/groups/create" class="space-y-4">
+            <form method="post" action="/groups/create" class="space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
                 {{ csrf_field() }}
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Group Name</label>
                     <input type="text" id="name" name="name" required
                            class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-500">
                 </div>
-                <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition font-medium">
+                <button type="submit" :disabled="submitting" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition font-medium disabled:opacity-60">
                     Create
                 </button>
             </form>
@@ -67,14 +67,14 @@
         <!-- Join Group -->
         <div class="bg-white rounded-lg shadow p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Join Group</h2>
-            <form method="post" action="/groups/join" class="space-y-4">
+            <form method="post" action="/groups/join" class="space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
                 {{ csrf_field() }}
                 <div>
                     <label for="invite_code" class="block text-sm font-medium text-gray-700 mb-1">Invite Code</label>
                     <input type="text" id="invite_code" name="invite_code" required
                            class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-500">
                 </div>
-                <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition font-medium">
+                <button type="submit" :disabled="submitting" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition font-medium disabled:opacity-60">
                     Join
                 </button>
             </form>
