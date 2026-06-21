@@ -4,16 +4,25 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+from app.config import settings
+
 FLASH_COOKIE_NAME = "tankapp_flash"
+
+
+def _flash_cookie_kwargs() -> dict:
+    return {
+        "httponly": True,
+        "samesite": "lax",
+        "secure": settings.is_production,
+    }
 
 
 def set_flash(response: Response, message: str, category: str = "success") -> None:
     response.set_cookie(
         FLASH_COOKIE_NAME,
         json.dumps({"message": message, "category": category}),
-        httponly=True,
-        samesite="lax",
         max_age=60,
+        **_flash_cookie_kwargs(),
     )
 
 
@@ -36,5 +45,5 @@ class FlashMiddleware(BaseHTTPMiddleware):
         request.state.active_group = None
         response = await call_next(request)
         if request.state.flash:
-            response.delete_cookie(FLASH_COOKIE_NAME)
+            response.delete_cookie(FLASH_COOKIE_NAME, **_flash_cookie_kwargs())
         return response

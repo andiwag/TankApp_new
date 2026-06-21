@@ -63,6 +63,7 @@ def set_session_cookie(response, user_id: int, active_group_id: int | None = Non
         cookie,
         httponly=True,
         samesite="lax",
+        secure=settings.is_production,
     )
 
 

@@ -29,6 +29,7 @@ from app.schemas import (
     UserCreate,
     first_validation_error_message,
 )
+from app.mail import send_password_reset_email
 from app.templating import templates
 
 logger = logging.getLogger(__name__)
@@ -59,12 +60,25 @@ def _get_reset_user(db: Session, token_data: dict) -> User | None:
     return user
 
 
-def _deliver_reset_token(email: str, token: str) -> None:
+async def _deliver_reset_token(email: str, token: str) -> None:
     """In development: log the reset link. In production: send via email."""
-    if settings.is_production:
-        pass
-    else:
-        logger.info("Password reset link for %s: /reset-password/%s", email, token)
+    reset_path = f"/reset-password/{token}"
+    if not settings.is_production:
+        logger.info("Password reset link for %s: %s", email, reset_path)
+        return
+
+    if not settings.mail_configured:
+        logger.error(
+            "Password reset requested for %s but mail is not configured", email
+        )
+        return
+
+    if not settings.BASE_URL:
+        logger.error("Password reset requested for %s but BASE_URL is not set", email)
+        return
+
+    reset_url = f"{settings.BASE_URL.rstrip('/')}{reset_path}"
+    await send_password_reset_email(email, reset_url)
 
 
 # ── Pages ────────────────────────────────────────────────────────────────────
@@ -226,7 +240,7 @@ async def forgot_password(
 
     if user:
         token = create_password_reset_token(user.id, user.password_hash)
-        _deliver_reset_token(email, token)
+        await _deliver_reset_token(email, token)
 
     return templates.TemplateResponse(
         request, "forgot_password.html", context={"success": True}
@@ -276,5 +290,10 @@ async def reset_password(
 @router.post("/logout")
 async def logout():
     response = RedirectResponse(url="/login", status_code=303)
-    response.delete_cookie(settings.SESSION_COOKIE_NAME)
+    response.delete_cookie(
+        settings.SESSION_COOKIE_NAME,
+        httponly=True,
+        samesite="lax",
+        secure=settings.is_production,
+    )
     return response

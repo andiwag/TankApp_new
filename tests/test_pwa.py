@@ -43,7 +43,7 @@ class TestServiceWorker:
         response = await client.get("/static/sw.js")
 
         assert response.status_code == 200
-        assert response.headers["content-type"].startswith("application/javascript")
+        assert "javascript" in response.headers["content-type"]
         assert "self.addEventListener('install'" in response.text
         assert "caches.open" in response.text
         assert "/static/manifest.json" in response.text

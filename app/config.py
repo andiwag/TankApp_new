@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "supersecretkey"
     SESSION_COOKIE_NAME: str = "tankapp_session"
     ENV: str = "development"
+    BASE_URL: str = ""
 
     MAIL_USERNAME: str = ""
     MAIL_PASSWORD: str = ""
@@ -23,6 +24,15 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.ENV == "production"
+
+    @property
+    def mail_configured(self) -> bool:
+        return bool(
+            self.MAIL_USERNAME
+            and self.MAIL_PASSWORD
+            and self.MAIL_SERVER
+            and self.MAIL_FROM
+        )
 
 
 settings = Settings()
