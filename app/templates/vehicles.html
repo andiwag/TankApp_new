@@ -7,11 +7,14 @@
 <div class="max-w-7xl mx-auto">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <h1 class="text-2xl font-bold text-gray-900">Vehicles</h1>
-        {% if can_edit %}
-        <a href="/vehicles/new" class="inline-flex justify-center items-center px-4 py-2 rounded-md bg-green-700 text-white text-sm font-medium hover:bg-green-800 transition">
-            Add vehicle
-        </a>
-        {% endif %}
+        <div class="flex flex-wrap gap-2">
+            <a href="/export/vehicles.csv" class="inline-flex justify-center items-center min-h-[44px] px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">Export CSV</a>
+            {% if can_edit %}
+            <a href="/vehicles/new" class="inline-flex justify-center items-center min-h-[44px] px-4 py-2 rounded-md bg-green-700 text-white text-sm font-medium hover:bg-green-800 transition">
+                Add vehicle
+            </a>
+            {% endif %}
+        </div>
     </div>
 
     <div id="vehicle-list" class="bg-white rounded-lg shadow overflow-hidden">

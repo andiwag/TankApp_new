@@ -1,11 +1,10 @@
 """Tests for Phase 11: Summary & statistics."""
 
 import re
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from unittest.mock import patch
 
 import pytest
-
 from app.models import FuelEntry, Vehicle
 from app.services.consumption import (
     average_consumption_for_vehicle,
@@ -16,7 +15,8 @@ from app.services.summary import get_summary_context
 
 def _find_vehicle_liters(html: str, vehicle_id: int) -> float:
     m = re.search(
-        rf'id="sum-liters-{vehicle_id}">([\d.]+)</', html,
+        rf'id="sum-liters-{vehicle_id}">([\d.]+)</',
+        html,
     )
     assert m is not None, f"missing sum-liters-{vehicle_id}"
     return float(m.group(1))
@@ -30,7 +30,8 @@ def _find_vehicle_count(html: str, vehicle_id: int) -> int:
 
 def _month_liters(html: str, year: int, month: int) -> float:
     m = re.search(
-        rf'id="sum-month-{year:d}-{month:02d}">([\d.]+)</', html,
+        rf'id="sum-month-{year:d}-{month:02d}">([\d.]+)</',
+        html,
     )
     assert m is not None, f"missing sum-month-{year}-{month:02d}"
     return float(m.group(1))
@@ -42,15 +43,11 @@ def _month_liters(html: str, year: int, month: int) -> float:
 class TestConsumptionCalculation:
     def test_consumption_car_two_entries_calculates_l_per_100km(self):
         # First fill at 10000 km (ignored for segments); second fill 5 L over 100 km
-        r = average_consumption_for_vehicle(
-            "km", [(10000, 40.0), (10100, 5.0)]
-        )
+        r = average_consumption_for_vehicle("km", [(10000, 40.0), (10100, 5.0)])
         assert r == pytest.approx(5.0)
 
     def test_consumption_tractor_two_entries_calculates_l_per_hour(self):
-        r = average_consumption_for_vehicle(
-            "hours", [(10.0, 0.0), (20.0, 3.0)]
-        )
+        r = average_consumption_for_vehicle("hours", [(10.0, 0.0), (20.0, 3.0)])
         assert r == pytest.approx(0.3)
 
     def test_consumption_single_entry_no_result(self):
@@ -71,9 +68,7 @@ class TestConsumptionCalculation:
         assert r == pytest.approx(8.75)
 
     def test_consumption_handles_large_gap_in_readings(self):
-        r = average_consumption_for_vehicle(
-            "km", [(0.0, 0.0), (100_000.0, 50.0)]
-        )
+        r = average_consumption_for_vehicle("km", [(0.0, 0.0), (100_000.0, 50.0)])
         assert r == pytest.approx(50.0 / 100_000.0 * 100.0)
 
     def test_consumption_unit_label_km_and_hours(self):
@@ -83,14 +78,35 @@ class TestConsumptionCalculation:
     def test_consumption_unit_label_unknown(self):
         assert consumption_unit_label("bogus") == "—"
 
+    def test_consumption_skips_partial_fill_between_full_tanks(self):
+        with_partial = [
+            (100.0, 40.0, True),
+            (150.0, 5.0, False),
+            (200.0, 10.0, True),
+        ]
+        all_full = [
+            (100.0, 40.0, True),
+            (150.0, 5.0, True),
+            (200.0, 10.0, True),
+        ]
+        assert average_consumption_for_vehicle("km", with_partial) == pytest.approx(
+            10.0
+        )
+        assert average_consumption_for_vehicle("km", all_full) == pytest.approx(15.0)
+
 
 # ── Summary context (DB) ─────────────────────────────────────────────────────
 
 
 class TestSummaryFuelPerVehicle:
     def test_summary_fuel_per_vehicle_total_liters(
-        self, db, create_test_user, create_test_group, create_test_user_group,
-        create_test_vehicle, create_test_fuel_entry,
+        self,
+        db,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_vehicle,
+        create_test_fuel_entry,
     ):
         user = create_test_user()
         group = create_test_group(created_by=user.id)
@@ -107,8 +123,13 @@ class TestSummaryFuelPerVehicle:
         assert row["total_liters"] == pytest.approx(50.0)
 
     def test_summary_fuel_per_vehicle_entry_count(
-        self, db, create_test_user, create_test_group, create_test_user_group,
-        create_test_vehicle, create_test_fuel_entry,
+        self,
+        db,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_vehicle,
+        create_test_fuel_entry,
     ):
         user = create_test_user()
         group = create_test_group(created_by=user.id)
@@ -123,8 +144,13 @@ class TestSummaryFuelPerVehicle:
         assert row["entry_count"] == 3
 
     def test_summary_fuel_per_vehicle_excludes_soft_deleted_entries(
-        self, db, create_test_user, create_test_group, create_test_user_group,
-        create_test_vehicle, create_test_fuel_entry,
+        self,
+        db,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_vehicle,
+        create_test_fuel_entry,
     ):
         user = create_test_user()
         group = create_test_group(created_by=user.id)
@@ -137,7 +163,7 @@ class TestSummaryFuelPerVehicle:
             vehicle_id=v.id, group_id=group.id, user_id=user.id, fuel_amount_l=90.0
         )
         db.query(FuelEntry).filter(FuelEntry.id == e2.id).update(
-            {"deleted_at": datetime.now(timezone.utc)}
+            {"deleted_at": datetime.now(UTC)}
         )
         db.commit()
         ctx = get_summary_context(db, group.id, today=date(2026, 6, 1))
@@ -146,8 +172,13 @@ class TestSummaryFuelPerVehicle:
         assert row["entry_count"] == 1
 
     def test_summary_fuel_per_vehicle_excludes_soft_deleted_vehicles(
-        self, db, create_test_user, create_test_group, create_test_user_group,
-        create_test_vehicle, create_test_fuel_entry,
+        self,
+        db,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_vehicle,
+        create_test_fuel_entry,
     ):
         user = create_test_user()
         group = create_test_group(created_by=user.id)
@@ -158,10 +189,13 @@ class TestSummaryFuelPerVehicle:
             vehicle_id=v_ok.id, group_id=group.id, user_id=user.id, fuel_amount_l=5.0
         )
         create_test_fuel_entry(
-            vehicle_id=v_gone.id, group_id=group.id, user_id=user.id, fuel_amount_l=100.0
+            vehicle_id=v_gone.id,
+            group_id=group.id,
+            user_id=user.id,
+            fuel_amount_l=100.0,
         )
         db.query(Vehicle).filter(Vehicle.id == v_gone.id).update(
-            {"deleted_at": datetime.now(timezone.utc)}
+            {"deleted_at": datetime.now(UTC)}
         )
         db.commit()
         ctx = get_summary_context(db, group.id, today=date(2026, 6, 1))
@@ -170,8 +204,13 @@ class TestSummaryFuelPerVehicle:
         assert v_gone.id not in ids
 
     def test_summary_fuel_per_vehicle_scoped_to_active_group(
-        self, db, create_test_user, create_test_group, create_test_user_group,
-        create_test_vehicle, create_test_fuel_entry,
+        self,
+        db,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_vehicle,
+        create_test_fuel_entry,
     ):
         user = create_test_user()
         g_a = create_test_group(name="A", invite_code="FARM-AAA11", created_by=user.id)
@@ -191,8 +230,13 @@ class TestSummaryFuelPerVehicle:
         assert liters_a == pytest.approx(10.0)
 
     def test_consumption_excludes_soft_deleted_entries(
-        self, db, create_test_user, create_test_group, create_test_user_group,
-        create_test_vehicle, create_test_fuel_entry,
+        self,
+        db,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_vehicle,
+        create_test_fuel_entry,
     ):
         """Soft-deleted fills are omitted when building consumption segments."""
         user = create_test_user()
@@ -221,7 +265,7 @@ class TestSummaryFuelPerVehicle:
             usage_reading=400.0,
         )
         db.query(FuelEntry).filter(FuelEntry.id == e_mid.id).update(
-            {"deleted_at": datetime.now(timezone.utc)}
+            {"deleted_at": datetime.now(UTC)}
         )
         db.commit()
         ctx = get_summary_context(db, group.id, today=date(2026, 6, 1))
@@ -293,8 +337,13 @@ class TestSummaryMonthly:
         assert months.get((2025, 7), None) == 0.0
 
     def test_summary_monthly_totals_excludes_soft_deleted(
-        self, db, create_test_user, create_test_group, create_test_user_group,
-        create_test_vehicle, create_test_fuel_entry,
+        self,
+        db,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_vehicle,
+        create_test_fuel_entry,
     ):
         user = create_test_user()
         group = create_test_group(created_by=user.id)
@@ -315,7 +364,7 @@ class TestSummaryMonthly:
             entry_date=date(2026, 3, 15),
         )
         db.query(FuelEntry).filter(FuelEntry.id == e2.id).update(
-            {"deleted_at": datetime.now(timezone.utc)}
+            {"deleted_at": datetime.now(UTC)}
         )
         db.commit()
         ctx = get_summary_context(db, group.id, today=date(2026, 6, 1))
@@ -332,7 +381,9 @@ class TestSummaryPageAuth:
         assert r.status_code == 303
         assert r.headers.get("location") == "/login"
 
-    async def test_summary_requires_active_group(self, client, create_test_user, auth_cookie):
+    async def test_summary_requires_active_group(
+        self, client, create_test_user, auth_cookie
+    ):
         user = create_test_user()
         auth_cookie(client, user.id, active_group_id=None)
         r = await client.get("/summary", follow_redirects=False)

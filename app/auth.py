@@ -22,8 +22,19 @@ def verify_password(plain: str, hashed: str) -> bool:
 # ── Session cookies ──────────────────────────────────────────────────────────
 
 
-def create_session_cookie(user_id: int, active_group_id: int | None = None) -> str:
-    return _serializer.dumps({"user_id": user_id, "active_group_id": active_group_id})
+def create_session_cookie(
+    user_id: int,
+    active_group_id: int | None = None,
+    *,
+    session_id: str,
+) -> str:
+    return _serializer.dumps(
+        {
+            "session_id": session_id,
+            "user_id": user_id,
+            "active_group_id": active_group_id,
+        }
+    )
 
 
 def decode_session_cookie(cookie_value: str) -> dict | None:
@@ -56,11 +67,26 @@ def decode_password_reset_token(token: str) -> dict | None:
         return None
 
 
-def set_session_cookie(response, user_id: int, active_group_id: int | None = None) -> None:
-    cookie = create_session_cookie(user_id, active_group_id)
+def set_session_cookie(
+    response,
+    user_id: int,
+    active_group_id: int | None = None,
+    *,
+    session_id: str,
+) -> None:
+    cookie = create_session_cookie(user_id, active_group_id, session_id=session_id)
     response.set_cookie(
         settings.SESSION_COOKIE_NAME,
         cookie,
+        httponly=True,
+        samesite="lax",
+        secure=settings.is_production,
+    )
+
+
+def clear_session_cookie(response) -> None:
+    response.delete_cookie(
+        settings.SESSION_COOKIE_NAME,
         httponly=True,
         samesite="lax",
         secure=settings.is_production,

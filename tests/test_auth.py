@@ -1,10 +1,8 @@
 """Tests for Phase 3: Authentication (Register, Login, Logout)."""
 
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import patch
-
-from fastapi import Depends
 
 from app.auth import (
     create_password_reset_token,
@@ -18,7 +16,7 @@ from app.config import settings
 from app.dependencies import get_current_user, require_role
 from app.main import app
 from app.models import User, UserGroup
-
+from fastapi import Depends
 
 # ── Test-only routes for dependency testing ──────────────────────────────────
 
@@ -61,24 +59,33 @@ class TestPasswordHashing:
 
 class TestSessionCookie:
     def test_create_session_cookie_returns_string(self):
-        cookie = create_session_cookie(user_id=1, active_group_id=2)
+        cookie = create_session_cookie(
+            user_id=1, active_group_id=2, session_id="sess-1"
+        )
         assert isinstance(cookie, str)
         assert len(cookie) > 0
 
     def test_decode_session_cookie_valid(self):
-        cookie = create_session_cookie(user_id=42, active_group_id=7)
+        cookie = create_session_cookie(
+            user_id=42, active_group_id=7, session_id="sess-42"
+        )
         data = decode_session_cookie(cookie)
         assert data is not None
         assert data["user_id"] == 42
         assert data["active_group_id"] == 7
+        assert data["session_id"] == "sess-42"
 
     def test_decode_session_cookie_tampered_returns_none(self):
-        cookie = create_session_cookie(user_id=1, active_group_id=2)
+        cookie = create_session_cookie(
+            user_id=1, active_group_id=2, session_id="sess-1"
+        )
         tampered = cookie[:-5] + "XXXXX"
         assert decode_session_cookie(tampered) is None
 
     def test_decode_session_cookie_expired_returns_none(self):
-        cookie = create_session_cookie(user_id=1, active_group_id=None)
+        cookie = create_session_cookie(
+            user_id=1, active_group_id=None, session_id="sess-1"
+        )
         time.sleep(1.1)
         with patch("app.auth.SESSION_MAX_AGE", 0):
             assert decode_session_cookie(cookie) is None
@@ -128,7 +135,7 @@ class TestLoginRoute:
 
     async def test_login_soft_deleted_user_fails(self, client, create_test_user, db):
         user = create_test_user(password="secret1234")
-        user.deleted_at = datetime.now(timezone.utc)
+        user.deleted_at = datetime.now(UTC)
         db.commit()
 
         response = await client.post(
@@ -164,9 +171,7 @@ class TestRegisterRoute:
         assert user.name == "Alice"
         assert user.password_hash != "secret1234"
 
-    async def test_register_duplicate_email_shows_error(
-        self, client, create_test_user
-    ):
+    async def test_register_duplicate_email_shows_error(self, client, create_test_user):
         create_test_user(email="alice@farm.com")
         response = await client.post(
             "/register",
@@ -217,9 +222,11 @@ class TestLogoutRoute:
         response = await client.post("/logout")
         cookie_header = response.headers.get("set-cookie", "")
         assert settings.SESSION_COOKIE_NAME in cookie_header
-        assert 'Max-Age=0' in cookie_header or '""' in cookie_header
+        assert "Max-Age=0" in cookie_header or '""' in cookie_header
 
-    async def test_logout_redirects_to_login(self, client, create_test_user, auth_cookie):
+    async def test_logout_redirects_to_login(
+        self, client, create_test_user, auth_cookie
+    ):
         user = create_test_user()
         auth_cookie(client, user.id)
         response = await client.post("/logout")
@@ -450,9 +457,7 @@ class TestResetPasswordRoute:
         body = response.text.lower()
         assert "invalid" in body or "expired" in body
 
-    async def test_reset_password_expired_token_fails(
-        self, client, create_test_user
-    ):
+    async def test_reset_password_expired_token_fails(self, client, create_test_user):
         user = create_test_user(password="secret1234")
         token = create_password_reset_token(user.id, user.password_hash)
         time.sleep(1.1)

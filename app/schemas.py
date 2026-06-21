@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Annotated, Optional
+from typing import Annotated
 
 from pydantic import (
     AfterValidator,
@@ -12,7 +12,6 @@ from pydantic import (
 )
 
 from app.enums import FuelType, VehicleType
-
 
 MIN_PASSWORD_LENGTH = 8
 
@@ -30,7 +29,7 @@ def first_validation_error_message(exc: ValidationError) -> str:
     msg = errors[0]["msg"]
     prefix = "Value error, "
     if msg.startswith(prefix):
-        msg = msg[len(prefix):]
+        msg = msg[len(prefix) :]
     return msg
 
 
@@ -57,9 +56,7 @@ def _validate_password_match(password: str, confirm: str) -> None:
 
 def _validate_password_length(password: str) -> None:
     if len(password) < MIN_PASSWORD_LENGTH:
-        raise ValueError(
-            f"Password must be at least {MIN_PASSWORD_LENGTH} characters"
-        )
+        raise ValueError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters")
 
 
 # ── User schemas ─────────────────────────────────────────────────────────────
@@ -84,8 +81,8 @@ class UserLogin(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
+    name: str | None = None
+    email: EmailStr | None = None
 
     @field_validator("name")
     @classmethod
@@ -157,8 +154,8 @@ class VehicleCreate(BaseModel):
 
 
 class VehicleUpdate(BaseModel):
-    name: Optional[str] = None
-    fuel_type: Optional[FuelType] = None
+    name: str | None = None
+    fuel_type: FuelType | None = None
 
     @field_validator("name", mode="before")
     @classmethod
@@ -185,7 +182,9 @@ class FuelEntryCreate(BaseModel):
     fuel_amount_l: float = Field(gt=0)
     usage_reading: float = Field(ge=0)
     entry_date: date
-    notes: Optional[str] = Field(default=None, max_length=500)
+    full_tank: bool = True
+    total_cost_eur: float | None = Field(default=None, ge=0)
+    notes: str | None = Field(default=None, max_length=500)
 
     @model_validator(mode="after")
     def validate_date_not_future(self) -> "FuelEntryCreate":
@@ -195,10 +194,12 @@ class FuelEntryCreate(BaseModel):
 
 
 class FuelEntryUpdate(BaseModel):
-    fuel_amount_l: Optional[float] = Field(default=None, gt=0)
-    usage_reading: Optional[float] = Field(default=None, ge=0)
-    entry_date: Optional[date] = None
-    notes: Optional[str] = Field(default=None, max_length=500)
+    fuel_amount_l: float | None = Field(default=None, gt=0)
+    usage_reading: float | None = Field(default=None, ge=0)
+    entry_date: date | None = None
+    full_tank: bool | None = None
+    total_cost_eur: float | None = Field(default=None, ge=0)
+    notes: str | None = Field(default=None, max_length=500)
 
     @model_validator(mode="after")
     def require_at_least_one_field(self) -> "FuelEntryUpdate":
@@ -206,6 +207,8 @@ class FuelEntryUpdate(BaseModel):
             self.fuel_amount_l is None
             and self.usage_reading is None
             and self.entry_date is None
+            and self.full_tank is None
+            and self.total_cost_eur is None
             and self.notes is None
         ):
             raise ValueError("At least one field must be provided")
@@ -227,3 +230,55 @@ class GroupCreate(BaseModel):
 
 class JoinGroup(BaseModel):
     invite_code: str
+
+
+# ── Maintenance log schemas ─────────────────────────────────────────────────
+
+
+class MaintenanceLogCreate(BaseModel):
+    vehicle_id: int
+    service_date: date
+    usage_reading: float | None = Field(default=None, ge=0)
+    description: str = Field(min_length=1, max_length=500)
+    cost_eur: float | None = Field(default=None, ge=0)
+    next_service_date: date | None = None
+    next_service_usage: float | None = Field(default=None, ge=0)
+
+    @model_validator(mode="after")
+    def validate_dates(self) -> "MaintenanceLogCreate":
+        if self.service_date > date.today():
+            raise ValueError("service_date must not be in the future")
+        if (
+            self.next_service_date is not None
+            and self.next_service_date < self.service_date
+        ):
+            raise ValueError("next_service_date must be on or after service_date")
+        return self
+
+
+class MaintenanceLogUpdate(BaseModel):
+    service_date: date | None = None
+    usage_reading: float | None = Field(default=None, ge=0)
+    description: str | None = Field(default=None, min_length=1, max_length=500)
+    cost_eur: float | None = Field(default=None, ge=0)
+    next_service_date: date | None = None
+    next_service_usage: float | None = Field(default=None, ge=0)
+
+    @model_validator(mode="after")
+    def require_at_least_one_field(self) -> "MaintenanceLogUpdate":
+        if (
+            self.service_date is None
+            and self.usage_reading is None
+            and self.description is None
+            and self.cost_eur is None
+            and self.next_service_date is None
+            and self.next_service_usage is None
+        ):
+            raise ValueError("At least one field must be provided")
+        return self
+
+    @model_validator(mode="after")
+    def validate_dates(self) -> "MaintenanceLogUpdate":
+        if self.service_date is not None and self.service_date > date.today():
+            raise ValueError("service_date must not be in the future")
+        return self

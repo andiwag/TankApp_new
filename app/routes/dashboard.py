@@ -5,6 +5,7 @@ from app.database import get_db
 from app.dependencies import get_active_group
 from app.models import Group
 from app.services.dashboard import get_dashboard_context
+from app.services.reminders import list_group_reminders
 from app.templating import templates
 
 router = APIRouter()
@@ -17,4 +18,5 @@ async def dashboard_page(
     group: Group = Depends(get_active_group),
 ):
     ctx = get_dashboard_context(db, group.id)
+    ctx["service_reminders"] = list_group_reminders(db, group.id)
     return templates.TemplateResponse(request, "dashboard.html", context=ctx)

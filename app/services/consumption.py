@@ -2,31 +2,38 @@
 
 from app.enums import UsageUnit
 
+FuelReading = tuple[float, float] | tuple[float, float, bool]
+
+
+def _normalize_entry(entry: FuelReading) -> tuple[float, float, bool]:
+    if len(entry) == 2:
+        return (entry[0], entry[1], True)
+    return entry
+
 
 def average_consumption_for_vehicle(
     usage_unit: str,
-    entries: list[tuple[float, float]],
+    entries: list[FuelReading],
 ) -> float | None:
     """Return mean segment consumption, or None if there is no valid segment.
 
-    ``entries`` are ``(usage_reading, fuel_amount_l)`` for one vehicle (each fill).
-    Rows are sorted by ``usage_reading`` internally.
+    Each entry is ``(usage_reading, fuel_amount_l)`` or
+    ``(usage_reading, fuel_amount_l, full_tank)``. When ``full_tank`` is omitted it
+    defaults to ``True``. Only full-tank fills anchor consumption segments.
 
     * ``km`` → liters / 100 km per segment, then arithmetic mean.
     * ``hours`` → liters / hour per segment, then arithmetic mean.
-
-    Segments with a non-positive odometer/hour delta are skipped (duplicate or
-    reversed readings).
     """
     if not entries:
         return None
 
-    sorted_e = sorted(entries, key=lambda t: t[0])
+    sorted_e = sorted((_normalize_entry(e) for e in entries), key=lambda t: t[0])
+    full_tank_readings = [(r, f) for r, f, ft in sorted_e if ft]
     segments: list[float] = []
 
-    for i in range(1, len(sorted_e)):
-        prev_reading, _ = sorted_e[i - 1]
-        curr_reading, curr_fuel = sorted_e[i]
+    for i in range(1, len(full_tank_readings)):
+        prev_reading, _ = full_tank_readings[i - 1]
+        curr_reading, curr_fuel = full_tank_readings[i]
         delta = curr_reading - prev_reading
         if delta <= 0:
             continue

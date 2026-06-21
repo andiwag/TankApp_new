@@ -21,6 +21,28 @@
         </div>
     </div>
 
+    {% if service_reminders %}
+    <section class="bg-white rounded-lg shadow overflow-hidden mb-10">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Service reminders</h2>
+        </div>
+        <ul class="divide-y divide-gray-200">
+            {% for reminder in service_reminders %}
+            <li class="px-6 py-4 flex flex-wrap gap-4 justify-between items-baseline">
+                <div>
+                    <span class="font-medium text-gray-900">{{ reminder.vehicle_name }}</span>
+                    <span class="text-gray-500 text-sm ml-2">{{ reminder.description }}</span>
+                </div>
+                <span class="text-sm font-medium {% if reminder.status == 'overdue' %}text-red-700{% else %}text-amber-700{% endif %}">
+                    {% if reminder.status == 'overdue' %}Overdue{% else %}Due soon{% endif %}
+                    {% if reminder.next_service_date %} · {{ reminder.next_service_date }}{% endif %}
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
     <section id="recent-fuel-entries" class="bg-white rounded-lg shadow overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-lg font-semibold text-gray-900">Recent fuel entries</h2>

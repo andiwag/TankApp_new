@@ -3,12 +3,11 @@
 import re
 from contextlib import asynccontextmanager
 
-from httpx import ASGITransport, AsyncClient
-
 from app.auth import create_password_reset_token
 from app.main import app
-from tests.conftest import create_authenticated_group
+from httpx import ASGITransport, AsyncClient
 
+from tests.conftest import create_authenticated_group
 
 _CSRF_RE = re.compile(r'name="csrf_token"\s+value="([^"]+)"')
 _POST_FORM_RE = re.compile(
@@ -82,7 +81,9 @@ class TestCsrfRequests:
             )
         assert response.status_code == 403
 
-    async def test_stale_form_token_still_valid_after_second_get(self, create_test_user):
+    async def test_stale_form_token_still_valid_after_second_get(
+        self, create_test_user
+    ):
         create_test_user(password="secret1234")
         async with _raw_client() as client:
             first_page = await client.get("/login")
@@ -138,6 +139,9 @@ class TestCsrfTemplateFields:
             f"/vehicles/{vehicle.id}/edit",
             "/fuel",
             "/fuel/new",
+            "/maintenance",
+            "/maintenance/new",
+            "/analytics",
             "/profile",
             "/settings/group",
         ]

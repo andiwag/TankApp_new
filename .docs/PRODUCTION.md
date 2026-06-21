@@ -82,7 +82,7 @@ Complete these **before** the first deploy.
 
 ### Recommended before sharing with beta farms
 
-- [ ] **Session cookie `Secure` flag** — `app/auth.py` `set_session_cookie()` should set `secure=settings.is_production` (CSRF cookies already do this in `app/csrf.py`).
+- [ ] **Session cookie `Secure` flag** — implemented in `app/auth.py` (`secure=settings.is_production`).
 
 - [ ] **Flash cookie `Secure` flag** — `app/flash.py` `set_flash()` should set `secure=settings.is_production`.
 
@@ -106,10 +106,10 @@ If you prefer buildpacks instead of a Dockerfile:
 
 | Item | Beta impact | Fix when |
 |------|-------------|----------|
-| In-memory rate limiting | Resets on redeploy; not shared across workers | Redis or proxy limits on paid tier |
-| No session revocation | Cannot force-logout a compromised account | Add session table if needed |
-| Audit log UI | Backend-only | Future feature |
+| In-memory rate limiting (no `REDIS_URL`) | Resets on redeploy; not shared across workers | Set `REDIS_URL` on Northflank (Redis addon or Upstash) |
 | `subscription_tier` | Unused column | When billing is added |
+
+**Implemented since this guide was first written:** server-side session revocation (profile → active sessions), audit log UI (`/settings/audit`), maintenance logs + service reminders, CSV export, analytics, and Redis-backed rate limiting when `REDIS_URL` is set.
 
 ---
 
@@ -131,6 +131,13 @@ Set these on your Northflank service (**Environment** page). Never commit real v
 | `MAIL_SERVER` | `smtp-relay.brevo.com` | For email |
 | `MAIL_PORT` | `587` | For email |
 | `MAIL_STARTTLS` | `true` | For email |
+| `BASE_URL` | `https://your-app.code.run` | For password-reset and reminder email links |
+| `REDIS_URL` | Redis connection string | **Yes** in production (or set `SINGLE_WORKER_MODE=true` for one worker) |
+| `CRON_SECRET` | Random secret for scheduled jobs | **Yes** when `ENV=production` |
+| `ALLOWED_HOSTS` | `your-app.code.run` (comma-separated) | Recommended in production |
+| `SENTRY_DSN` | Sentry project DSN | Optional error tracking |
+| `RUN_MIGRATIONS_ON_START` | `true` (default) or `false` | Set `false` for multi-replica; run `scripts/migrate.sh` as a Job |
+| `SINGLE_WORKER_MODE` | `true` only for single-worker beta | Allows in-memory rate limits without Redis |
 
 Copy `.env.example` as a local reference; production values live only on Northflank.
 
@@ -147,18 +154,23 @@ If you copy a connection string from elsewhere that uses `postgres://`, change t
 | Password hashing (bcrypt) | Implemented | None |
 | CSRF on all POST routes | Implemented | Set `ENV=production` (enables secure CSRF cookie) |
 | Session cookie HttpOnly | Implemented | None |
-| Session cookie Secure | **Missing** | Add `secure=settings.is_production` in `auth.py` |
+| Session cookie Secure | Implemented (`secure=settings.is_production`) | Set `ENV=production` |
 | Session cookie SameSite | `lax` | OK for SSR forms |
-| Group-scoped queries | Implemented | None |
+| Session revocation | Server-side `UserSession` rows | Users can revoke sessions on profile page |
+| Group-scoped queries + membership checks | Implemented | None |
 | Soft deletes | Implemented | None |
-| Rate limiting (login/register/reset) | In-memory | Acceptable for beta |
+| Rate limiting (login/register/reset) | Redis or in-memory (`SINGLE_WORKER_MODE`) | Set `REDIS_URL` for multi-worker |
+| Security headers (CSP, X-Frame-Options, etc.) | Implemented | None |
+| Host header validation | `ALLOWED_HOSTS` | Set to your Northflank hostname |
 | Password reset anti-enumeration | Implemented | None |
 | HTTPS | Northflank provides automatically | None |
 | Secrets in repo | `.env` gitignored | Verify before push |
 
-### 3.4 Logging
+### 3.4 Logging and error tracking
 
-The app uses Python `logging` in `app/routes/auth.py`. Northflank streams container logs in the service **Observe** tab. For beta, that is sufficient.
+- **Development:** human-readable logs to stdout.
+- **Production:** JSON-structured logs to stdout (Northflank **Observe** tab).
+- **Optional:** set `SENTRY_DSN` to send unhandled exceptions to [Sentry](https://sentry.io).
 
 ### 3.5 Backups
 
@@ -168,9 +180,43 @@ Northflank Postgres addons support backup schedules (configure when creating the
 2. Before risky schema changes, fork the addon or take a manual backup.
 3. Export critical data periodically if farms depend on it.
 
-### 3.6 Health check
+### 3.6 Health checks
 
-Configure a health check on your service pointing to `GET /health` (returns `{"status": "ok"}`). This helps Northflank detect failed deploys. Unlike Render's free tier, Sandbox services do **not** spin down on idle — health checks are for deploy validation only.
+| Endpoint | Purpose | Expected |
+|----------|---------|----------|
+| `GET /health` | Liveness — process is running | `200 {"status":"ok"}` |
+| `GET /health/ready` | Readiness — database accepts queries | `200 {"status":"ready"}` or `503` |
+
+Point Northflank **liveness** at `/health` and **readiness** at `/health/ready` when both are supported.
+
+### 3.7 Database migrations (multi-replica)
+
+For a **single** Sandbox service, `scripts/start.sh` runs `alembic upgrade head` on boot (default).
+
+For **multiple replicas**, set `RUN_MIGRATIONS_ON_START=false` on the web service and run migrations once per deploy:
+
+```sh
+scripts/migrate.sh
+```
+
+Use a Northflank **Job** (or manual one-off container) with the same image and `DATABASE_URL` before scaling the web service.
+
+### 3.8 Service reminder cron
+
+Maintenance service reminders are sent by a **POST** endpoint (CSRF-exempt). Schedule it daily via a Northflank **Cron Job** or external scheduler (e.g. cron-job.org):
+
+```
+POST https://your-app.code.run/cron/service-reminders
+Authorization: Bearer <CRON_SECRET>
+```
+
+Requirements:
+
+- `CRON_SECRET` set on the web service (same value in the cron job headers)
+- Mail env vars configured (`MAIL_*` and `BASE_URL`)
+- Migrations applied (`maintenance_logs.reminder_sent_at` column exists)
+
+The job claims each due log atomically so concurrent runs do not duplicate emails. If every admin email fails for a log, the claim is released so the next run retries.
 
 ---
 
@@ -341,17 +387,29 @@ MAIL_PASSWORD=<Brevo SMTP key>
 MAIL_FROM=noreply@yourdomain.com
 ```
 
-4. Implement `_deliver_reset_token()` using `fastapi-mail` (already in `requirements.txt`). The reset link must use your public Northflank URL:
+4. Password reset uses `fastapi-mail` (`app/mail.py`). Set `BASE_URL` to your public Northflank URL so reset links resolve correctly:
 
 ```
-https://tankapp-web-<hash>.code.run/reset-password/{token}
+https://tankapp-web-<hash>.code.run
 ```
-
-Consider adding a `BASE_URL` setting to `app/config.py` for this.
 
 ---
 
 ## 6. Post-deploy verification
+
+### Automated CI (GitHub Actions)
+
+Pushes and pull requests to `main` run `.github/workflows/ci.yml`:
+
+1. **Lint** — `ruff check` and `ruff format --check` on `app/` and `tests/`.
+2. **Test** — full `pytest` on **Postgres 16** (migrations via Alembic, then all tests).
+
+Local default remains SQLite in-memory when `DATABASE_URL` is unset. To mirror CI locally with Docker:
+
+```powershell
+$env:DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/tankapp_test"
+pytest
+```
 
 ### Automated (local, before each deploy)
 
@@ -365,6 +423,7 @@ All tests should pass locally before pushing.
 ### Manual (on the live URL)
 
 - [ ] `GET /health` returns `{"status":"ok"}`
+- [ ] `GET /health/ready` returns `{"status":"ready"}`
 - [ ] `GET /login` loads with Tailwind styling
 - [ ] Register a new account
 - [ ] Create a group; note the invite code
@@ -374,6 +433,8 @@ All tests should pass locally before pushing.
 - [ ] Open `/static/manifest.json` (PWA)
 - [ ] Second browser/incognito: join group via invite code
 - [ ] Forgot-password flow (if email is configured)
+- [ ] Maintenance log + dashboard service reminders widget
+- [ ] `POST /cron/service-reminders` with Bearer token (if reminders enabled)
 
 ### Responsiveness test (Sandbox advantage)
 

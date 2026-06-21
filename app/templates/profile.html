@@ -61,5 +61,36 @@
             </button>
         </form>
     </div>
+
+    <div class="bg-white rounded-lg shadow p-6 mt-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-2">Active sessions</h2>
+        <p class="text-sm text-gray-600 mb-4">Sign out devices you no longer use.</p>
+        {% if sessions %}
+        <ul class="divide-y divide-gray-200 mb-4">
+            {% for session in sessions %}
+            <li class="py-3 flex flex-wrap gap-3 justify-between items-center">
+                <div class="text-sm text-gray-700">
+                    Started {{ session.created_at.strftime('%Y-%m-%d %H:%M UTC') }}
+                    {% if session.id == current_session_id %}<span class="text-green-700 font-medium">(this device)</span>{% endif %}
+                </div>
+                <form method="post" action="/profile/sessions/{{ session.id }}/revoke" x-data="{ submitting: false }" @submit="submitting = true">
+                    {{ csrf_field() }}
+                    <button type="submit" :disabled="submitting" class="text-sm text-red-600 hover:text-red-800 font-medium disabled:opacity-60">Revoke</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% if sessions|length > 1 %}
+        <form method="post" action="/profile/sessions/revoke-all" x-data="{ submitting: false }" @submit="submitting = true">
+            {{ csrf_field() }}
+            <button type="submit" :disabled="submitting" class="inline-flex justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60">
+                Sign out all other devices
+            </button>
+        </form>
+        {% endif %}
+        {% else %}
+        <p class="text-sm text-gray-500">No active sessions.</p>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

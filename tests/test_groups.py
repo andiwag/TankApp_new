@@ -1,20 +1,16 @@
 """Tests for Phase 5: Group System."""
 
-from datetime import datetime, timezone
-
+from datetime import UTC, datetime
 
 from app.auth import decode_session_cookie
 from app.config import settings
 from app.models import Group, UserGroup
 
-
 # ── Create Group ─────────────────────────────────────────────────────────────
 
 
 class TestCreateGroup:
-    async def test_create_group_valid(
-        self, client, create_test_user, auth_cookie, db
-    ):
+    async def test_create_group_valid(self, client, create_test_user, auth_cookie, db):
         user = create_test_user()
         auth_cookie(client, user.id)
 
@@ -33,10 +29,14 @@ class TestCreateGroup:
         await client.post("/groups/create", data={"name": "My Farm"})
 
         group = db.query(Group).filter(Group.name == "My Farm").first()
-        ug = db.query(UserGroup).filter(
-            UserGroup.user_id == user.id,
-            UserGroup.group_id == group.id,
-        ).first()
+        ug = (
+            db.query(UserGroup)
+            .filter(
+                UserGroup.user_id == user.id,
+                UserGroup.group_id == group.id,
+            )
+            .first()
+        )
         assert ug is not None
         assert ug.role == "admin"
 
@@ -78,15 +78,17 @@ class TestJoinGroup:
         joiner = create_test_user(email="joiner@farm.com", name="Joiner")
         auth_cookie(client, joiner.id)
 
-        response = await client.post(
-            "/groups/join", data={"invite_code": "FARM-JOIN1"}
-        )
+        response = await client.post("/groups/join", data={"invite_code": "FARM-JOIN1"})
         assert response.status_code == 303
 
-        ug = db.query(UserGroup).filter(
-            UserGroup.user_id == joiner.id,
-            UserGroup.group_id == group.id,
-        ).first()
+        ug = (
+            db.query(UserGroup)
+            .filter(
+                UserGroup.user_id == joiner.id,
+                UserGroup.group_id == group.id,
+            )
+            .first()
+        )
         assert ug is not None
 
     async def test_join_group_invalid_code_fails(
@@ -114,16 +116,24 @@ class TestJoinGroup:
         auth_cookie(client, joiner.id)
         await client.post("/groups/join", data={"invite_code": "FARM-ROLE1"})
 
-        ug = db.query(UserGroup).filter(
-            UserGroup.user_id == joiner.id,
-            UserGroup.group_id == group.id,
-        ).first()
+        ug = (
+            db.query(UserGroup)
+            .filter(
+                UserGroup.user_id == joiner.id,
+                UserGroup.group_id == group.id,
+            )
+            .first()
+        )
         assert ug is not None
         assert ug.role == "contributor"
 
     async def test_join_group_already_member_shows_error(
-        self, client, create_test_user, create_test_group,
-        create_test_user_group, auth_cookie,
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
     ):
         owner = create_test_user(email="owner@farm.com")
         group = create_test_group(
@@ -132,9 +142,7 @@ class TestJoinGroup:
         create_test_user_group(owner.id, group.id, "admin")
 
         auth_cookie(client, owner.id)
-        response = await client.post(
-            "/groups/join", data={"invite_code": "FARM-MEMB1"}
-        )
+        response = await client.post("/groups/join", data={"invite_code": "FARM-MEMB1"})
         assert response.status_code == 200
         body = response.text.lower()
         assert "already" in body or "member" in body
@@ -146,15 +154,13 @@ class TestJoinGroup:
         group = create_test_group(
             name="Dead Farm", invite_code="FARM-DEAD1", created_by=owner.id
         )
-        group.deleted_at = datetime.now(timezone.utc)
+        group.deleted_at = datetime.now(UTC)
         db.commit()
 
         joiner = create_test_user(email="joiner@farm.com", name="Joiner")
         auth_cookie(client, joiner.id)
 
-        response = await client.post(
-            "/groups/join", data={"invite_code": "FARM-DEAD1"}
-        )
+        response = await client.post("/groups/join", data={"invite_code": "FARM-DEAD1"})
         assert response.status_code == 200
         body = response.text.lower()
         assert "invalid" in body or "not found" in body
@@ -165,8 +171,12 @@ class TestJoinGroup:
 
 class TestSwitchGroup:
     async def test_switch_group_valid(
-        self, client, create_test_user, create_test_group,
-        create_test_user_group, auth_cookie,
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
     ):
         user = create_test_user()
         group = create_test_group(created_by=user.id)
@@ -189,8 +199,12 @@ class TestSwitchGroup:
         assert response.status_code == 403
 
     async def test_switch_group_updates_session(
-        self, client, create_test_user, create_test_group,
-        create_test_user_group, auth_cookie,
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
     ):
         user = create_test_user()
         group = create_test_group(created_by=user.id)
@@ -211,8 +225,13 @@ class TestSwitchGroup:
 
 class TestLeaveGroup:
     async def test_leave_group_as_contributor(
-        self, client, create_test_user, create_test_group,
-        create_test_user_group, auth_cookie, db,
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+        db,
     ):
         owner = create_test_user(email="owner@farm.com")
         group = create_test_group(created_by=owner.id)
@@ -225,15 +244,24 @@ class TestLeaveGroup:
         response = await client.post(f"/groups/leave/{group.id}")
         assert response.status_code == 303
 
-        ug = db.query(UserGroup).filter(
-            UserGroup.user_id == contributor.id,
-            UserGroup.group_id == group.id,
-        ).first()
+        ug = (
+            db.query(UserGroup)
+            .filter(
+                UserGroup.user_id == contributor.id,
+                UserGroup.group_id == group.id,
+            )
+            .first()
+        )
         assert ug is None
 
     async def test_leave_group_as_admin_with_other_admins(
-        self, client, create_test_user, create_test_group,
-        create_test_user_group, auth_cookie, db,
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+        db,
     ):
         admin1 = create_test_user(email="admin1@farm.com")
         group = create_test_group(created_by=admin1.id)
@@ -246,15 +274,24 @@ class TestLeaveGroup:
         response = await client.post(f"/groups/leave/{group.id}")
         assert response.status_code == 303
 
-        ug = db.query(UserGroup).filter(
-            UserGroup.user_id == admin1.id,
-            UserGroup.group_id == group.id,
-        ).first()
+        ug = (
+            db.query(UserGroup)
+            .filter(
+                UserGroup.user_id == admin1.id,
+                UserGroup.group_id == group.id,
+            )
+            .first()
+        )
         assert ug is None
 
     async def test_leave_group_as_sole_admin_fails(
-        self, client, create_test_user, create_test_group,
-        create_test_user_group, auth_cookie, db,
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+        db,
     ):
         user = create_test_user()
         group = create_test_group(created_by=user.id)
@@ -263,10 +300,14 @@ class TestLeaveGroup:
         auth_cookie(client, user.id, group.id)
         response = await client.post(f"/groups/leave/{group.id}")
 
-        ug = db.query(UserGroup).filter(
-            UserGroup.user_id == user.id,
-            UserGroup.group_id == group.id,
-        ).first()
+        ug = (
+            db.query(UserGroup)
+            .filter(
+                UserGroup.user_id == user.id,
+                UserGroup.group_id == group.id,
+            )
+            .first()
+        )
         assert ug is not None
         assert response.status_code != 303
 
@@ -287,8 +328,13 @@ class TestLeaveGroup:
 
 class TestDeleteGroup:
     async def test_delete_group_as_admin(
-        self, client, create_test_user, create_test_group,
-        create_test_user_group, auth_cookie, db,
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+        db,
     ):
         user = create_test_user()
         group = create_test_group(created_by=user.id)
@@ -302,8 +348,13 @@ class TestDeleteGroup:
         assert group.deleted_at is not None
 
     async def test_delete_group_as_contributor_fails(
-        self, client, create_test_user, create_test_group,
-        create_test_user_group, auth_cookie, db,
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+        db,
     ):
         owner = create_test_user(email="owner@farm.com")
         group = create_test_group(created_by=owner.id)
@@ -316,8 +367,13 @@ class TestDeleteGroup:
         assert response.status_code == 403
 
     async def test_delete_group_as_reader_fails(
-        self, client, create_test_user, create_test_group,
-        create_test_user_group, auth_cookie, db,
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+        db,
     ):
         owner = create_test_user(email="owner@farm.com")
         group = create_test_group(created_by=owner.id)
@@ -330,8 +386,13 @@ class TestDeleteGroup:
         assert response.status_code == 403
 
     async def test_delete_group_soft_deletes(
-        self, client, create_test_user, create_test_group,
-        create_test_user_group, auth_cookie, db,
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+        db,
     ):
         user = create_test_user()
         group = create_test_group(created_by=user.id)
@@ -365,8 +426,13 @@ class TestGroupAuthorization:
         assert db.query(Group).filter(Group.name == "My Farm").first() is not None
 
     async def test_delete_group_requires_admin(
-        self, client, create_test_user, create_test_group,
-        create_test_user_group, auth_cookie, db,
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+        db,
     ):
         owner = create_test_user(email="owner@farm.com")
         group = create_test_group(created_by=owner.id)

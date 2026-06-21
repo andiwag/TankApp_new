@@ -35,4 +35,9 @@ def group_page_capabilities(db: Session, user: User, group_id: int) -> dict[str,
         ug and ROLE_HIERARCHY.get(ug.role, 0) >= ROLE_HIERARCHY[Role.contributor.value]
     )
     can_delete = bool(ug and ug.role == Role.admin.value)
-    return {"can_edit": can_edit, "can_delete": can_delete}
+    can_view_audit = can_delete
+    return {
+        "can_edit": can_edit,
+        "can_delete": can_delete,
+        "can_view_audit": can_view_audit,
+    }

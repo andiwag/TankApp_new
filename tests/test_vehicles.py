@@ -1,11 +1,10 @@
 """Tests for Phase 8: Vehicles CRUD."""
 
-from datetime import datetime, timezone
-
+from datetime import UTC, datetime
 
 from app.models import Vehicle
-from tests.conftest import create_authenticated_group
 
+from tests.conftest import create_authenticated_group
 
 
 class TestListVehicles:
@@ -15,7 +14,12 @@ class TestListVehicles:
         assert response.headers.get("location") == "/login"
 
     async def test_list_vehicles_returns_200(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
     ):
         create_authenticated_group(
             client,
@@ -37,8 +41,12 @@ class TestListVehicles:
         auth_cookie,
     ):
         user = create_test_user()
-        g_a = create_test_group(name="Farm A", invite_code="FARM-AAAAA", created_by=user.id)
-        g_b = create_test_group(name="Farm B", invite_code="FARM-BBBBB", created_by=user.id)
+        g_a = create_test_group(
+            name="Farm A", invite_code="FARM-AAAAA", created_by=user.id
+        )
+        g_b = create_test_group(
+            name="Farm B", invite_code="FARM-BBBBB", created_by=user.id
+        )
         create_test_user_group(user.id, g_a.id, role="admin")
         create_test_user_group(user.id, g_b.id, role="admin")
         create_test_vehicle(group_id=g_a.id, name="Only A")
@@ -69,7 +77,7 @@ class TestListVehicles:
         create_test_vehicle(group_id=group.id, name="Visible")
         v_del = create_test_vehicle(group_id=group.id, name="Hidden")
         db.query(Vehicle).filter(Vehicle.id == v_del.id).update(
-            {"deleted_at": datetime.now(timezone.utc)}
+            {"deleted_at": datetime.now(UTC)}
         )
         db.commit()
 
@@ -378,7 +386,9 @@ class TestEditVehicle:
             auth_cookie,
             role="contributor",
         )
-        v = create_test_vehicle(group_id=group.id, name="Old", vtype="tractor", fuel_type="diesel")
+        v = create_test_vehicle(
+            group_id=group.id, name="Old", vtype="tractor", fuel_type="diesel"
+        )
         response = await client.post(
             f"/vehicles/{v.id}/edit",
             data={"name": "New Name", "fuel_type": "petrol"},
@@ -409,7 +419,9 @@ class TestEditVehicle:
             auth_cookie,
             role="contributor",
         )
-        v = create_test_vehicle(group_id=group.id, name="Old", vtype="car", fuel_type="diesel")
+        v = create_test_vehicle(
+            group_id=group.id, name="Old", vtype="car", fuel_type="diesel"
+        )
         await client.post(
             f"/vehicles/{v.id}/edit",
             data={"name": "Renamed", "fuel_type": "diesel"},
@@ -437,7 +449,9 @@ class TestEditVehicle:
             auth_cookie,
             role="contributor",
         )
-        v = create_test_vehicle(group_id=group.id, name="Same", vtype="car", fuel_type="diesel")
+        v = create_test_vehicle(
+            group_id=group.id, name="Same", vtype="car", fuel_type="diesel"
+        )
         await client.post(
             f"/vehicles/{v.id}/edit",
             data={"name": "Same", "fuel_type": "petrol"},
@@ -465,7 +479,9 @@ class TestEditVehicle:
             auth_cookie,
             role="contributor",
         )
-        v = create_test_vehicle(group_id=group.id, name="V", vtype="tractor", fuel_type="diesel")
+        v = create_test_vehicle(
+            group_id=group.id, name="V", vtype="tractor", fuel_type="diesel"
+        )
         await client.post(
             f"/vehicles/{v.id}/edit",
             data={"name": "V2", "fuel_type": "diesel"},
@@ -593,7 +609,7 @@ class TestEditVehicle:
         )
         v = create_test_vehicle(group_id=group.id)
         db.query(Vehicle).filter(Vehicle.id == v.id).update(
-            {"deleted_at": datetime.now(timezone.utc)}
+            {"deleted_at": datetime.now(UTC)}
         )
         db.commit()
         response = await client.post(
@@ -711,7 +727,9 @@ class TestDeleteVehicle:
         create_test_user_group(user.id, g_b.id, role="admin")
         v_in_b = create_test_vehicle(group_id=g_b.id)
         auth_cookie(client, user.id, g_a.id)
-        response = await client.post(f"/vehicles/{v_in_b.id}/delete", follow_redirects=False)
+        response = await client.post(
+            f"/vehicles/{v_in_b.id}/delete", follow_redirects=False
+        )
         assert response.status_code == 404
 
     async def test_delete_vehicle_not_found_404(
@@ -736,7 +754,12 @@ class TestDeleteVehicle:
 
 class TestGroupRoutesAuth:
     async def test_group_routes_require_authentication(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
     ):
         response = await client.get("/vehicles", follow_redirects=False)
         assert response.status_code == 303

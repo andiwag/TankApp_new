@@ -1,25 +1,52 @@
+import os
+import subprocess
 from datetime import date
 
 import pytest
+from app.auth import create_session_cookie
+from app.config import settings
+from app.csrf import (
+    CSRF_COOKIE_NAME,
+    CSRF_FIELD_NAME,
+    UNSAFE_METHODS,
+    create_csrf_tokens,
+)
+from app.database import Base, get_db
+from app.main import app
+from app.models import FuelEntry, Group, User, UserGroup, Vehicle
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.auth import create_session_cookie
-from app.config import settings
-from app.csrf import CSRF_COOKIE_NAME, CSRF_FIELD_NAME, UNSAFE_METHODS, create_csrf_tokens
-from app.database import Base, get_db
-from app.main import app
-from app.models import FuelEntry, Group, User, UserGroup, Vehicle
+TEST_DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite://")
+_USE_POSTGRES = TEST_DATABASE_URL.startswith("postgresql")
 
-TEST_DATABASE_URL = "sqlite://"
 
-test_engine = create_engine(
-    TEST_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
+def _run_alembic_upgrade() -> None:
+    result = subprocess.run(
+        ["alembic", "upgrade", "head"],
+        env={
+            **os.environ,
+            "DATABASE_URL": TEST_DATABASE_URL,
+            "ENV": "development",
+        },
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr or result.stdout)
+
+
+if _USE_POSTGRES:
+    test_engine = create_engine(TEST_DATABASE_URL, pool_pre_ping=True)
+else:
+    test_engine = create_engine(
+        TEST_DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
 
 TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
@@ -61,7 +88,10 @@ def override_get_db():
 @pytest.fixture(scope="session", autouse=True)
 def setup_database():
     app.dependency_overrides[get_db] = override_get_db
-    Base.metadata.create_all(bind=test_engine)
+    if _USE_POSTGRES:
+        _run_alembic_upgrade()
+    else:
+        Base.metadata.create_all(bind=test_engine)
     yield
     Base.metadata.drop_all(bind=test_engine)
     app.dependency_overrides.clear()
@@ -93,10 +123,17 @@ async def client():
 
 
 @pytest.fixture
-def auth_cookie():
+def auth_cookie(db):
     def _set(client, user_id: int, active_group_id: int | None = None) -> None:
-        cookie_value = create_session_cookie(user_id, active_group_id)
+        from app.services.sessions import create_user_session
+
+        session_id = create_user_session(db, user_id)
+        db.commit()
+        cookie_value = create_session_cookie(
+            user_id, active_group_id, session_id=session_id
+        )
         client.cookies.set(settings.SESSION_COOKIE_NAME, cookie_value)
+
     return _set
 
 
@@ -110,6 +147,7 @@ def create_test_user(db):
     ):
         if password is not None:
             from app.auth import hash_password
+
             password_hash = hash_password(password)
         user = User(email=email, name=name, password_hash=password_hash)
         db.add(user)

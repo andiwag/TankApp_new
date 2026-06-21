@@ -1,0 +1,147 @@
+{% extends "marketing_base.html" %}
+
+{% block title %}TankApp – Kraftstoffverwaltung für landwirtschaftliche Betriebe{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="relative overflow-hidden bg-gradient-to-b from-green-50 to-white">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+        <div class="max-w-3xl">
+            <p class="text-sm font-semibold text-green-700 uppercase tracking-wide mb-3">Für österreichische Betriebe</p>
+            <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 leading-tight mb-6">
+                Kraftstoff, Fahrzeuge und Wartung – alles an einem Ort
+            </h1>
+            <p class="text-lg text-gray-600 mb-8 leading-relaxed">
+                TankApp hilft Landwirten und Betriebsleitern, Tankvorgänge zu erfassen, Verbrauch zu verstehen und Serviceintervalle nicht zu verpassen. Einfach, mobil und für Teams mit mehreren Mitarbeitern.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <a href="/register" class="inline-flex justify-center items-center min-h-[48px] px-6 py-3 rounded-lg bg-green-700 text-white font-semibold hover:bg-green-800 transition shadow-sm">
+                    Kostenlos registrieren
+                </a>
+                <a href="/#features" class="inline-flex justify-center items-center min-h-[48px] px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition">
+                    Funktionen ansehen
+                </a>
+            </div>
+            <p class="mt-4 text-sm text-gray-500">Keine Kreditkarte erforderlich · Free-Tarif verfügbar</p>
+        </div>
+    </div>
+</section>
+
+<!-- Problem / value -->
+<section class="py-16 bg-white border-y border-gray-100">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl sm:text-3xl font-bold text-center mb-12">Schluss mit Zettelwirtschaft an der Tankstelle</h2>
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="text-center p-6">
+                <div class="w-12 h-12 rounded-full bg-green-100 text-green-700 flex items-center justify-center mx-auto mb-4 text-xl font-bold">1</div>
+                <h3 class="font-semibold text-lg mb-2">Erfassen statt schätzen</h3>
+                <p class="text-gray-600 text-sm">Liter, Kosten und Betriebsstunden direkt am Handy – auch bei Teiltankungen.</p>
+            </div>
+            <div class="text-center p-6">
+                <div class="w-12 h-12 rounded-full bg-green-100 text-green-700 flex items-center justify-center mx-auto mb-4 text-xl font-bold">2</div>
+                <h3 class="font-semibold text-lg mb-2">Verbrauch im Blick</h3>
+                <p class="text-gray-600 text-sm">Dashboard, Auswertungen und CSV-Export für Ihre Betriebsführung.</p>
+            </div>
+            <div class="text-center p-6">
+                <div class="w-12 h-12 rounded-full bg-green-100 text-green-700 flex items-center justify-center mx-auto mb-4 text-xl font-bold">3</div>
+                <h3 class="font-semibold text-lg mb-2">Team & Betrieb</h3>
+                <p class="text-gray-600 text-sm">Gruppen mit Rollen: Admin, Mitarbeiter, Nur-Lesen. Ein Betrieb, ein Invite-Code.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section id="features" class="py-16 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl sm:text-3xl font-bold text-center mb-4">Was TankApp kann</h2>
+        <p class="text-center text-gray-600 mb-12 max-w-2xl mx-auto">Entwickelt für Traktoren, Transporter und Maschinen – mit den Einheiten, die im Betrieb zählen.</p>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for title, desc in [
+                ("Tankbuch", "Tankvorgänge mit Datum, Liter, Kosten und Voll-/Teiltankung."),
+                ("Fahrzeugverwaltung", "Traktoren, PKW und Maschinen mit Betriebsstunden oder Kilometern."),
+                ("Verbrauchsanalyse", "Trends und Kennzahlen der letzten Monate im Dashboard."),
+                ("Wartungsprotokoll", "Service, Kosten und nächste fällige Intervalle."),
+                ("Service-Erinnerungen", "Benachrichtigung bei fälliger Wartung nach Datum oder Betriebsstunden."),
+                ("CSV-Export", "Daten für Buchhaltung und Auswertung herunterladen."),
+                ("Team & Rollen", "Mitarbeiter einladen mit Admin-, Schreib- oder Lese-Rechten."),
+                ("Audit-Log", "Nachvollziehen, wer was im Betrieb geändert hat."),
+                ("Mobil optimiert", "Große Touch-Targets – auch mit Handschuhen nutzbar."),
+            ] %}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-5">
+                <h3 class="font-semibold text-green-800 mb-2">{{ title }}</h3>
+                <p class="text-sm text-gray-600">{{ desc }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Pricing -->
+<section id="pricing" class="py-16 bg-white">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl sm:text-3xl font-bold text-center mb-4">Einfache Preise pro Betrieb</h2>
+        <p class="text-center text-gray-600 mb-12">Ein Abo gilt für Ihre gesamte Betriebsgruppe – alle eingeladenen Nutzer inklusive.<br><span class="text-sm">Preise zzgl. USt.; bei Unternehmen mit UID gilt die Reverse-Charge-Regelung.</span></p>
+        <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <!-- Free -->
+            <div class="rounded-xl border border-gray-200 p-6 flex flex-col">
+                <h3 class="text-lg font-semibold text-gray-900">Free</h3>
+                <p class="mt-2 text-3xl font-bold">€0<span class="text-base font-normal text-gray-500">/Monat</span></p>
+                <p class="text-sm text-gray-500 mt-1">Zum Ausprobieren</p>
+                <ul class="mt-6 space-y-3 text-sm text-gray-600 flex-1">
+                    <li>✓ Bis zu 2 Fahrzeuge</li>
+                    <li>✓ Unbegrenzte Tankvorgänge</li>
+                    <li>✓ 1 Admin, Team per Invite</li>
+                    <li>✓ Dashboard & Zusammenfassung</li>
+                </ul>
+                <a href="/register" class="mt-8 block text-center min-h-[44px] leading-[44px] rounded-lg border border-green-700 text-green-700 font-medium hover:bg-green-50 transition">
+                    Kostenlos starten
+                </a>
+            </div>
+            <!-- Pro -->
+            <div class="rounded-xl border-2 border-green-700 p-6 flex flex-col relative shadow-md">
+                <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-700 text-white text-xs font-semibold px-3 py-1 rounded-full">Beliebt</span>
+                <h3 class="text-lg font-semibold text-gray-900">Pro</h3>
+                <p class="mt-2 text-3xl font-bold">€19<span class="text-base font-normal text-gray-500">/Monat</span></p>
+                <p class="text-sm text-gray-500 mt-1">Kleine Betriebe</p>
+                <ul class="mt-6 space-y-3 text-sm text-gray-600 flex-1">
+                    <li>✓ Bis zu 10 Fahrzeuge</li>
+                    <li>✓ Analytics & CSV-Export</li>
+                    <li>✓ Wartungsprotokoll & Erinnerungen</li>
+                    <li>✓ Audit-Log</li>
+                </ul>
+                <a href="/register" class="mt-8 block text-center min-h-[44px] leading-[44px] rounded-lg bg-green-700 text-white font-medium hover:bg-green-800 transition">
+                    Pro testen
+                </a>
+            </div>
+            <!-- Farm -->
+            <div class="rounded-xl border border-gray-200 p-6 flex flex-col">
+                <h3 class="text-lg font-semibold text-gray-900">Farm</h3>
+                <p class="mt-2 text-3xl font-bold">€49<span class="text-base font-normal text-gray-500">/Monat</span></p>
+                <p class="text-sm text-gray-500 mt-1">Größere Flotten</p>
+                <ul class="mt-6 space-y-3 text-sm text-gray-600 flex-1">
+                    <li>✓ Unbegrenzte Fahrzeuge</li>
+                    <li>✓ Alle Pro-Funktionen</li>
+                    <li>✓ Prioritäts-Support</li>
+                    <li>✓ Für wachsende Betriebe</li>
+                </ul>
+                <a href="/register" class="mt-8 block text-center min-h-[44px] leading-[44px] rounded-lg border border-green-700 text-green-700 font-medium hover:bg-green-50 transition">
+                    Farm wählen
+                </a>
+            </div>
+        </div>
+        <p class="text-center text-xs text-gray-400 mt-8">Online-Zahlung und Abo-Verwaltung folgen in Kürze (Stripe). Bis dahin ist der Free-Tarif voll nutzbar.</p>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="py-16 bg-green-800 text-white">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-2xl sm:text-3xl font-bold mb-4">Bereit für mehr Übersicht im Betrieb?</h2>
+        <p class="text-green-100 mb-8 max-w-xl mx-auto">Erstellen Sie in zwei Minuten einen Betrieb, laden Sie Ihr Team ein und erfassen Sie den ersten Tankvorgang.</p>
+        <a href="/register" class="inline-flex justify-center items-center min-h-[48px] px-8 py-3 rounded-lg bg-white text-green-800 font-semibold hover:bg-green-50 transition">
+            Jetzt kostenlos registrieren
+        </a>
+    </div>
+</section>
+{% endblock %}

@@ -1,6 +1,6 @@
 """Fuel entry listing and mutations for the active group."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session, joinedload
 
@@ -65,6 +65,8 @@ def create_fuel_entry(
         user_id=user_id,
         fuel_amount_l=data.fuel_amount_l,
         usage_reading=data.usage_reading,
+        full_tank=data.full_tank,
+        total_cost_eur=data.total_cost_eur,
         entry_date=data.entry_date,
         notes=data.notes,
     )
@@ -79,12 +81,12 @@ def apply_fuel_entry_update(
 ) -> None:
     for name, value in data.model_dump(exclude_unset=True).items():
         setattr(entry, name, value)
-    entry.updated_at = datetime.now(timezone.utc)
+    entry.updated_at = datetime.now(UTC)
     db.commit()
     db.refresh(entry)
 
 
 def soft_delete_fuel_entry(db: Session, entry: FuelEntry) -> None:
-    entry.deleted_at = datetime.now(timezone.utc)
+    entry.deleted_at = datetime.now(UTC)
     db.commit()
     db.refresh(entry)

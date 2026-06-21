@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf_field with context %}
+
+{% block title %}Maintenance – TankApp{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">Maintenance</h1>
+        {% if can_edit %}
+        <a href="/maintenance/new" class="inline-flex justify-center items-center min-h-[44px] px-4 py-2 rounded-md bg-green-700 text-white text-sm font-medium hover:bg-green-800 transition">
+            Add record
+        </a>
+        {% endif %}
+    </div>
+
+    <div id="maintenance-list" class="bg-white rounded-lg shadow overflow-hidden">
+        {% if logs %}
+        <ul class="divide-y divide-gray-200">
+            {% for log in logs %}
+            <li class="px-6 py-4 flex flex-wrap gap-4 justify-between items-start">
+                <div class="min-w-0 flex-1">
+                    <p class="font-medium text-gray-900">{{ log.service_date }} · {{ log.vehicle.name }}</p>
+                    <p class="text-sm text-gray-700 mt-1">{{ log.description }}</p>
+                    <p class="text-sm text-gray-600 mt-1">
+                        {% if log.usage_reading is not none %}Reading {{ log.usage_reading }}{% endif %}
+                        {% if log.cost_eur is not none %} · €{{ '%.2f'|format(log.cost_eur) }}{% endif %}
+                    </p>
+                    {% if log.next_service_date or log.next_service_usage is not none %}
+                    <p class="text-sm text-amber-700 mt-1">
+                        Next:
+                        {% if log.next_service_date %}{{ log.next_service_date }}{% endif %}
+                        {% if log.next_service_usage is not none %} · at {{ log.next_service_usage }}{% endif %}
+                    </p>
+                    {% endif %}
+                    <p class="text-sm text-gray-500 mt-1">Logged by {{ log.user.name }}</p>
+                </div>
+                <div class="flex flex-wrap gap-2 shrink-0">
+                    {% if can_edit %}
+                    <a href="/maintenance/{{ log.id }}/edit" class="text-sm text-green-700 hover:text-green-900 font-medium">Edit</a>
+                    {% endif %}
+                    {% if can_delete %}
+                    <form method="post" action="/maintenance/{{ log.id }}/delete" class="inline" x-data="{ submitting: false }" @submit="if (!confirm('Remove this maintenance record?')) { $event.preventDefault(); return; } submitting = true">
+                        {{ csrf_field() }}
+                        <button type="submit" :disabled="submitting" class="text-sm text-red-600 hover:text-red-800 font-medium disabled:opacity-60">Delete</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="px-6 py-10 text-gray-500 text-sm">No maintenance records yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

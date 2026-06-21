@@ -3,12 +3,19 @@ from fastapi.responses import RedirectResponse
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
+from app.auth import clear_session_cookie
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.flash import set_flash
 from app.models import User
+from app.responses import not_found_response
 from app.schemas import PasswordChange, UserUpdate, first_validation_error_message
 from app.services import profile as profile_service
+from app.services.sessions import (
+    list_active_sessions,
+    revoke_all_user_sessions,
+    revoke_session,
+)
 from app.templating import templates
 
 router = APIRouter()
@@ -17,9 +24,19 @@ router = APIRouter()
 @router.get("/profile")
 async def profile_page(
     request: Request,
-    _user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    return templates.TemplateResponse(request, "profile.html", context={})
+    current_session_id = request.state.session_data.get("session_id")
+    sessions = list_active_sessions(db, user.id)
+    return templates.TemplateResponse(
+        request,
+        "profile.html",
+        context={
+            "sessions": sessions,
+            "current_session_id": current_session_id,
+        },
+    )
 
 
 @router.post("/profile")
@@ -42,7 +59,9 @@ async def profile_update(
     err = profile_service.update_user_profile(db, user, data)
     if err:
         return templates.TemplateResponse(
-            request, "profile.html", context={"profile_error": err},
+            request,
+            "profile.html",
+            context={"profile_error": err},
         )
 
     response = RedirectResponse(url="/profile", status_code=303)
@@ -75,9 +94,53 @@ async def profile_change_password(
     err = profile_service.change_user_password(db, user, data)
     if err:
         return templates.TemplateResponse(
-            request, "profile.html", context={"password_error": err},
+            request,
+            "profile.html",
+            context={"password_error": err},
         )
+
+    current_session_id = request.state.session_data.get("session_id")
+    revoke_all_user_sessions(db, user.id, except_session_id=current_session_id)
+    db.commit()
 
     response = RedirectResponse(url="/profile", status_code=303)
     set_flash(response, "Password changed", category="success")
+    return response
+
+
+@router.post("/profile/sessions/{session_id}/revoke")
+async def revoke_profile_session(
+    session_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    sessions = list_active_sessions(db, user.id)
+    if not any(session.id == session_id for session in sessions):
+        return not_found_response()
+
+    revoke_session(db, session_id)
+    db.commit()
+
+    if request.state.session_data.get("session_id") == session_id:
+        response = RedirectResponse(url="/login", status_code=303)
+        clear_session_cookie(response)
+        return response
+
+    response = RedirectResponse(url="/profile", status_code=303)
+    set_flash(response, "Session revoked.", category="success")
+    return response
+
+
+@router.post("/profile/sessions/revoke-all")
+async def revoke_all_profile_sessions(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    current_session_id = request.state.session_data.get("session_id")
+    revoke_all_user_sessions(db, user.id, except_session_id=current_session_id)
+    db.commit()
+    response = RedirectResponse(url="/profile", status_code=303)
+    set_flash(response, "Other sessions signed out.", category="success")
     return response

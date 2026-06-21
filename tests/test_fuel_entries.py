@@ -1,11 +1,10 @@
 """Tests for Phase 9: Fuel entries CRUD."""
 
-from datetime import date, datetime, timedelta, timezone
-
+from datetime import UTC, date, datetime, timedelta
 
 from app.models import FuelEntry, Vehicle
-from tests.conftest import create_authenticated_group
 
+from tests.conftest import create_authenticated_group
 
 
 class TestListFuelEntries:
@@ -31,7 +30,12 @@ class TestListFuelEntries:
         assert response.headers.get("location") == "/groups"
 
     async def test_list_fuel_entries_returns_200(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
     ):
         create_authenticated_group(
             client,
@@ -54,8 +58,12 @@ class TestListFuelEntries:
         auth_cookie,
     ):
         user = create_test_user()
-        g_a = create_test_group(name="Farm A", invite_code="FARM-AAAAA", created_by=user.id)
-        g_b = create_test_group(name="Farm B", invite_code="FARM-BBBBB", created_by=user.id)
+        g_a = create_test_group(
+            name="Farm A", invite_code="FARM-AAAAA", created_by=user.id
+        )
+        g_b = create_test_group(
+            name="Farm B", invite_code="FARM-BBBBB", created_by=user.id
+        )
         create_test_user_group(user.id, g_a.id, role="admin")
         create_test_user_group(user.id, g_b.id, role="admin")
         v_a = create_test_vehicle(group_id=g_a.id, name="Tractor A")
@@ -99,7 +107,7 @@ class TestListFuelEntries:
             auth_cookie,
         )
         v = create_test_vehicle(group_id=group.id)
-        e_vis = create_test_fuel_entry(
+        create_test_fuel_entry(
             vehicle_id=v.id,
             group_id=group.id,
             user_id=user.id,
@@ -114,7 +122,7 @@ class TestListFuelEntries:
             usage_reading=11.0,
         )
         db.query(FuelEntry).filter(FuelEntry.id == e_del.id).update(
-            {"deleted_at": datetime.now(timezone.utc)}
+            {"deleted_at": datetime.now(UTC)}
         )
         db.commit()
 
@@ -158,7 +166,7 @@ class TestListFuelEntries:
             usage_reading=2.0,
         )
         db.query(Vehicle).filter(Vehicle.id == v_gone.id).update(
-            {"deleted_at": datetime.now(timezone.utc)}
+            {"deleted_at": datetime.now(UTC)}
         )
         db.commit()
 
@@ -443,7 +451,7 @@ class TestCreateFuelEntry:
         )
         v = create_test_vehicle(group_id=group.id)
         db.query(Vehicle).filter(Vehicle.id == v.id).update(
-            {"deleted_at": datetime.now(timezone.utc)}
+            {"deleted_at": datetime.now(UTC)}
         )
         db.commit()
         d = date.today()
@@ -908,7 +916,7 @@ class TestEditFuelEntry:
             user_id=user.id,
         )
         db.query(FuelEntry).filter(FuelEntry.id == e.id).update(
-            {"deleted_at": datetime.now(timezone.utc)}
+            {"deleted_at": datetime.now(UTC)}
         )
         db.commit()
         d = date.today()

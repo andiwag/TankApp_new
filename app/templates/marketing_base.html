@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="{% block meta_description %}TankApp – Kraftstoff- und Flottenverwaltung für landwirtschaftliche Betriebe in Österreich.{% endblock %}">
+    <title>{% block title %}TankApp{% endblock %}</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#15803d">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+</head>
+<body class="bg-white min-h-screen flex flex-col text-gray-900">
+
+    <header class="border-b border-gray-100 bg-white/90 backdrop-blur sticky top-0 z-10" x-data="{ open: false }">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="/" class="font-bold text-xl text-green-800 tracking-tight">TankApp</a>
+
+                <nav class="hidden md:flex items-center gap-8 text-sm font-medium">
+                    <a href="/#features" class="text-gray-600 hover:text-green-700 transition">Funktionen</a>
+                    <a href="/#pricing" class="text-gray-600 hover:text-green-700 transition">Preise</a>
+                    <a href="/login" class="text-gray-600 hover:text-green-700 transition">Anmelden</a>
+                    <a href="/register" class="inline-flex items-center min-h-[44px] px-4 py-2 rounded-md bg-green-700 text-white hover:bg-green-800 transition">
+                        Kostenlos starten
+                    </a>
+                </nav>
+
+                <button @click="open = !open" class="md:hidden min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-gray-700" aria-label="Menü">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path x-show="!open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        <path x-show="open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div x-show="open" x-transition class="md:hidden pb-4 space-y-2 border-t border-gray-100 pt-3">
+                <a href="/#features" class="block py-2 text-gray-700">Funktionen</a>
+                <a href="/#pricing" class="block py-2 text-gray-700">Preise</a>
+                <a href="/login" class="block py-2 text-gray-700">Anmelden</a>
+                <a href="/register" class="block py-3 text-center rounded-md bg-green-700 text-white font-medium">Kostenlos starten</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-gray-50 border-t border-gray-200 mt-auto">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div class="flex flex-col sm:flex-row justify-between gap-6 text-sm text-gray-600">
+                <div>
+                    <p class="font-semibold text-gray-900 mb-1">TankApp</p>
+                    <p>Kraftstoff- und Flottenverwaltung für Betriebe.</p>
+                </div>
+                <div class="flex flex-wrap gap-x-6 gap-y-2">
+                    <a href="/impressum" class="hover:text-green-700 transition">Impressum</a>
+                    <a href="/datenschutz" class="hover:text-green-700 transition">Datenschutz</a>
+                    <a href="/agb" class="hover:text-green-700 transition">AGB</a>
+                    <a href="/login" class="hover:text-green-700 transition">Anmelden</a>
+                </div>
+            </div>
+            <p class="text-center text-xs text-gray-400 mt-8">&copy; 2026 TankApp</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,42 @@
+{% extends "marketing_base.html" %}
+
+{% block title %}AGB – TankApp{% endblock %}
+
+{% block content %}
+<article class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">Allgemeine Geschäftsbedingungen</h1>
+    <p class="text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-4 text-sm mb-8">
+        <strong>Hinweis:</strong> Rechtlich verbindliche AGB müssen für Ihr Unternehmen und die geplanten Tarife (Free, Pro, Farm) von einem Rechtsanwalt erstellt werden.
+    </p>
+    <div class="space-y-6 text-gray-700 text-sm leading-relaxed">
+        <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">1. Geltungsbereich</h2>
+            <p>Diese AGB gelten für die Nutzung der Software TankApp zwischen [Anbieter] und dem Kunden (Betrieb/Gruppe).</p>
+        </section>
+        <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">2. Leistungsbeschreibung</h2>
+            <p>TankApp ist eine webbasierte Anwendung zur Erfassung von Kraftstoffvorgängen, Fahrzeugen und Wartungsdaten. Der Funktionsumfang richtet sich nach dem gewählten Tarif (Free, Pro, Farm).</p>
+        </section>
+        <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">3. Vertragsschluss & Abo</h2>
+            <p>Der Vertrag kommt mit Registrierung und Wahl eines Tarifs zustande. Kostenpflichtige Abos verlängern sich monatlich, sofern nicht gekündigt. Zahlung über Stripe.</p>
+        </section>
+        <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">4. Preise & Umsatzsteuer</h2>
+            <p>Alle Preise verstehen sich zzgl. gesetzlicher Umsatzsteuer, sofern anwendbar. Bei berechtigtem Reverse Charge weist der Kunde die Steuer selbst aus.</p>
+        </section>
+        <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">5. Kündigung</h2>
+            <p>Kostenpflichtige Abos können jederzeit zum Ende der Abrechnungsperiode gekündigt werden (über das Kundenportal oder schriftlich).</p>
+        </section>
+        <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">6. Haftung & Verfügbarkeit</h2>
+            <p>Die Software wird mit branchenüblicher Sorgfalt betrieben. Haftungsbeschränkungen gemäß österreichischem Recht – Details durch Anwalt ausformulieren.</p>
+        </section>
+        <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">7. Anwendbares Recht</h2>
+            <p>Österreichisches Recht. Gerichtsstand [Ort], soweit zulässig.</p>
+        </section>
+    </div>
+</article>
+{% endblock %}

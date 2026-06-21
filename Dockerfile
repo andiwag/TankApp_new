@@ -9,6 +9,6 @@ COPY . .
 
 EXPOSE 8000
 
-RUN chmod +x scripts/start.sh
+RUN chmod +x scripts/start.sh scripts/migrate.sh
 
 CMD ["scripts/start.sh"]

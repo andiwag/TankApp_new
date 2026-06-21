@@ -1,6 +1,6 @@
 """Vehicle listing and mutations for the active group."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
@@ -60,11 +60,11 @@ def apply_vehicle_update(db: Session, vehicle: Vehicle, data: VehicleUpdate) -> 
         vehicle.name = data.name
     if data.fuel_type is not None:
         vehicle.fuel_type = data.fuel_type.value
-    vehicle.updated_at = datetime.now(timezone.utc)
+    vehicle.updated_at = datetime.now(UTC)
     db.commit()
     db.refresh(vehicle)
 
 
 def soft_delete_vehicle(db: Session, vehicle: Vehicle) -> None:
-    vehicle.deleted_at = datetime.now(timezone.utc)
+    vehicle.deleted_at = datetime.now(UTC)
     db.flush()

@@ -1,0 +1,48 @@
+{% extends "marketing_base.html" %}
+
+{% block title %}Datenschutz – TankApp{% endblock %}
+
+{% block content %}
+<article class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">Datenschutzerklärung</h1>
+    <p class="text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-4 text-sm mb-8">
+        <strong>Hinweis:</strong> Diese Vorlage muss von einem Rechtsanwalt oder Datenschutzexperten an Ihr konkretes Setup angepasst werden (Hosting, Stripe, E-Mail, Cookies).
+    </p>
+    <div class="space-y-6 text-gray-700 text-sm leading-relaxed">
+        <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">1. Verantwortlicher</h2>
+            <p>[Name/Firma, Adresse, E-Mail – siehe Impressum]</p>
+        </section>
+        <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">2. Welche Daten wir verarbeiten</h2>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Registrierungsdaten (Name, E-Mail, Passwort-Hash)</li>
+                <li>Betriebs- und Fahrzeugdaten, die Sie in TankApp eingeben</li>
+                <li>Technische Protokolle (IP, Browser, Session-Cookies)</li>
+                <li>Bei Zahlungen: Abrechnungsdaten über Stripe (Zahlungsmittel, Rechnungsadresse)</li>
+            </ul>
+        </section>
+        <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">3. Rechtsgrundlagen (DSGVO)</h2>
+            <p>Vertragserfüllung (Art. 6 Abs. 1 lit. b), berechtigtes Interesse (Art. 6 Abs. 1 lit. f), Einwilligung wo erforderlich (Art. 6 Abs. 1 lit. a).</p>
+        </section>
+        <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">4. Auftragsverarbeiter</h2>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Hosting (z. B. Northflank) – Server in der EU</li>
+                <li>Stripe Payments Europe – Zahlungsabwicklung</li>
+                <li>E-Mail-Anbieter (z. B. Brevo) – Passwort-Reset, Benachrichtigungen</li>
+            </ul>
+            <p class="mt-2">Mit jedem Auftragsverarbeiter ist ein AVV (Auftragsverarbeitungsvertrag) abzuschließen.</p>
+        </section>
+        <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">5. Ihre Rechte</h2>
+            <p>Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit, Widerspruch, Beschwerde bei der Österreichischen Datenschutzbehörde (<a href="https://www.dsb.gv.at" class="text-green-700">dsb.gv.at</a>).</p>
+        </section>
+        <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">6. Cookies</h2>
+            <p>Session-Cookie (Anmeldung), CSRF-Schutz-Cookie, optional Flash-Meldungen. Keine Werbe-Tracking-Cookies.</p>
+        </section>
+    </div>
+</article>
+{% endblock %}

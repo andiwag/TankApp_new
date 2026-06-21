@@ -7,15 +7,17 @@ from sqlalchemy.orm import Session
 
 from app.audit import log_event
 from app.auth import (
+    clear_session_cookie,
     create_password_reset_token,
     decode_password_reset_token,
+    decode_session_cookie,
     hash_password,
-    set_session_cookie,
     verify_password,
     verify_reset_token_data,
 )
 from app.config import settings
 from app.database import get_db
+from app.mail import send_password_reset_email
 from app.models import User
 from app.rate_limit import (
     RATE_LIMIT_MESSAGE,
@@ -29,7 +31,11 @@ from app.schemas import (
     UserCreate,
     first_validation_error_message,
 )
-from app.mail import send_password_reset_email
+from app.services.sessions import (
+    revoke_all_user_sessions,
+    revoke_session,
+    start_user_session,
+)
 from app.templating import templates
 
 logger = logging.getLogger(__name__)
@@ -49,10 +55,14 @@ def _rate_limit_key(request: Request, action: str, identifier: str) -> str:
 
 def _get_reset_user(db: Session, token_data: dict) -> User | None:
     """Look up the user from decoded token data and verify the password-hash fingerprint."""
-    user = db.query(User).filter(
-        User.id == token_data["user_id"],
-        User.deleted_at == None,  # noqa: E711
-    ).first()
+    user = (
+        db.query(User)
+        .filter(
+            User.id == token_data["user_id"],
+            User.deleted_at == None,  # noqa: E711
+        )
+        .first()
+    )
     if not user:
         return None
     if not verify_reset_token_data(user.password_hash, token_data):
@@ -106,14 +116,16 @@ async def reset_password_page(
     data = decode_password_reset_token(token)
     if not data:
         return templates.TemplateResponse(
-            request, "reset_password.html",
+            request,
+            "reset_password.html",
             context={"error": _INVALID_RESET_LINK},
         )
 
     user = _get_reset_user(db, data)
     if not user:
         return templates.TemplateResponse(
-            request, "reset_password.html",
+            request,
+            "reset_password.html",
             context={"error": _INVALID_RESET_LINK},
         )
 
@@ -143,20 +155,26 @@ async def login(
             status_code=429,
         )
 
-    user = db.query(User).filter(
-        User.email == email,
-        User.deleted_at == None,  # noqa: E711
-    ).first()
+    user = (
+        db.query(User)
+        .filter(
+            User.email == email,
+            User.deleted_at == None,  # noqa: E711
+        )
+        .first()
+    )
 
     if not user or not verify_password(password, user.password_hash):
         login_rate_limiter.record_attempt(rate_limit_key)
         return templates.TemplateResponse(
-            request, "login.html", context={"error": "Invalid email or password"},
+            request,
+            "login.html",
+            context={"error": "Invalid email or password"},
         )
 
     login_rate_limiter.clear(rate_limit_key)
     response = RedirectResponse(url="/dashboard", status_code=303)
-    set_session_cookie(response, user.id)
+    start_user_session(response, db, user.id)
     return response
 
 
@@ -178,7 +196,6 @@ async def register(
             context={"error": RATE_LIMIT_MESSAGE},
             status_code=429,
         )
-    register_rate_limiter.record_attempt(rate_limit_key)
 
     try:
         user_data = UserCreate(
@@ -186,15 +203,18 @@ async def register(
         )
     except ValidationError as exc:
         return templates.TemplateResponse(
-            request, "register.html",
+            request,
+            "register.html",
             context={"error": first_validation_error_message(exc)},
         )
 
     normalized_email = user_data.email.lower()
     existing = db.query(User).filter(User.email == normalized_email).first()
     if existing:
+        register_rate_limiter.record_attempt(rate_limit_key)
         return templates.TemplateResponse(
-            request, "register.html",
+            request,
+            "register.html",
             context={"error": EMAIL_DUPLICATE_MESSAGE},
         )
 
@@ -211,7 +231,7 @@ async def register(
 
     register_rate_limiter.clear(rate_limit_key)
     response = RedirectResponse(url="/groups", status_code=303)
-    set_session_cookie(response, user.id)
+    start_user_session(response, db, user.id)
     return response
 
 
@@ -233,10 +253,14 @@ async def forgot_password(
         )
     password_reset_rate_limiter.record_attempt(rate_limit_key)
 
-    user = db.query(User).filter(
-        User.email == email,
-        User.deleted_at == None,  # noqa: E711
-    ).first()
+    user = (
+        db.query(User)
+        .filter(
+            User.email == email,
+            User.deleted_at == None,  # noqa: E711
+        )
+        .first()
+    )
 
     if user:
         token = create_password_reset_token(user.id, user.password_hash)
@@ -258,14 +282,16 @@ async def reset_password(
     data = decode_password_reset_token(token)
     if not data:
         return templates.TemplateResponse(
-            request, "reset_password.html",
+            request,
+            "reset_password.html",
             context={"error": _INVALID_RESET_LINK},
         )
 
     user = _get_reset_user(db, data)
     if not user:
         return templates.TemplateResponse(
-            request, "reset_password.html",
+            request,
+            "reset_password.html",
             context={"error": _INVALID_RESET_LINK},
         )
 
@@ -277,23 +303,26 @@ async def reset_password(
         )
     except ValidationError as exc:
         return templates.TemplateResponse(
-            request, "reset_password.html",
+            request,
+            "reset_password.html",
             context={"error": first_validation_error_message(exc), "token": token},
         )
 
     user.password_hash = hash_password(new_password)
+    revoke_all_user_sessions(db, user.id)
     db.commit()
 
     return RedirectResponse(url="/login", status_code=303)
 
 
 @router.post("/logout")
-async def logout():
+async def logout(request: Request, db: Session = Depends(get_db)):
+    cookie = request.cookies.get(settings.SESSION_COOKIE_NAME)
+    if cookie:
+        data = decode_session_cookie(cookie)
+        if data and data.get("session_id"):
+            revoke_session(db, data["session_id"])
+            db.commit()
     response = RedirectResponse(url="/login", status_code=303)
-    response.delete_cookie(
-        settings.SESSION_COOKIE_NAME,
-        httponly=True,
-        samesite="lax",
-        secure=settings.is_production,
-    )
+    clear_session_cookie(response)
     return response

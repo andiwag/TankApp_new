@@ -35,3 +35,24 @@ async def send_password_reset_email(to_email: str, reset_url: str) -> None:
         await FastMail(_mail_connection()).send_message(message)
     except Exception:
         logger.exception("Failed to send password reset email to %s", to_email)
+
+
+async def send_service_reminder_email(
+    to_email: str,
+    *,
+    vehicle_name: str,
+    description: str,
+    due_detail: str,
+) -> None:
+    message = MessageSchema(
+        subject=f"TankApp service reminder: {vehicle_name}",
+        recipients=[to_email],
+        body=(
+            f"Service reminder for {vehicle_name}.\n\n"
+            f"Task: {description}\n"
+            f"Due: {due_detail}\n\n"
+            "Log in to TankApp to review maintenance records."
+        ),
+        subtype=MessageType.plain,
+    )
+    await FastMail(_mail_connection()).send_message(message)

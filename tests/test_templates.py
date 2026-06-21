@@ -2,7 +2,6 @@
 
 import json
 
-
 FLASH_COOKIE_NAME = "tankapp_flash"
 
 
@@ -51,7 +50,12 @@ class TestAuthenticatedPageElements:
         assert "Alice Farmer" in response.text
 
     async def test_authenticated_page_shows_active_group(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
     ):
         user = create_test_user()
         group = create_test_group(name="Green Farm", created_by=user.id)

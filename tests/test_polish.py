@@ -27,7 +27,7 @@ async def _query_counter() -> AsyncIterator[list[str]]:
 def _assert_has_submit_loading_state(html: str) -> None:
     assert "x-data" in html
     assert "@submit" in html
-    assert ":disabled=\"submitting\"" in html
+    assert ':disabled="submitting"' in html
 
 
 class TestClientSideValidation:
@@ -152,7 +152,7 @@ class TestQueryCounts:
             response = await client.get("/dashboard")
 
         assert response.status_code == 200
-        assert len(statements) <= 6
+        assert len(statements) <= 10
 
     async def test_no_n_plus_1_queries_on_vehicle_list(
         self, client, auth_group, create_test_vehicle
@@ -165,7 +165,7 @@ class TestQueryCounts:
             response = await client.get("/vehicles")
 
         assert response.status_code == 200
-        assert len(statements) <= 4
+        assert len(statements) <= 6
 
     async def test_no_n_plus_1_queries_on_fuel_entry_list(
         self, client, auth_group, create_test_vehicle, create_test_fuel_entry
@@ -185,7 +185,7 @@ class TestQueryCounts:
             response = await client.get("/fuel")
 
         assert response.status_code == 200
-        assert len(statements) <= 4
+        assert len(statements) <= 6
 
 
 class TestRateLimiting:

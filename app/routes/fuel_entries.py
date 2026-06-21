@@ -40,6 +40,23 @@ def _parse_date(value: str, field_label: str) -> date:
         raise ValueError(f"{field_label} must be a valid date") from exc
 
 
+def _parse_full_tank(value: str) -> bool:
+    return value in ("1", "on", "true", "yes")
+
+
+def _parse_optional_float(value: str, field_label: str) -> float | None:
+    stripped = value.strip()
+    if not stripped:
+        return None
+    try:
+        parsed = float(stripped)
+    except ValueError as exc:
+        raise ValueError(f"{field_label} must be a number") from exc
+    if parsed < 0:
+        raise ValueError(f"{field_label} must not be negative")
+    return parsed
+
+
 def _fuel_form_response(
     request: Request,
     *,
@@ -53,6 +70,8 @@ def _fuel_form_response(
     form_usage_reading: str = "",
     form_entry_date: str = "",
     form_notes: str = "",
+    form_full_tank: bool = True,
+    form_total_cost_eur: str = "",
 ):
     return templates.TemplateResponse(
         request,
@@ -68,6 +87,8 @@ def _fuel_form_response(
             "form_usage_reading": form_usage_reading,
             "form_entry_date": form_entry_date,
             "form_notes": form_notes,
+            "form_full_tank": form_full_tank,
+            "form_total_cost_eur": form_total_cost_eur,
         },
     )
 
@@ -107,6 +128,8 @@ async def create_fuel_entry_post(
     usage_reading: str = Form(""),
     entry_date: str = Form(""),
     notes: str = Form(""),
+    full_tank: str = Form("1"),
+    total_cost_eur: str = Form(""),
     db: Session = Depends(get_db),
     group: Group = Depends(get_active_group),
     user=Depends(require_role(Role.contributor.value)),
@@ -124,6 +147,8 @@ async def create_fuel_entry_post(
             form_usage_reading=usage_reading,
             form_entry_date=entry_date,
             form_notes=notes,
+            form_full_tank=_parse_full_tank(full_tank),
+            form_total_cost_eur=total_cost_eur,
         )
 
     try:
@@ -132,6 +157,8 @@ async def create_fuel_entry_post(
             fuel_amount_l=_parse_float(fuel_amount_l, "Fuel amount"),
             usage_reading=_parse_float(usage_reading, "Usage reading"),
             entry_date=_parse_date(entry_date, "Entry date"),
+            full_tank=_parse_full_tank(full_tank),
+            total_cost_eur=_parse_optional_float(total_cost_eur, "Total cost"),
             notes=notes.strip() or None,
         )
     except ValueError as exc:
@@ -139,9 +166,7 @@ async def create_fuel_entry_post(
     except ValidationError as exc:
         return _error_form(first_validation_error_message(exc))
 
-    vehicle = vehicle_service.get_active_vehicle_in_group(
-        db, data.vehicle_id, group.id
-    )
+    vehicle = vehicle_service.get_active_vehicle_in_group(db, data.vehicle_id, group.id)
     if not vehicle:
         return _error_form("Choose a valid vehicle from this group.")
 
@@ -175,10 +200,6 @@ async def edit_fuel_entry_form(
 async def edit_fuel_entry_post(
     request: Request,
     entry_id: int,
-    fuel_amount_l: str = Form(""),
-    usage_reading: str = Form(""),
-    entry_date: str = Form(""),
-    notes: str = Form(""),
     db: Session = Depends(get_db),
     group: Group = Depends(get_active_group),
     _user=Depends(require_role(Role.contributor.value)),
@@ -187,13 +208,23 @@ async def edit_fuel_entry_post(
     if not entry:
         return not_found_response()
 
+    form = await request.form()
     try:
-        data = FuelEntryUpdate(
-            fuel_amount_l=_parse_float(fuel_amount_l, "Fuel amount"),
-            usage_reading=_parse_float(usage_reading, "Usage reading"),
-            entry_date=_parse_date(entry_date, "Entry date"),
-            notes=notes.strip() or None,
-        )
+        update_fields: dict = {
+            "fuel_amount_l": _parse_float(form.get("fuel_amount_l", ""), "Fuel amount"),
+            "usage_reading": _parse_float(
+                form.get("usage_reading", ""), "Usage reading"
+            ),
+            "entry_date": _parse_date(form.get("entry_date", ""), "Entry date"),
+            "notes": (form.get("notes", "") or "").strip() or None,
+        }
+        if "full_tank" in form:
+            update_fields["full_tank"] = _parse_full_tank(form["full_tank"])
+        if "total_cost_eur" in form:
+            update_fields["total_cost_eur"] = _parse_optional_float(
+                form.get("total_cost_eur", ""), "Total cost"
+            )
+        data = FuelEntryUpdate(**update_fields)
     except (ValueError, ValidationError) as exc:
         msg = (
             str(exc)

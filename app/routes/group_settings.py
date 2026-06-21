@@ -23,9 +23,7 @@ def _settings_response(
     *,
     error: str | None = None,
 ):
-    context = settings_service.group_settings_context(
-        db, request.state.user, group
-    )
+    context = settings_service.group_settings_context(db, request.state.user, group)
     context["error"] = error
     return templates.TemplateResponse(
         request,

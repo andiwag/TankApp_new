@@ -4,7 +4,6 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.audit import log_event
-from app.auth import set_session_cookie
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models import User
@@ -12,6 +11,7 @@ from app.responses import forbidden_response, not_found_response
 from app.schemas import GroupCreate, first_validation_error_message
 from app.services import groups as group_service
 from app.services.invite_codes import InviteCodeGenerationError
+from app.services.sessions import refresh_session_cookie
 from app.templating import templates
 
 router = APIRouter()
@@ -63,7 +63,9 @@ async def create_group(
     except ValidationError as exc:
         session_data = request.state.session_data
         return _render_groups_with_error(
-            request, db, user,
+            request,
+            db,
+            user,
             session_data.get("active_group_id"),
             first_validation_error_message(exc),
         )
@@ -84,7 +86,13 @@ async def create_group(
     log_event(db, group.id, user.id, "group.create", "group", group.id)
     db.commit()
     db.refresh(group)
-    set_session_cookie(response, user.id, group.id)
+    session_data = request.state.session_data
+    refresh_session_cookie(
+        response,
+        user.id,
+        group.id,
+        session_id=session_data["session_id"],
+    )
     return response
 
 
@@ -102,14 +110,22 @@ async def join_group(
         group = group_service.join_group_by_invite_code(db, user, invite_code)
     except group_service.GroupActionError as exc:
         return _render_groups_with_error(
-            request, db, user, active_group_id,
+            request,
+            db,
+            user,
+            active_group_id,
             str(exc),
         )
 
     response = RedirectResponse(url="/groups", status_code=303)
     log_event(db, group.id, user.id, "group.join", "group", group.id)
     db.commit()
-    set_session_cookie(response, user.id, group.id)
+    refresh_session_cookie(
+        response,
+        user.id,
+        group.id,
+        session_id=session_data["session_id"],
+    )
     return response
 
 
@@ -125,7 +141,13 @@ async def switch_group(
         return forbidden_response()
 
     response = RedirectResponse(url="/dashboard", status_code=303)
-    set_session_cookie(response, user.id, group.id)
+    session_data = request.state.session_data
+    refresh_session_cookie(
+        response,
+        user.id,
+        group.id,
+        session_id=session_data["session_id"],
+    )
     return response
 
 
@@ -141,7 +163,9 @@ async def leave_group(
     except group_service.GroupActionError as exc:
         session_data = request.state.session_data
         return _render_groups_with_error(
-            request, db, user,
+            request,
+            db,
+            user,
             session_data.get("active_group_id"),
             str(exc),
         )
@@ -153,7 +177,12 @@ async def leave_group(
     log_event(db, group_id, user.id, "group.leave", "group", group_id)
     db.commit()
     if session_data.get("active_group_id") == group_id:
-        set_session_cookie(response, user.id, None)
+        refresh_session_cookie(
+            response,
+            user.id,
+            None,
+            session_id=session_data["session_id"],
+        )
     return response
 
 
@@ -178,5 +207,10 @@ async def delete_group(
     db.commit()
     db.refresh(group)
     if session_data.get("active_group_id") == group_id:
-        set_session_cookie(response, user.id, None)
+        refresh_session_cookie(
+            response,
+            user.id,
+            None,
+            session_id=session_data["session_id"],
+        )
     return response

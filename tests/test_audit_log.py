@@ -3,6 +3,7 @@
 from datetime import date
 
 from app.models import AuditLog, FuelEntry, User, Vehicle
+
 from tests.conftest import create_authenticated_group
 
 
@@ -84,9 +85,7 @@ class TestAuditLoggedEvents:
         joiner = create_test_user(email="joiner@farm.com", name="Joiner")
         auth_cookie(client, joiner.id)
 
-        response = await client.post(
-            "/groups/join", data={"invite_code": "FARM-JOIN1"}
-        )
+        response = await client.post("/groups/join", data={"invite_code": "FARM-JOIN1"})
         assert response.status_code == 303
 
         log = _audit_log(db, "group.join")

@@ -1,6 +1,6 @@
 """Group listing and membership mutations."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
@@ -15,9 +15,7 @@ class GroupActionError(Exception):
     """User-recoverable group action error for SSR form rendering."""
 
 
-def user_groups_context(
-    db: Session, user: User, active_group_id: int | None
-) -> dict:
+def user_groups_context(db: Session, user: User, active_group_id: int | None) -> dict:
     rows = (
         db.query(Group, UserGroup.role)
         .join(UserGroup, UserGroup.group_id == Group.id)
@@ -72,9 +70,7 @@ def join_group_by_invite_code(db: Session, user: User, invite_code: str) -> Grou
     return group
 
 
-def switchable_group_for_user(
-    db: Session, user: User, group_id: int
-) -> Group | None:
+def switchable_group_for_user(db: Session, user: User, group_id: int) -> Group | None:
     if not get_membership(db, user.id, group_id):
         return None
     return (
@@ -92,10 +88,7 @@ def leave_group(db: Session, user: User, group_id: int) -> bool:
     if not membership:
         return False
 
-    if (
-        membership.role == Role.admin.value
-        and count_group_admins(db, group_id) <= 1
-    ):
+    if membership.role == Role.admin.value and count_group_admins(db, group_id) <= 1:
         raise GroupActionError(
             "You cannot leave as the sole admin. Promote another admin first."
         )
@@ -105,9 +98,7 @@ def leave_group(db: Session, user: User, group_id: int) -> bool:
     return True
 
 
-def soft_delete_group_as_admin(
-    db: Session, user: User, group_id: int
-) -> Group | None:
+def soft_delete_group_as_admin(db: Session, user: User, group_id: int) -> Group | None:
     membership = get_membership(db, user.id, group_id)
     if not membership or membership.role != Role.admin.value:
         raise PermissionError("Forbidden")
@@ -123,6 +114,6 @@ def soft_delete_group_as_admin(
     if not group:
         return None
 
-    group.deleted_at = datetime.now(timezone.utc)
+    group.deleted_at = datetime.now(UTC)
     db.flush()
     return group

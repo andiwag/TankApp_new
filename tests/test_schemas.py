@@ -1,8 +1,6 @@
 from datetime import date, timedelta
 
 import pytest
-from pydantic import ValidationError
-
 from app.schemas import (
     FuelEntryCreate,
     GroupCreate,
@@ -11,7 +9,7 @@ from app.schemas import (
     UserCreate,
     VehicleCreate,
 )
-
+from pydantic import ValidationError
 
 # ── UserCreate ───────────────────────────────────────────────────────────────
 
@@ -96,6 +94,30 @@ class TestFuelEntryCreate:
         )
         assert e.fuel_amount_l == 45.5
         assert e.usage_reading == 12000.0
+        assert e.full_tank is True
+        assert e.total_cost_eur is None
+
+    def test_fuel_entry_create_partial_fill_and_cost(self):
+        e = FuelEntryCreate(
+            vehicle_id=1,
+            fuel_amount_l=20.0,
+            usage_reading=500.0,
+            entry_date=date(2025, 6, 1),
+            full_tank=False,
+            total_cost_eur=30.0,
+        )
+        assert e.full_tank is False
+        assert e.total_cost_eur == 30.0
+
+    def test_fuel_entry_create_negative_cost_fails(self):
+        with pytest.raises(ValidationError, match="total_cost_eur"):
+            FuelEntryCreate(
+                vehicle_id=1,
+                fuel_amount_l=30.0,
+                usage_reading=100.0,
+                entry_date=date(2025, 1, 1),
+                total_cost_eur=-1.0,
+            )
 
     def test_fuel_entry_create_negative_amount_fails(self):
         with pytest.raises(ValidationError, match="fuel_amount_l"):

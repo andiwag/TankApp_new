@@ -1,6 +1,5 @@
 """Tests for Phase 10: User Profile Management."""
 
-
 from app.auth import verify_password
 from app.models import User
 
@@ -17,9 +16,7 @@ class TestProfilePage:
     async def test_get_profile_shows_current_name_and_email(
         self, client, create_test_user, auth_cookie
     ):
-        user = create_test_user(
-            email="farmer@example.com", name="Pat Farmer"
-        )
+        user = create_test_user(email="farmer@example.com", name="Pat Farmer")
         auth_cookie(client, user.id)
         response = await client.get("/profile")
         assert response.status_code == 200
@@ -33,9 +30,7 @@ class TestProfilePage:
 
 
 class TestProfileUpdate:
-    async def test_update_profile_name(
-        self, client, create_test_user, auth_cookie, db
-    ):
+    async def test_update_profile_name(self, client, create_test_user, auth_cookie, db):
         user = create_test_user(name="Old Name")
         auth_cookie(client, user.id)
         response = await client.post(
@@ -69,9 +64,7 @@ class TestProfileUpdate:
         self, client, create_test_user, auth_cookie, db
     ):
         create_test_user(email="taken@example.com", name="Other")
-        user = create_test_user(
-            email="mine@example.com", name="Me", password="pw"
-        )
+        user = create_test_user(email="mine@example.com", name="Me", password="pw")
         auth_cookie(client, user.id)
         response = await client.post(
             "/profile",

@@ -1,10 +1,8 @@
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 import pytest
-from sqlalchemy.exc import IntegrityError
-
 from app.models import AuditLog, FuelEntry, Group, User, UserGroup, Vehicle
-
+from sqlalchemy.exc import IntegrityError
 
 # ── User ─────────────────────────────────────────────────────────────────────
 
@@ -46,7 +44,7 @@ class TestUser:
         db.add(user)
         db.commit()
 
-        user.deleted_at = datetime.now(timezone.utc)
+        user.deleted_at = datetime.now(UTC)
         db.commit()
         db.refresh(user)
 
@@ -87,7 +85,7 @@ class TestGroup:
         db.add(group)
         db.commit()
 
-        group.deleted_at = datetime.now(timezone.utc)
+        group.deleted_at = datetime.now(UTC)
         db.commit()
         db.refresh(group)
 
@@ -125,9 +123,7 @@ class TestUserGroup:
         with pytest.raises(IntegrityError):
             db.commit()
 
-    def test_user_group_role_enum_values(
-        self, db, create_test_user, create_test_group
-    ):
+    def test_user_group_role_enum_values(self, db, create_test_user, create_test_group):
         user = create_test_user()
         group = create_test_group(created_by=user.id)
 
@@ -152,9 +148,7 @@ class TestVehicle:
         group = create_test_group(created_by=user.id)
         return group
 
-    def test_create_vehicle_valid(
-        self, db, create_test_user, create_test_group
-    ):
+    def test_create_vehicle_valid(self, db, create_test_user, create_test_group):
         group = self._setup(db, create_test_user, create_test_group)
         vehicle = Vehicle(
             group_id=group.id, name="John Deere", vtype="tractor", fuel_type="diesel"
@@ -216,9 +210,7 @@ class TestVehicle:
         db.refresh(v)
         assert v.usage_unit == "hours"
 
-    def test_vehicle_belongs_to_group(
-        self, db, create_test_user, create_test_group
-    ):
+    def test_vehicle_belongs_to_group(self, db, create_test_user, create_test_group):
         group = self._setup(db, create_test_user, create_test_group)
         v = Vehicle(
             group_id=group.id, name="Tractor", vtype="tractor", fuel_type="diesel"
@@ -236,7 +228,7 @@ class TestVehicle:
         db.add(v)
         db.commit()
 
-        v.deleted_at = datetime.now(timezone.utc)
+        v.deleted_at = datetime.now(UTC)
         db.commit()
         db.refresh(v)
         assert v.deleted_at is not None
@@ -344,7 +336,7 @@ class TestFuelEntry:
         db.add(entry)
         db.commit()
 
-        entry.deleted_at = datetime.now(timezone.utc)
+        entry.deleted_at = datetime.now(UTC)
         db.commit()
         db.refresh(entry)
         assert entry.deleted_at is not None
@@ -354,9 +346,7 @@ class TestFuelEntry:
 
 
 class TestAuditLog:
-    def test_create_audit_log_valid(
-        self, db, create_test_user, create_test_group
-    ):
+    def test_create_audit_log_valid(self, db, create_test_user, create_test_group):
         user = create_test_user()
         group = create_test_group(created_by=user.id)
 
@@ -386,8 +376,12 @@ class TestRelationships:
         self, db, create_test_user, create_test_group
     ):
         user = create_test_user()
-        g1 = create_test_group(name="Farm A", invite_code="FARM-AAAA1", created_by=user.id)
-        g2 = create_test_group(name="Farm B", invite_code="FARM-BBBB1", created_by=user.id)
+        g1 = create_test_group(
+            name="Farm A", invite_code="FARM-AAAA1", created_by=user.id
+        )
+        g2 = create_test_group(
+            name="Farm B", invite_code="FARM-BBBB1", created_by=user.id
+        )
 
         db.add(UserGroup(user_id=user.id, group_id=g1.id, role="admin"))
         db.add(UserGroup(user_id=user.id, group_id=g2.id, role="contributor"))
@@ -398,9 +392,7 @@ class TestRelationships:
         assert g1.id in group_ids
         assert g2.id in group_ids
 
-    def test_group_has_many_users_through_user_group(
-        self, db, create_test_group
-    ):
+    def test_group_has_many_users_through_user_group(self, db, create_test_group):
         u1 = User(email="u1@farm.com", name="U1", password_hash="h")
         u2 = User(email="u2@farm.com", name="U2", password_hash="h")
         db.add_all([u1, u2])
@@ -416,9 +408,7 @@ class TestRelationships:
         assert u1.id in user_ids
         assert u2.id in user_ids
 
-    def test_group_has_many_vehicles(
-        self, db, create_test_user, create_test_group
-    ):
+    def test_group_has_many_vehicles(self, db, create_test_user, create_test_group):
         user = create_test_user()
         group = create_test_group(created_by=user.id)
 
@@ -438,12 +428,20 @@ class TestRelationships:
         vehicle = create_test_vehicle(group_id=group.id)
 
         e1 = FuelEntry(
-            vehicle_id=vehicle.id, group_id=group.id, user_id=user.id,
-            fuel_amount_l=30.0, usage_reading=100.0, entry_date=date(2025, 1, 1),
+            vehicle_id=vehicle.id,
+            group_id=group.id,
+            user_id=user.id,
+            fuel_amount_l=30.0,
+            usage_reading=100.0,
+            entry_date=date(2025, 1, 1),
         )
         e2 = FuelEntry(
-            vehicle_id=vehicle.id, group_id=group.id, user_id=user.id,
-            fuel_amount_l=35.0, usage_reading=200.0, entry_date=date(2025, 2, 1),
+            vehicle_id=vehicle.id,
+            group_id=group.id,
+            user_id=user.id,
+            fuel_amount_l=35.0,
+            usage_reading=200.0,
+            entry_date=date(2025, 2, 1),
         )
         db.add_all([e1, e2])
         db.commit()
@@ -459,8 +457,12 @@ class TestRelationships:
         vehicle = create_test_vehicle(group_id=group.id)
 
         entry = FuelEntry(
-            vehicle_id=vehicle.id, group_id=group.id, user_id=user.id,
-            fuel_amount_l=40.0, usage_reading=300.0, entry_date=date(2025, 3, 1),
+            vehicle_id=vehicle.id,
+            group_id=group.id,
+            user_id=user.id,
+            fuel_amount_l=40.0,
+            usage_reading=300.0,
+            entry_date=date(2025, 3, 1),
         )
         db.add(entry)
         db.commit()

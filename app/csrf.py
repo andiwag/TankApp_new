@@ -52,14 +52,14 @@ async def validate_csrf(
     request: Request,
     csrf_protect: CsrfProtect = Depends(),
 ) -> None:
+    if request.url.path.startswith("/cron/"):
+        return
     if request.method.upper() not in UNSAFE_METHODS:
         return
     try:
         await csrf_protect.validate_csrf(request)
     except CsrfProtectError as exc:
-        raise HTTPException(
-            status_code=403, detail="CSRF validation failed"
-        ) from exc
+        raise HTTPException(status_code=403, detail="CSRF validation failed") from exc
 
 
 class CsrfTokenMiddleware(BaseHTTPMiddleware):

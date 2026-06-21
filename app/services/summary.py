@@ -59,14 +59,16 @@ def get_summary_context(db: Session, group_id: int, today: date | None = None) -
         ves = by_vehicle.get(v.id, [])
         total_liters = sum(e.fuel_amount_l for e in ves)
         entry_count = len(ves)
-        pairs = [(e.usage_reading, e.fuel_amount_l) for e in ves]
+        pairs = [(e.usage_reading, e.fuel_amount_l, e.full_tank) for e in ves]
         avg = average_consumption_for_vehicle(v.usage_unit, pairs)
         unit_label = consumption_unit_label(v.usage_unit)
+        total_cost = sum(e.total_cost_eur or 0.0 for e in ves)
         vehicle_rows.append(
             {
                 "vehicle_id": v.id,
                 "name": v.name,
                 "total_liters": total_liters,
+                "total_cost_eur": total_cost if total_cost > 0 else None,
                 "entry_count": entry_count,
                 "avg_consumption": avg,
                 "consumption_unit_label": unit_label,
@@ -74,6 +76,7 @@ def get_summary_context(db: Session, group_id: int, today: date | None = None) -
         )
 
     month_totals: dict[tuple[int, int], float] = {k: 0.0 for k in month_keys}
+    month_costs: dict[tuple[int, int], float] = {k: 0.0 for k in month_keys}
     start_floor = date(first_month[0], first_month[1], 1)
 
     for e in entries:
@@ -84,6 +87,8 @@ def get_summary_context(db: Session, group_id: int, today: date | None = None) -
         if key not in month_totals:
             continue
         month_totals[key] += e.fuel_amount_l
+        if e.total_cost_eur is not None:
+            month_costs[key] += e.total_cost_eur
 
     monthly_rows = [
         {
@@ -92,14 +97,18 @@ def get_summary_context(db: Session, group_id: int, today: date | None = None) -
             "month": k[1],
             "label": f"{calendar.month_abbr[k[1]]} {k[0]}",
             "liters": month_totals[k],
+            "cost_eur": month_costs[k] if month_costs[k] > 0 else None,
         }
         for k in month_keys
     ]
+
+    total_group_cost = sum(e.total_cost_eur or 0.0 for e in entries)
 
     show_empty_state = len(vehicles) == 0
 
     return {
         "vehicle_rows": vehicle_rows,
         "monthly_rows": monthly_rows,
+        "total_group_cost_eur": total_group_cost if total_group_cost > 0 else None,
         "show_empty_state": show_empty_state,
     }

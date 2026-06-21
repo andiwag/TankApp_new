@@ -18,6 +18,8 @@ def test_production_flag():
         DATABASE_URL="sqlite:///./test.db",
         SECRET_KEY="testkey",
         ENV="production",
+        CRON_SECRET="cron-secret",
+        SINGLE_WORKER_MODE=True,
         _env_file=None,
     )
     assert s.is_production is True

@@ -3,20 +3,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}TankApp{% endblock %}</title>
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#15803d">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col">
+<body class="bg-gray-50 min-h-screen flex flex-col pb-[env(safe-area-inset-bottom)]">
 
     <!-- Navigation -->
     <nav class="bg-green-700 shadow-md" x-data="{ open: false }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
-                <a href="{% if request.state.user %}/dashboard{% else %}/login{% endif %}" class="text-white font-bold text-xl tracking-tight">
+                <a href="{% if request.state.user %}/dashboard{% else %}/{% endif %}" class="text-white font-bold text-xl tracking-tight">
                     TankApp
                 </a>
 
@@ -24,11 +24,13 @@
                 <!-- Desktop menu -->
                 <div class="hidden md:flex items-center space-x-6">
                     {% if request.state.active_group %}
-                    <a href="/dashboard" class="text-green-100 hover:text-white text-sm transition">Dashboard</a>
-                    <a href="/summary" class="text-green-100 hover:text-white text-sm transition">Summary</a>
-                    <a href="/vehicles" class="text-green-100 hover:text-white text-sm transition">Vehicles</a>
-                    <a href="/fuel" class="text-green-100 hover:text-white text-sm transition">Fuel</a>
-                    <a href="/settings/group" class="text-green-100 hover:text-white text-sm transition">Settings</a>
+                    <a href="/dashboard" class="text-green-100 hover:text-white text-sm transition min-h-[44px] inline-flex items-center">Dashboard</a>
+                    <a href="/summary" class="text-green-100 hover:text-white text-sm transition min-h-[44px] inline-flex items-center">Summary</a>
+                    <a href="/analytics" class="text-green-100 hover:text-white text-sm transition min-h-[44px] inline-flex items-center">Analytics</a>
+                    <a href="/vehicles" class="text-green-100 hover:text-white text-sm transition min-h-[44px] inline-flex items-center">Vehicles</a>
+                    <a href="/fuel" class="text-green-100 hover:text-white text-sm transition min-h-[44px] inline-flex items-center">Fuel</a>
+                    <a href="/maintenance" class="text-green-100 hover:text-white text-sm transition min-h-[44px] inline-flex items-center">Maintenance</a>
+                    <a href="/settings/group" class="text-green-100 hover:text-white text-sm transition min-h-[44px] inline-flex items-center">Settings</a>
                     <span class="text-green-200 text-sm">{{ request.state.active_group.name }}</span>
                     {% endif %}
                     <a href="/profile" class="text-green-100 hover:text-white text-sm transition">Profile</a>
@@ -40,7 +42,7 @@
                 </div>
 
                 <!-- Mobile hamburger -->
-                <button @click="open = !open" class="md:hidden text-white focus:outline-none" aria-label="Toggle menu">
+                <button @click="open = !open" class="md:hidden text-white focus:outline-none min-h-[44px] min-w-[44px] inline-flex items-center justify-center" aria-label="Toggle menu">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path x-show="!open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         <path x-show="open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -51,13 +53,15 @@
 
             {% if request.state.user %}
             <!-- Mobile menu -->
-            <div x-show="open" x-transition class="md:hidden pb-4 space-y-2">
+            <div x-show="open" x-transition class="md:hidden pb-4 space-y-1">
                 {% if request.state.active_group %}
-                <a href="/dashboard" class="block text-green-100 hover:text-white text-sm transition">Dashboard</a>
-                <a href="/summary" class="block text-green-100 hover:text-white text-sm transition">Summary</a>
-                <a href="/vehicles" class="block text-green-100 hover:text-white text-sm transition">Vehicles</a>
-                <a href="/fuel" class="block text-green-100 hover:text-white text-sm transition">Fuel</a>
-                <a href="/settings/group" class="block text-green-100 hover:text-white text-sm transition">Settings</a>
+                <a href="/dashboard" class="block text-green-100 hover:text-white text-base py-3 px-1 transition">Dashboard</a>
+                <a href="/summary" class="block text-green-100 hover:text-white text-base py-3 px-1 transition">Summary</a>
+                <a href="/analytics" class="block text-green-100 hover:text-white text-base py-3 px-1 transition">Analytics</a>
+                <a href="/vehicles" class="block text-green-100 hover:text-white text-base py-3 px-1 transition">Vehicles</a>
+                <a href="/fuel" class="block text-green-100 hover:text-white text-base py-3 px-1 transition">Fuel</a>
+                <a href="/maintenance" class="block text-green-100 hover:text-white text-base py-3 px-1 transition">Maintenance</a>
+                <a href="/settings/group" class="block text-green-100 hover:text-white text-base py-3 px-1 transition">Settings</a>
                 <span class="block text-green-200 text-sm">{{ request.state.active_group.name }}</span>
                 {% endif %}
                 <a href="/profile" class="block text-green-100 hover:text-white text-sm transition">Profile</a>

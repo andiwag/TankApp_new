@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf_field with context %}
+
+{% block title %}{% if mode == 'create' %}New maintenance{% else %}Edit maintenance{% endif %} – TankApp{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">
+        {% if mode == 'create' %}New maintenance record{% else %}Edit maintenance record{% endif %}
+    </h1>
+
+    {% if error %}
+    <div class="mb-4 rounded-md p-4 bg-red-50 text-red-800 border border-red-200 text-sm" role="alert">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="post" action="{% if mode == 'create' %}/maintenance/new{% else %}/maintenance/{{ log.id }}/edit{% endif %}" class="space-y-6 bg-white rounded-lg shadow p-6" x-data="{ submitting: false }" @submit="submitting = true">
+        {{ csrf_field() }}
+        {% if mode == 'create' %}
+        <div>
+            <label for="vehicle_id" class="block text-sm font-medium text-gray-700">Vehicle</label>
+            <select name="vehicle_id" id="vehicle_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border px-3 py-2 text-base">
+                <option value="">Select vehicle</option>
+                {% for v in vehicles %}
+                <option value="{{ v.id }}" {% if form_vehicle_id and form_vehicle_id == (v.id ~ '') %}selected{% endif %}>{{ v.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% else %}
+        <div>
+            <p class="text-sm font-medium text-gray-700">Vehicle</p>
+            <p class="mt-1 text-sm text-gray-900">{{ vehicle.name }}</p>
+        </div>
+        {% endif %}
+
+        <div>
+            <label for="service_date" class="block text-sm font-medium text-gray-700">Service date</label>
+            <input type="date" name="service_date" id="service_date" required
+                   value="{% if log %}{{ log.service_date.isoformat() }}{% else %}{{ form_service_date }}{% endif %}"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border px-3 py-2 text-base" />
+        </div>
+
+        <div>
+            <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+            <textarea name="description" id="description" rows="3" maxlength="500" required
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border px-3 py-2 text-base">{% if log %}{{ log.description }}{% else %}{{ form_description }}{% endif %}</textarea>
+        </div>
+
+        <div>
+            <label for="usage_reading" class="block text-sm font-medium text-gray-700">Usage reading (optional)</label>
+            <input type="number" name="usage_reading" id="usage_reading" inputmode="decimal" min="0" step="0.01"
+                   value="{% if log and log.usage_reading is not none %}{{ log.usage_reading }}{% else %}{{ form_usage_reading }}{% endif %}"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border px-3 py-2 text-base" />
+        </div>
+
+        <div>
+            <label for="cost_eur" class="block text-sm font-medium text-gray-700">Cost (€, optional)</label>
+            <input type="number" name="cost_eur" id="cost_eur" inputmode="decimal" min="0" step="0.01"
+                   value="{% if log and log.cost_eur is not none %}{{ log.cost_eur }}{% else %}{{ form_cost_eur }}{% endif %}"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border px-3 py-2 text-base" />
+        </div>
+
+        <div>
+            <label for="next_service_date" class="block text-sm font-medium text-gray-700">Next service date (optional)</label>
+            <input type="date" name="next_service_date" id="next_service_date"
+                   value="{% if log and log.next_service_date %}{{ log.next_service_date.isoformat() }}{% else %}{{ form_next_service_date }}{% endif %}"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border px-3 py-2 text-base" />
+        </div>
+
+        <div>
+            <label for="next_service_usage" class="block text-sm font-medium text-gray-700">Next service at usage (optional)</label>
+            <input type="number" name="next_service_usage" id="next_service_usage" inputmode="decimal" min="0" step="0.01"
+                   value="{% if log and log.next_service_usage is not none %}{{ log.next_service_usage }}{% else %}{{ form_next_service_usage }}{% endif %}"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border px-3 py-2 text-base" />
+        </div>
+
+        <div class="flex gap-3 pt-2">
+            <button type="submit" :disabled="submitting" class="inline-flex justify-center items-center min-h-[44px] px-4 py-2 rounded-md bg-green-700 text-white text-sm font-medium hover:bg-green-800 transition disabled:opacity-60">
+                {% if mode == 'create' %}Save{% else %}Update{% endif %}
+            </button>
+            <a href="/maintenance" class="inline-flex justify-center items-center min-h-[44px] px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

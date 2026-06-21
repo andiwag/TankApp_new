@@ -1,14 +1,18 @@
 """Tests for Phase 12: Group Settings."""
 
-
 from app.models import Group, UserGroup
-from tests.conftest import create_authenticated_group
 
+from tests.conftest import create_authenticated_group
 
 
 class TestGroupSettingsPage:
     async def test_group_settings_page_returns_200(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
     ):
         create_authenticated_group(
             client,
@@ -26,7 +30,12 @@ class TestGroupSettingsPage:
         assert response.headers.get("location") == "/login"
 
     async def test_group_settings_shows_invite_code(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
     ):
         create_authenticated_group(
             client,
@@ -50,7 +59,9 @@ class TestGroupSettingsPage:
         admin = create_test_user(name="Admin Farmer")
         group = create_test_group(created_by=admin.id)
         create_test_user_group(admin.id, group.id, role="admin")
-        contributor = create_test_user(email="contrib@example.com", name="Contrib Farmer")
+        contributor = create_test_user(
+            email="contrib@example.com", name="Contrib Farmer"
+        )
         create_test_user_group(contributor.id, group.id, role="contributor")
         auth_cookie(client, admin.id, group.id)
 
@@ -62,7 +73,12 @@ class TestGroupSettingsPage:
         assert 'data-member-role="contributor"' in response.text
 
     async def test_group_settings_admin_sees_role_controls(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
     ):
         _, group = create_authenticated_group(
             client,
@@ -79,7 +95,12 @@ class TestGroupSettingsPage:
         assert 'data-testid="member-role-form"' in response.text
 
     async def test_group_settings_contributor_cannot_see_role_controls(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
     ):
         create_authenticated_group(
             client,
@@ -95,7 +116,12 @@ class TestGroupSettingsPage:
         assert 'data-testid="member-remove-form"' not in response.text
 
     async def test_group_settings_reader_cannot_see_role_controls(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
     ):
         create_authenticated_group(
             client,
@@ -113,7 +139,12 @@ class TestGroupSettingsPage:
 
 class TestRegenerateInviteCode:
     async def test_regenerate_invite_code_as_admin(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
     ):
         user, group = create_authenticated_group(
             client,
@@ -127,7 +158,12 @@ class TestRegenerateInviteCode:
         assert response.headers.get("location") == "/settings/group"
 
     async def test_regenerate_invite_code_as_contributor_denied(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
     ):
         create_authenticated_group(
             client,
@@ -141,7 +177,13 @@ class TestRegenerateInviteCode:
         assert response.status_code == 403
 
     async def test_regenerate_invite_code_changes_code(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie, db
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+        db,
     ):
         user, group = create_authenticated_group(
             client,
@@ -162,7 +204,13 @@ class TestRegenerateInviteCode:
 
 class TestChangeMemberRole:
     async def test_change_member_role_as_admin(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie, db
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+        db,
     ):
         admin, group = create_authenticated_group(
             client,
@@ -181,14 +229,24 @@ class TestChangeMemberRole:
 
         assert response.status_code == 303
         db.expire_all()
-        ug = db.query(UserGroup).filter(
-            UserGroup.user_id == member.id,
-            UserGroup.group_id == group.id,
-        ).one()
+        ug = (
+            db.query(UserGroup)
+            .filter(
+                UserGroup.user_id == member.id,
+                UserGroup.group_id == group.id,
+            )
+            .one()
+        )
         assert ug.role == "contributor"
 
     async def test_change_member_role_as_contributor_denied(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie, db
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+        db,
     ):
         user, group = create_authenticated_group(
             client,
@@ -205,7 +263,13 @@ class TestChangeMemberRole:
         assert response.status_code == 403
 
     async def test_change_member_role_cannot_demote_self(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie, db
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+        db,
     ):
         admin, group = create_authenticated_group(
             client,
@@ -223,14 +287,24 @@ class TestChangeMemberRole:
         assert response.status_code == 200
         assert "cannot change your own role" in response.text.lower()
         db.expire_all()
-        ug = db.query(UserGroup).filter(
-            UserGroup.user_id == admin.id,
-            UserGroup.group_id == group.id,
-        ).one()
+        ug = (
+            db.query(UserGroup)
+            .filter(
+                UserGroup.user_id == admin.id,
+                UserGroup.group_id == group.id,
+            )
+            .one()
+        )
         assert ug.role == "admin"
 
     async def test_change_member_role_valid_roles_only(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie, db
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+        db,
     ):
         admin, group = create_authenticated_group(
             client,
@@ -250,14 +324,23 @@ class TestChangeMemberRole:
         assert response.status_code == 200
         assert "invalid role" in response.text.lower()
         db.expire_all()
-        ug = db.query(UserGroup).filter(
-            UserGroup.user_id == member.id,
-            UserGroup.group_id == group.id,
-        ).one()
+        ug = (
+            db.query(UserGroup)
+            .filter(
+                UserGroup.user_id == member.id,
+                UserGroup.group_id == group.id,
+            )
+            .one()
+        )
         assert ug.role == "reader"
 
     async def test_change_member_role_member_not_in_group_404(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
     ):
         admin, group = create_authenticated_group(
             client,
@@ -277,7 +360,13 @@ class TestChangeMemberRole:
 
 class TestRemoveMember:
     async def test_remove_member_as_admin(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie, db
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+        db,
     ):
         admin, group = create_authenticated_group(
             client,
@@ -293,14 +382,23 @@ class TestRemoveMember:
 
         assert response.status_code == 303
         db.expire_all()
-        ug = db.query(UserGroup).filter(
-            UserGroup.user_id == member.id,
-            UserGroup.group_id == group.id,
-        ).first()
+        ug = (
+            db.query(UserGroup)
+            .filter(
+                UserGroup.user_id == member.id,
+                UserGroup.group_id == group.id,
+            )
+            .first()
+        )
         assert ug is None
 
     async def test_remove_member_as_contributor_denied(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
     ):
         user, group = create_authenticated_group(
             client,
@@ -314,7 +412,13 @@ class TestRemoveMember:
         assert response.status_code == 403
 
     async def test_remove_member_cannot_remove_self(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie, db
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+        db,
     ):
         admin, group = create_authenticated_group(
             client,
@@ -329,14 +433,23 @@ class TestRemoveMember:
         assert response.status_code == 200
         assert "cannot remove yourself" in response.text.lower()
         db.expire_all()
-        ug = db.query(UserGroup).filter(
-            UserGroup.user_id == admin.id,
-            UserGroup.group_id == group.id,
-        ).one()
+        ug = (
+            db.query(UserGroup)
+            .filter(
+                UserGroup.user_id == admin.id,
+                UserGroup.group_id == group.id,
+            )
+            .one()
+        )
         assert ug.role == "admin"
 
     async def test_remove_member_not_in_group_404(
-        self, client, create_test_user, create_test_group, create_test_user_group, auth_cookie
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
     ):
         admin, group = create_authenticated_group(
             client,
