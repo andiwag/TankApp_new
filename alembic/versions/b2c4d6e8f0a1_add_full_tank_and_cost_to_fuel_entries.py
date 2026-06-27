@@ -18,15 +18,26 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "fuel_entries",
-        sa.Column("full_tank", sa.Boolean(), nullable=False, server_default=sa.true()),
-    )
-    op.add_column(
-        "fuel_entries",
-        sa.Column("total_cost_eur", sa.Float(), nullable=True),
-    )
-    op.alter_column("fuel_entries", "full_tank", server_default=None)
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    fuel_columns = {column["name"] for column in inspector.get_columns("fuel_entries")}
+
+    if "full_tank" not in fuel_columns:
+        op.add_column(
+            "fuel_entries",
+            sa.Column(
+                "full_tank", sa.Boolean(), nullable=False, server_default=sa.true()
+            ),
+        )
+    if "total_cost_eur" not in fuel_columns:
+        op.add_column(
+            "fuel_entries",
+            sa.Column("total_cost_eur", sa.Float(), nullable=True),
+        )
+
+    # SQLite cannot ALTER COLUMN DROP DEFAULT; Postgres can clean up the default.
+    if bind.dialect.name != "sqlite":
+        op.alter_column("fuel_entries", "full_tank", server_default=None)
 
 
 def downgrade() -> None:

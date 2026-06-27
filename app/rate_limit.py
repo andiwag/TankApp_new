@@ -92,4 +92,5 @@ def _build_limiter(*, max_attempts: int, window_seconds: int):
 
 login_rate_limiter = _build_limiter(max_attempts=5, window_seconds=60)
 register_rate_limiter = _build_limiter(max_attempts=10, window_seconds=60)
+register_invite_rate_limiter = _build_limiter(max_attempts=15, window_seconds=60)
 password_reset_rate_limiter = _build_limiter(max_attempts=5, window_seconds=60)

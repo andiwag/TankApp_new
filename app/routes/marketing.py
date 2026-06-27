@@ -1,9 +1,10 @@
 """Public marketing pages (landing, legal)."""
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.dependencies import get_optional_current_user
 from app.models import User
@@ -48,3 +49,12 @@ async def terms_page(
     _user: User | None = Depends(get_optional_current_user),
 ):
     return templates.TemplateResponse(request, "legal/terms.html")
+
+
+@router.get("/robots.txt", include_in_schema=False)
+async def robots_txt() -> PlainTextResponse:
+    if settings.registration_invite_required:
+        body = "User-agent: *\nDisallow: /\n"
+    else:
+        body = "User-agent: *\nAllow: /\n"
+    return PlainTextResponse(body, media_type="text/plain")

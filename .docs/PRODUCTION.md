@@ -4,6 +4,8 @@ This document covers **production hardening** and **step-by-step deployment** fo
 
 **Chosen beta path (this guide):** $0/month on [Northflank Sandbox](https://northflank.com/pricing) for personal testing and 1–2 beta farms.
 
+**Quick start:** see [BETA_DEPLOY.md](./BETA_DEPLOY.md) for a focused private-beta checklist.
+
 | Component | Service | Cost |
 |-----------|---------|------|
 | Web app | Northflank Sandbox (combined service) | $0 |
@@ -65,30 +67,33 @@ Complete these **before** the first deploy.
 
 ### Required
 
-- [ ] **Add a PostgreSQL driver** to `requirements.txt`:
+- [x] **Add a PostgreSQL driver** to `requirements.txt`:
   ```
   psycopg2-binary==2.9.10
   ```
-  Without this, the app cannot connect to Postgres.
 
-- [ ] **Add a `Dockerfile`** (recommended — Northflank's official FastAPI guide uses Docker). See [§4.2](#42-add-dockerfile-and-start-script) for a copy-paste example.
+- [x] **Add a `Dockerfile`** (recommended — Northflank's official FastAPI guide uses Docker). See [§4.2](#42-add-dockerfile-and-start-script) for a copy-paste example.
 
 - [ ] **Generate a strong `SECRET_KEY`** (never use the dev default):
   ```powershell
-  python -c "import secrets; print(secrets.token_urlsafe(32))"
+  .\scripts\generate-beta-secrets.ps1
   ```
 
-- [ ] **Add `.venv/` to `.gitignore`** (alongside existing `venv/`).
+- [x] **Add `.venv/` to `.gitignore`** (alongside existing `venv/`).
 
 ### Recommended before sharing with beta farms
 
-- [ ] **Session cookie `Secure` flag** — implemented in `app/auth.py` (`secure=settings.is_production`).
+- [x] **Session cookie `Secure` flag** — implemented in `app/auth.py` (`secure=settings.is_production`).
 
-- [ ] **Flash cookie `Secure` flag** — `app/flash.py` `set_flash()` should set `secure=settings.is_production`.
+- [x] **Flash cookie `Secure` flag** — `app/flash.py` `set_flash()` sets `secure=settings.is_production`.
 
-- [ ] **Password reset email** — `app/routes/auth.py` `_deliver_reset_token()` is a no-op when `ENV=production`. Wire up `fastapi-mail` or skip password reset for beta and reset passwords manually.
+- [x] **Password reset email** — `app/routes/auth.py` sends via `fastapi-mail` when `MAIL_*` and `BASE_URL` are set.
 
-- [ ] **Fix PWA test** — `tests/test_pwa.py` expects `application/javascript`; Starlette serves `text/javascript`. Relax the assertion so CI stays green.
+- [x] **PWA test** — accepts `text/javascript` for service worker content type.
+
+- [x] **Private beta registration gate** — set `REGISTRATION_INVITE_CODE` (see [BETA_DEPLOY.md](./BETA_DEPLOY.md)).
+
+- [x] **Graceful error pages** — unhandled errors show friendly HTML/JSON instead of raw tracebacks.
 
 ### Buildpack alternative (no Docker)
 
@@ -536,6 +541,7 @@ See Northflank's own [FastAPI + Postgres guide](https://northflank.com/guides/de
 
 ## Related docs
 
+- [BETA_DEPLOY.md](./BETA_DEPLOY.md) — private beta quick start
 - [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) — MVP feature phases (all complete)
 - [TECHNICAL_DOCUMENTATION.md](./TECHNICAL_DOCUMENTATION.md) — architecture, schema, routes
 - [DECISION_LOG.md](./DECISION_LOG.md) — design decisions (auth, audit, rate limits, email deferral)

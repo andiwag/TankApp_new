@@ -1,15 +1,23 @@
+import builtins
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.config import settings
 from app.csrf import CsrfTokenMiddleware, validate_csrf
 from app.database import check_database_connection
+from app.error_pages import (
+    api_error_response,
+    error_page_response,
+    http_exception_response,
+    wants_html_response,
+)
 from app.flash import FlashMiddleware
 from app.logging_config import configure_logging
 from app.middleware.security_headers import SecurityHeadersMiddleware
@@ -88,6 +96,44 @@ async def no_active_group_handler(request, exc):
 @app.exception_handler(InsufficientRoleException)
 async def insufficient_role_handler(request, exc):
     return forbidden_response()
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    return http_exception_response(request, exc)
+
+
+def _root_cause(exc: BaseException) -> BaseException:
+    group_type = getattr(builtins, "BaseExceptionGroup", None)
+    if group_type is None:
+        return exc
+    while isinstance(exc, group_type) and exc.exceptions:
+        exc = exc.exceptions[0]
+    return exc
+
+
+async def _handle_unhandled_error(request: Request, exc: BaseException):
+    exc = _root_cause(exc)
+    if not isinstance(exc, Exception):
+        raise exc
+    logger.exception("Unhandled error on %s %s", request.method, request.url.path)
+    if wants_html_response(request):
+        return error_page_response(
+            request,
+            status_code=500,
+            title="Something went wrong",
+            message=(
+                "An unexpected error occurred. Please try again. "
+                "If the problem persists, contact support."
+            ),
+            detail=str(exc),
+        )
+    return api_error_response(500, "internal_server_error")
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    return await _handle_unhandled_error(request, exc)
 
 
 @app.get("/health")

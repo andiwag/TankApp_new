@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    {% if registration_invite_required() %}<meta name="robots" content="noindex, nofollow">{% endif %}
     <meta name="description" content="{% block meta_description %}TankApp – Kraftstoff- und Flottenverwaltung für landwirtschaftliche Betriebe in Österreich.{% endblock %}">
     <title>{% block title %}TankApp{% endblock %}</title>
     <link rel="manifest" href="/static/manifest.json">

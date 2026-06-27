@@ -17,6 +17,7 @@ MIN_PASSWORD_LENGTH = 8
 
 # Shown when another account already holds this email (registration or profile update).
 EMAIL_DUPLICATE_MESSAGE = "Email already in use"
+INVITE_CODE_INVALID_MESSAGE = "Invalid invite code"
 
 
 # ── Validation helpers ───────────────────────────────────────────────────────

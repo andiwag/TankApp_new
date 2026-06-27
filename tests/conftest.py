@@ -117,7 +117,7 @@ def clean_tables(db):
 
 @pytest.fixture
 async def client():
-    transport = ASGITransport(app=app)
+    transport = ASGITransport(app=app, raise_app_exceptions=False)
     async with CsrfAsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 

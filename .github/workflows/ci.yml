@@ -60,3 +60,12 @@ jobs:
 
       - name: Run tests (Postgres)
         run: pytest -q
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t tankapp:ci .

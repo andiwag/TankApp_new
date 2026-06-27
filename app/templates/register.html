@@ -15,6 +15,14 @@
 
     <form method="post" action="/register" class="space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
         {{ csrf_field() }}
+        {% if registration_invite_required() %}
+        <div>
+            <label for="invite_code" class="block text-sm font-medium text-gray-700 mb-1">Invite code</label>
+            <input type="text" id="invite_code" name="invite_code" required autocomplete="off"
+                   class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-500">
+            <p class="mt-1 text-xs text-gray-500">Private beta — enter the invite code you received.</p>
+        </div>
+        {% endif %}
         <div>
             <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
             <input type="text" id="name" name="name" required

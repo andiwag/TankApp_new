@@ -1,4 +1,5 @@
 import logging
+import secrets
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
@@ -23,10 +24,12 @@ from app.rate_limit import (
     RATE_LIMIT_MESSAGE,
     login_rate_limiter,
     password_reset_rate_limiter,
+    register_invite_rate_limiter,
     register_rate_limiter,
 )
 from app.schemas import (
     EMAIL_DUPLICATE_MESSAGE,
+    INVITE_CODE_INVALID_MESSAGE,
     PasswordResetConfirm,
     UserCreate,
     first_validation_error_message,
@@ -51,6 +54,19 @@ _INVALID_RESET_LINK = "Invalid or expired reset link"
 def _rate_limit_key(request: Request, action: str, identifier: str) -> str:
     host = request.client.host if request.client else "unknown"
     return f"{action}:{host}:{identifier.lower().strip()}"
+
+
+def _invite_code_valid(submitted: str) -> bool:
+    expected = settings.REGISTRATION_INVITE_CODE.strip()
+    if not expected:
+        return True
+    submitted_value = submitted if isinstance(submitted, str) else ""
+    return secrets.compare_digest(submitted_value.strip(), expected)
+
+
+def _register_invite_host_key(request: Request) -> str:
+    host = request.client.host if request.client else "unknown"
+    return f"register-invite:{host}"
 
 
 def _get_reset_user(db: Session, token_data: dict) -> User | None:
@@ -185,6 +201,7 @@ async def register(
     email: str = Form(...),
     password: str = Form(...),
     password_confirm: str = Form(...),
+    invite_code: str = Form(""),
     db: Session = Depends(get_db),
 ):
     rate_limit_key = _rate_limit_key(request, "register", email)
@@ -195,6 +212,28 @@ async def register(
             "register.html",
             context={"error": RATE_LIMIT_MESSAGE},
             status_code=429,
+        )
+
+    if settings.registration_invite_required:
+        invite_host_key = _register_invite_host_key(request)
+        if register_invite_rate_limiter.is_limited(invite_host_key):
+            logger.warning("Rate limited registration invite attempts from %s", invite_host_key)
+            return templates.TemplateResponse(
+                request,
+                "register.html",
+                context={"error": RATE_LIMIT_MESSAGE},
+                status_code=429,
+            )
+
+    if not _invite_code_valid(invite_code):
+        if settings.registration_invite_required:
+            register_invite_rate_limiter.record_attempt(_register_invite_host_key(request))
+        register_rate_limiter.record_attempt(rate_limit_key)
+        logger.warning("Registration rejected: invalid invite code from %s", rate_limit_key)
+        return templates.TemplateResponse(
+            request,
+            "register.html",
+            context={"error": INVITE_CODE_INVALID_MESSAGE},
         )
 
     try:
