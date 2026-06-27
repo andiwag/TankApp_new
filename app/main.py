@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+from app.branding import PRODUCT_NAME
 from app.config import settings
 from app.csrf import CsrfTokenMiddleware, validate_csrf
 from app.database import check_database_connection
@@ -56,7 +57,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="TankApp",
+    title=PRODUCT_NAME,
     version="0.1.0",
     dependencies=[Depends(validate_csrf)],
     lifespan=lifespan,

@@ -4,6 +4,7 @@ import logging
 from collections import defaultdict, deque
 from time import monotonic
 
+from app.branding import REDIS_KEY_PREFIX
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -45,7 +46,7 @@ class RedisRateLimiter:
         self.window_seconds = window_seconds
 
     def _redis_key(self, key: str) -> str:
-        return f"tankapp:rate:{key}"
+        return f"{REDIS_KEY_PREFIX}:rate:{key}"
 
     def is_limited(self, key: str) -> bool:
         redis_key = self._redis_key(key)

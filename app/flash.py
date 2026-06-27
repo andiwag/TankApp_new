@@ -4,9 +4,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+from app.branding import FLASH_COOKIE_DEFAULT
 from app.config import settings
 
-FLASH_COOKIE_NAME = "tankapp_flash"
+FLASH_COOKIE_NAME = FLASH_COOKIE_DEFAULT
 
 
 def _flash_cookie_kwargs() -> dict:

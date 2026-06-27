@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tankapp-static-v1';
+const CACHE_NAME = 'tankly-static-v1';
 const STATIC_ASSETS = [
   '/static/manifest.json',
   '/static/icon-192.png',

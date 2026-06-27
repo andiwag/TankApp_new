@@ -113,7 +113,7 @@ class TestFlashMessages:
         )
 
         assert response.status_code == 303
-        assert "tankapp_flash" in response.cookies
+        assert "tankly_flash" in response.cookies
 
     async def test_flash_messages_on_error_actions(self, client, create_test_user):
         create_test_user(email="existing@example.com")

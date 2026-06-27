@@ -2,9 +2,8 @@
 
 from unittest.mock import patch
 
-from starlette.exceptions import HTTPException as StarletteHTTPException
-
 from app.error_pages import _client_safe_http_detail
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
 class TestErrorPages:
@@ -25,7 +24,7 @@ class TestErrorPages:
 
         assert response.status_code == 500
         assert "Something went wrong" in response.text
-        assert "TankApp" in response.text
+        assert "Tankly" in response.text
         assert "database unavailable" in response.text
 
     async def test_unhandled_error_returns_json_when_client_expects_json(

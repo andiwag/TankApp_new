@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     {% if registration_invite_required() %}<meta name="robots" content="noindex, nofollow">{% endif %}
-    <title>{% block title %}TankApp{% endblock %}</title>
+    <title>{% block title %}{{ product_name() }}{% endblock %}</title>
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#15803d">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,7 +18,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
                 <a href="{% if request.state.user %}/dashboard{% else %}/{% endif %}" class="text-white font-bold text-xl tracking-tight">
-                    TankApp
+                    {{ product_name() }}
                 </a>
 
                 {% if request.state.user %}
@@ -106,7 +106,7 @@
 
     <!-- Footer -->
     <footer class="bg-gray-100 border-t border-gray-200 py-4">
-        <p class="text-center text-sm text-gray-500">&copy; 2026 TankApp</p>
+        <p class="text-center text-sm text-gray-500">&copy; 2026 {{ product_name() }}</p>
     </footer>
 
     <script>

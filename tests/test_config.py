@@ -8,7 +8,7 @@ def test_default_settings():
         _env_file=None,
     )
     assert s.DATABASE_URL == "sqlite:///./test.db"
-    assert s.SESSION_COOKIE_NAME == "tankapp_session"
+    assert s.SESSION_COOKIE_NAME == "tankly_session"
     assert s.ENV == "development"
     assert s.is_production is False
 

@@ -1,6 +1,8 @@
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.branding import DEFAULT_MAIL_FROM, SESSION_COOKIE_DEFAULT
+
 _DEFAULT_SECRET_KEY = "supersecretkey"
 
 
@@ -15,7 +17,7 @@ class Settings(BaseSettings):
 
     SECRET_KEY: str = "supersecretkey"
 
-    SESSION_COOKIE_NAME: str = "tankapp_session"
+    SESSION_COOKIE_NAME: str = SESSION_COOKIE_DEFAULT
 
     ENV: str = "development"
 
@@ -42,7 +44,7 @@ class Settings(BaseSettings):
 
     MAIL_PASSWORD: str = ""
 
-    MAIL_FROM: str = "noreply@tankapp.example.com"
+    MAIL_FROM: str = DEFAULT_MAIL_FROM
 
     MAIL_SERVER: str = "smtp.example.com"
 

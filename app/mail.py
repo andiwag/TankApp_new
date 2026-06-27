@@ -2,6 +2,7 @@ import logging
 
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 
+from app.branding import PRODUCT_NAME
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -22,10 +23,10 @@ def _mail_connection() -> ConnectionConfig:
 
 async def send_password_reset_email(to_email: str, reset_url: str) -> None:
     message = MessageSchema(
-        subject="TankApp password reset",
+        subject=f"{PRODUCT_NAME} password reset",
         recipients=[to_email],
         body=(
-            "Use the link below to reset your TankApp password. "
+            f"Use the link below to reset your {PRODUCT_NAME} password. "
             "It is valid for 1 hour.\n\n"
             f"{reset_url}\n"
         ),
@@ -45,13 +46,13 @@ async def send_service_reminder_email(
     due_detail: str,
 ) -> None:
     message = MessageSchema(
-        subject=f"TankApp service reminder: {vehicle_name}",
+        subject=f"{PRODUCT_NAME} service reminder: {vehicle_name}",
         recipients=[to_email],
         body=(
             f"Service reminder for {vehicle_name}.\n\n"
             f"Task: {description}\n"
             f"Due: {due_detail}\n\n"
-            "Log in to TankApp to review maintenance records."
+            f"Log in to {PRODUCT_NAME} to review maintenance records."
         ),
         subtype=MessageType.plain,
     )

@@ -1,6 +1,6 @@
 # TankApp – Production & Beta Deployment Guide
 
-This document covers **production hardening** and **step-by-step deployment** for TankApp.
+This document covers **production hardening** and **step-by-step deployment** for Tankly.
 
 **Chosen beta path (this guide):** $0/month on [Northflank Sandbox](https://northflank.com/pricing) for personal testing and 1–2 beta farms.
 
@@ -55,7 +55,7 @@ Northflank Postgres addon    ←──  SQLAlchemy + Alembic migrations
 Brevo SMTP (opt.)            ←──  password reset emails
 ```
 
-TankApp is **server-rendered** (not a SPA). No frontend build step. Tailwind CSS and Alpine.js load from CDN.
+Tankly is **server-rendered** (not a SPA). No frontend build step. Tailwind CSS and Alpine.js load from CDN.
 
 **Do not use SQLite on Northflank.** Container filesystems are ephemeral; data would be lost on redeploy. Always use the Postgres addon.
 
@@ -129,7 +129,7 @@ Set these on your Northflank service (**Environment** page). Never commit real v
 | `DATABASE_URL` | From Postgres addon `POSTGRES_URI` (see [§4.4](#44-link-postgres-to-the-app)) | Yes |
 | `SECRET_KEY` | Random 32+ byte string | Yes |
 | `ENV` | `production` | Yes |
-| `SESSION_COOKIE_NAME` | `tankapp_session` (default OK) | No |
+| `SESSION_COOKIE_NAME` | `tankly_session` (default OK) | No |
 | `MAIL_USERNAME` | Brevo SMTP login | For email |
 | `MAIL_PASSWORD` | Brevo SMTP key | For email |
 | `MAIL_FROM` | `noreply@yourdomain.com` | For email |
@@ -148,7 +148,7 @@ Copy `.env.example` as a local reference; production values live only on Northfl
 
 ### 3.2 `DATABASE_URL` format
 
-Northflank provides `POSTGRES_URI` in the format `postgresql://user:pass@host:port/database`. Map this to `DATABASE_URL` for TankApp (which reads `DATABASE_URL` in `app/config.py`).
+Northflank provides `POSTGRES_URI` in the format `postgresql://user:pass@host:port/database`. Map this to `DATABASE_URL` for Tankly (which reads `DATABASE_URL` in `app/config.py`).
 
 If you copy a connection string from elsewhere that uses `postgres://`, change the prefix to `postgresql://` for SQLAlchemy 2.x.
 

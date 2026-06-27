@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     {% if registration_invite_required() %}<meta name="robots" content="noindex, nofollow">{% endif %}
-    <meta name="description" content="{% block meta_description %}TankApp – Kraftstoff- und Flottenverwaltung für landwirtschaftliche Betriebe in Österreich.{% endblock %}">
-    <title>{% block title %}TankApp{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}{{ product_name() }} – Kraftstoff- und Flottenverwaltung für landwirtschaftliche Betriebe in Österreich.{% endblock %}">
+    <title>{% block title %}{{ product_name() }}{% endblock %}</title>
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#15803d">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,7 +16,7 @@
     <header class="border-b border-gray-100 bg-white/90 backdrop-blur sticky top-0 z-10" x-data="{ open: false }">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                <a href="/" class="font-bold text-xl text-green-800 tracking-tight">TankApp</a>
+                <a href="/" class="font-bold text-xl text-green-800 tracking-tight">{{ product_name() }}</a>
 
                 <nav class="hidden md:flex items-center gap-8 text-sm font-medium">
                     <a href="/#features" class="text-gray-600 hover:text-green-700 transition">Funktionen</a>
@@ -52,7 +52,7 @@
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
             <div class="flex flex-col sm:flex-row justify-between gap-6 text-sm text-gray-600">
                 <div>
-                    <p class="font-semibold text-gray-900 mb-1">TankApp</p>
+                    <p class="font-semibold text-gray-900 mb-1">{{ product_name() }}</p>
                     <p>Kraftstoff- und Flottenverwaltung für Betriebe.</p>
                 </div>
                 <div class="flex flex-wrap gap-x-6 gap-y-2">
@@ -62,7 +62,7 @@
                     <a href="/login" class="hover:text-green-700 transition">Anmelden</a>
                 </div>
             </div>
-            <p class="text-center text-xs text-gray-400 mt-8">&copy; 2026 TankApp</p>
+            <p class="text-center text-xs text-gray-400 mt-8">&copy; 2026 {{ product_name() }}</p>
         </div>
     </footer>
 </body>

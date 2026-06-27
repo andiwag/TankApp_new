@@ -1,7 +1,7 @@
 {
-  "name": "TankApp",
-  "short_name": "TankApp",
-  "description": "Track farm fuel usage, vehicles, and operating hours.",
+  "name": "Tankly",
+  "short_name": "Tankly",
+  "description": "Kraftstoff- und Flottenverwaltung für landwirtschaftliche Betriebe",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",

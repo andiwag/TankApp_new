@@ -7,7 +7,7 @@ class TestLandingPage:
         assert response.status_code == 200
         html = response.text
         assert "Kraftstoff" in html
-        assert "TankApp" in html
+        assert "Tankly" in html
         assert "/register" in html
         assert 'id="pricing"' in html or 'id="features"' in html
 

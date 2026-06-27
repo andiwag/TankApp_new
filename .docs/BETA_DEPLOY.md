@@ -1,6 +1,6 @@
-# TankApp – Private Beta Deployment
+# Tankly – Private Beta Deployment
 
-Step-by-step guide to deploy TankApp for a **private beta** with 1–2 invited farms. For full production (billing, legal, paid hosting), see [PRODUCTION.md](./PRODUCTION.md) and [STRIPE_BILLING.md](./STRIPE_BILLING.md).
+Step-by-step guide to deploy Tankly for a **private beta** with 1–2 invited farms. For full production (billing, legal, paid hosting), see [PRODUCTION.md](./PRODUCTION.md) and [STRIPE_BILLING.md](./STRIPE_BILLING.md).
 
 ---
 
@@ -43,20 +43,20 @@ CI runs lint + full pytest on Postgres on every push.
 
 ### Postgres addon
 
-1. **Create new → Addon → PostgreSQL** — name `tankapp-db`
+1. **Create new → Addon → PostgreSQL** — name `Tankly-db`
 2. Keep networking **internal**
 3. Optional: enable backup schedule
 
 ### Secret group (recommended)
 
 1. **Create new → Secret group**
-2. Link `tankapp-db` addon
+2. Link `Tankly-db` addon
 3. Map `POSTGRES_URI` → alias **`DATABASE_URL`**
 
 ### Web service
 
-1. **Create new → Service → Combined service** — name `tankapp-web`
-2. Repository: `TankApp_new`, branch `main`
+1. **Create new → Service → Combined service** — name `Tankly-web`
+2. Repository: `Tankly_new`, branch `main`
 3. Build: **Dockerfile** at repo root
 4. Public HTTP enabled → note your `https://….code.run` URL
 5. Health check: **`/health/ready`** (readiness)
@@ -66,7 +66,7 @@ CI runs lint + full pytest on Postgres on every push.
 
 ## 4. Environment variables
 
-Set on the `tankapp-web` service (see `.env.beta.example`):
+Set on the `Tankly-web` service (see `.env.beta.example`):
 
 | Variable | Value |
 |----------|--------|

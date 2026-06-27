@@ -2,7 +2,7 @@
 
 import json
 
-FLASH_COOKIE_NAME = "tankapp_flash"
+FLASH_COOKIE_NAME = "tankly_flash"
 
 
 class TestBaseTemplateIncludes:

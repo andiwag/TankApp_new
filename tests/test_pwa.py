@@ -20,8 +20,8 @@ class TestManifest:
         response = await client.get("/static/manifest.json")
 
         manifest = response.json()
-        assert manifest["name"] == "TankApp"
-        assert manifest["short_name"] == "TankApp"
+        assert manifest["name"] == "Tankly"
+        assert manifest["short_name"] == "Tankly"
         assert manifest["display"] == "standalone"
         assert manifest["start_url"] == "/dashboard"
         assert manifest["scope"] == "/"

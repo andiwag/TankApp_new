@@ -8,9 +8,10 @@ from fastapi_csrf_protect.exceptions import CsrfProtectError
 from itsdangerous import BadData, SignatureExpired, URLSafeTimedSerializer
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.branding import CSRF_COOKIE_DEFAULT
 from app.config import settings
 
-CSRF_COOKIE_NAME = "tankapp_csrf"
+CSRF_COOKIE_NAME = CSRF_COOKIE_DEFAULT
 CSRF_FIELD_NAME = "csrf_token"
 CSRF_MAX_AGE = 3600
 UNSAFE_METHODS = {"DELETE", "PATCH", "POST", "PUT"}

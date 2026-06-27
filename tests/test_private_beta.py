@@ -85,9 +85,7 @@ class TestRegistrationInviteCode:
         assert response.status_code == 200
         assert 'name="invite_code"' not in response.text
 
-    async def test_invalid_invite_rate_limited_per_host(
-        self, client, monkeypatch
-    ):
+    async def test_invalid_invite_rate_limited_per_host(self, client, monkeypatch):
         from app.rate_limit import InMemoryRateLimiter
 
         monkeypatch.setattr(

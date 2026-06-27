@@ -217,7 +217,9 @@ async def register(
     if settings.registration_invite_required:
         invite_host_key = _register_invite_host_key(request)
         if register_invite_rate_limiter.is_limited(invite_host_key):
-            logger.warning("Rate limited registration invite attempts from %s", invite_host_key)
+            logger.warning(
+                "Rate limited registration invite attempts from %s", invite_host_key
+            )
             return templates.TemplateResponse(
                 request,
                 "register.html",
@@ -227,9 +229,13 @@ async def register(
 
     if not _invite_code_valid(invite_code):
         if settings.registration_invite_required:
-            register_invite_rate_limiter.record_attempt(_register_invite_host_key(request))
+            register_invite_rate_limiter.record_attempt(
+                _register_invite_host_key(request)
+            )
         register_rate_limiter.record_attempt(rate_limit_key)
-        logger.warning("Registration rejected: invalid invite code from %s", rate_limit_key)
+        logger.warning(
+            "Registration rejected: invalid invite code from %s", rate_limit_key
+        )
         return templates.TemplateResponse(
             request,
             "register.html",
