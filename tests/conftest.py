@@ -15,7 +15,7 @@ from app.database import Base, get_db
 from app.main import app
 from app.models import FuelEntry, Group, User, UserGroup, Vehicle
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -47,6 +47,12 @@ else:
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
+
+    @event.listens_for(test_engine, "connect")
+    def _set_sqlite_foreign_keys(dbapi_connection, _connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
 TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
@@ -159,12 +165,17 @@ def create_test_user(db):
 
 
 @pytest.fixture
-def create_test_group(db):
+def create_test_group(db, create_test_user):
     def _create(
         name: str = "Test Farm",
         invite_code: str = "FARM-TEST1",
-        created_by: int = 1,
+        created_by: int | None = None,
     ):
+        if created_by is None:
+            created_by = create_test_user(
+                email=f"owner-{invite_code.lower()}@test.com",
+                name="Group Owner",
+            ).id
         group = Group(name=name, invite_code=invite_code, created_by=created_by)
         db.add(group)
         db.commit()
