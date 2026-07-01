@@ -54,6 +54,7 @@ else:
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
 
+
 TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
 
