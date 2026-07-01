@@ -1,4 +1,4 @@
-# TankApp – Production & Beta Deployment Guide
+# Tankly – Production & Beta Deployment Guide
 
 This document covers **production hardening** and **step-by-step deployment** for Tankly.
 
@@ -55,7 +55,7 @@ Northflank Postgres addon    ←──  SQLAlchemy + Alembic migrations
 Brevo SMTP (opt.)            ←──  password reset emails
 ```
 
-Tankly is **server-rendered** (not a SPA). No frontend build step. Tailwind CSS and Alpine.js load from CDN.
+Tankly is **server-rendered** (not a SPA). No frontend build step. Tailwind CSS, Alpine.js, and Chart.js are served from `/static/vendor/` (self-hosted).
 
 **Do not use SQLite on Northflank.** Container filesystems are ephemeral; data would be lost on redeploy. Always use the Postgres addon.
 
@@ -67,12 +67,9 @@ Complete these **before** the first deploy.
 
 ### Required
 
-- [x] **Add a PostgreSQL driver** to `requirements.txt`:
-  ```
-  psycopg2-binary==2.9.10
-  ```
+- [x] **Add a PostgreSQL driver** to `requirements-prod.txt` (`psycopg2-binary==2.9.10`).
 
-- [x] **Add a `Dockerfile`** (recommended — Northflank's official FastAPI guide uses Docker). See [§4.2](#42-add-dockerfile-and-start-script) for a copy-paste example.
+- [x] **Add a `Dockerfile`** (recommended — Northflank's official FastAPI guide uses Docker). See [§4.2](#42-add-dockerfile-and-start-script). Production image uses `requirements-prod.txt` (no test/lint tools).
 
 - [ ] **Generate a strong `SECRET_KEY`** (never use the dev default):
   ```powershell
@@ -92,6 +89,10 @@ Complete these **before** the first deploy.
 - [x] **PWA test** — accepts `text/javascript` for service worker content type.
 
 - [x] **Private beta registration gate** — set `REGISTRATION_INVITE_CODE` (see [BETA_DEPLOY.md](./BETA_DEPLOY.md)).
+
+- [x] **Self-hosted frontend assets** — Alpine.js, Chart.js, and Tailwind browser bundle under `app/static/vendor/`.
+
+- [x] **GDPR account deletion and personal data export** — profile page (`POST /profile/delete-account`, `GET /profile/export/data.json`).
 
 - [x] **Graceful error pages** — unhandled errors show friendly HTML/JSON instead of raw tracebacks.
 
@@ -114,7 +115,7 @@ If you prefer buildpacks instead of a Dockerfile:
 | In-memory rate limiting (no `REDIS_URL`) | Resets on redeploy; not shared across workers | Set `REDIS_URL` on Northflank (Redis addon or Upstash) |
 | `subscription_tier` | Unused column | When billing is added |
 
-**Implemented since this guide was first written:** server-side session revocation (profile → active sessions), audit log UI (`/settings/audit`), maintenance logs + service reminders, CSV export, analytics, and Redis-backed rate limiting when `REDIS_URL` is set.
+**Implemented since this guide was first written:** server-side session revocation (profile → active sessions), audit log UI (`/settings/audit`), maintenance logs + service reminders, CSV export, analytics, Redis-backed rate limiting when `REDIS_URL` is set, self-hosted static vendor assets, GDPR delete/export on profile, CI coverage reporting, and Dependabot for dependency updates.
 
 ---
 
@@ -257,8 +258,8 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements-prod.txt .
+RUN pip install --no-cache-dir -r requirements-prod.txt
 
 COPY . .
 
@@ -473,7 +474,7 @@ Unlike Render's free tier, Northflank Sandbox does **not** spin down after idle 
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| Build fails | Missing `psycopg2-binary` or Dockerfile error | Check build logs; fix `requirements.txt` |
+| Build fails | Missing `psycopg2-binary` or Dockerfile error | Check build logs; fix `requirements-prod.txt` |
 | DB connection error | `DATABASE_URL` not set or wrong | Check secret group link or env var |
 | `ModuleNotFoundError: psycopg2` | Driver not in requirements | Add `psycopg2-binary` |
 | Migrations fail | DB not ready / wrong URL | Verify addon is running; check `postgresql://` prefix |

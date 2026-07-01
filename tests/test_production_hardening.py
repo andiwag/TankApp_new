@@ -67,8 +67,9 @@ class TestSecurityHeaders:
         )
         assert "Content-Security-Policy" in response.headers
         csp = response.headers["Content-Security-Policy"]
-        assert "cdn.tailwindcss.com" in csp
-        assert "cdn.jsdelivr.net" in csp
+        assert "script-src 'self'" in csp
+        assert "cdn.tailwindcss.com" not in csp
+        assert "cdn.jsdelivr.net" not in csp
         assert "frame-ancestors 'none'" in csp
 
     async def test_hsts_not_set_in_development(self, client):

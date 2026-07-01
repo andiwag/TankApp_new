@@ -1,8 +1,9 @@
 """Tests for Phase 9: Fuel entries CRUD."""
 
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, timedelta
 
 from app.models import FuelEntry, Vehicle
+from app.time_utils import utc_now
 
 from tests.conftest import create_authenticated_group
 
@@ -122,7 +123,7 @@ class TestListFuelEntries:
             usage_reading=11.0,
         )
         db.query(FuelEntry).filter(FuelEntry.id == e_del.id).update(
-            {"deleted_at": datetime.now(UTC)}
+            {"deleted_at": utc_now()}
         )
         db.commit()
 
@@ -166,7 +167,7 @@ class TestListFuelEntries:
             usage_reading=2.0,
         )
         db.query(Vehicle).filter(Vehicle.id == v_gone.id).update(
-            {"deleted_at": datetime.now(UTC)}
+            {"deleted_at": utc_now()}
         )
         db.commit()
 
@@ -450,9 +451,7 @@ class TestCreateFuelEntry:
             role="contributor",
         )
         v = create_test_vehicle(group_id=group.id)
-        db.query(Vehicle).filter(Vehicle.id == v.id).update(
-            {"deleted_at": datetime.now(UTC)}
-        )
+        db.query(Vehicle).filter(Vehicle.id == v.id).update({"deleted_at": utc_now()})
         db.commit()
         d = date.today()
         response = await client.post(
@@ -916,7 +915,7 @@ class TestEditFuelEntry:
             user_id=user.id,
         )
         db.query(FuelEntry).filter(FuelEntry.id == e.id).update(
-            {"deleted_at": datetime.now(UTC)}
+            {"deleted_at": utc_now()}
         )
         db.commit()
         d = date.today()

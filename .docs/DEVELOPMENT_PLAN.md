@@ -390,8 +390,7 @@ test_delete_group_requires_admin
 
 ### Tasks
 - [x] Create `app/templates/base.html`:
-  - Tailwind CSS (CDN)
-  - Alpine.js (CDN)
+  - Tailwind CSS, Alpine.js, Chart.js (self-hosted under `/static/vendor/`)
   - Navigation bar (responsive, mobile hamburger menu)
   - Flash message display area
   - Active group indicator

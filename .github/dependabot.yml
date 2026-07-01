@@ -1,0 +1,32 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      production:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - pytest*
+          - ruff
+          - httpx
+        update-types:
+          - minor
+          - patch
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    groups:
+      dev:
+        patterns:
+          - pytest*
+          - ruff
+          - httpx
+        update-types:
+          - minor
+          - patch

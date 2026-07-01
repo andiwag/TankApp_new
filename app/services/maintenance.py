@@ -1,12 +1,11 @@
 """Maintenance log listing and mutations for the active group."""
 
-from datetime import UTC, datetime
-
 from sqlalchemy.orm import Session, joinedload
 
 from app.models import MaintenanceLog, User, Vehicle
 from app.schemas import MaintenanceLogCreate, MaintenanceLogUpdate
 from app.services.membership import group_page_capabilities
+from app.time_utils import utc_now
 
 
 def list_maintenance_logs_for_group(db: Session, group_id: int) -> list[MaintenanceLog]:
@@ -96,12 +95,12 @@ def apply_maintenance_log_update(
         and data.next_service_date != previous_next_date
     ):
         log.reminder_sent_at = None
-    log.updated_at = datetime.now(UTC)
+    log.updated_at = utc_now()
     db.flush()
     db.refresh(log)
 
 
 def soft_delete_maintenance_log(db: Session, log: MaintenanceLog) -> None:
-    log.deleted_at = datetime.now(UTC)
+    log.deleted_at = utc_now()
     db.flush()
     db.refresh(log)

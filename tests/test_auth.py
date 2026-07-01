@@ -1,7 +1,6 @@
 """Tests for Phase 3: Authentication (Register, Login, Logout)."""
 
 import time
-from datetime import UTC, datetime
 from unittest.mock import patch
 
 from app.auth import (
@@ -16,6 +15,7 @@ from app.config import settings
 from app.dependencies import get_current_user, require_role
 from app.main import app
 from app.models import User, UserGroup
+from app.time_utils import utc_now
 from fastapi import Depends
 
 # ── Test-only routes for dependency testing ──────────────────────────────────
@@ -135,7 +135,7 @@ class TestLoginRoute:
 
     async def test_login_soft_deleted_user_fails(self, client, create_test_user, db):
         user = create_test_user(password="secret1234")
-        user.deleted_at = datetime.now(UTC)
+        user.deleted_at = utc_now()
         db.commit()
 
         response = await client.post(

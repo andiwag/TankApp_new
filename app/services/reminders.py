@@ -1,12 +1,13 @@
 """Service reminder queries and notification helpers."""
 
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.enums import Role
 from app.models import FuelEntry, MaintenanceLog, User, UserGroup, Vehicle
+from app.time_utils import utc_now
 
 
 def _today() -> date:
@@ -14,7 +15,7 @@ def _today() -> date:
 
 
 def _utcnow() -> datetime:
-    return datetime.now(UTC)
+    return utc_now()
 
 
 def _latest_usage_by_vehicle(db: Session, group_id: int) -> dict[int, float]:

@@ -1,8 +1,10 @@
-from datetime import UTC, date, datetime
+from datetime import date, datetime
+
+from app.time_utils import utc_now
 
 
 def _utcnow() -> datetime:
-    return datetime.now(UTC)
+    return utc_now()
 
 
 from sqlalchemy import Boolean, CheckConstraint, Enum, Float, ForeignKey, String, event

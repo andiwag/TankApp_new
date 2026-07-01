@@ -1,7 +1,7 @@
 """Tests for Phase 11: Summary & statistics."""
 
 import re
-from datetime import UTC, date, datetime
+from datetime import date
 from unittest.mock import patch
 
 import pytest
@@ -11,6 +11,7 @@ from app.services.consumption import (
     consumption_unit_label,
 )
 from app.services.summary import get_summary_context
+from app.time_utils import utc_now
 
 
 def _find_vehicle_liters(html: str, vehicle_id: int) -> float:
@@ -163,7 +164,7 @@ class TestSummaryFuelPerVehicle:
             vehicle_id=v.id, group_id=group.id, user_id=user.id, fuel_amount_l=90.0
         )
         db.query(FuelEntry).filter(FuelEntry.id == e2.id).update(
-            {"deleted_at": datetime.now(UTC)}
+            {"deleted_at": utc_now()}
         )
         db.commit()
         ctx = get_summary_context(db, group.id, today=date(2026, 6, 1))
@@ -195,7 +196,7 @@ class TestSummaryFuelPerVehicle:
             fuel_amount_l=100.0,
         )
         db.query(Vehicle).filter(Vehicle.id == v_gone.id).update(
-            {"deleted_at": datetime.now(UTC)}
+            {"deleted_at": utc_now()}
         )
         db.commit()
         ctx = get_summary_context(db, group.id, today=date(2026, 6, 1))
@@ -265,7 +266,7 @@ class TestSummaryFuelPerVehicle:
             usage_reading=400.0,
         )
         db.query(FuelEntry).filter(FuelEntry.id == e_mid.id).update(
-            {"deleted_at": datetime.now(UTC)}
+            {"deleted_at": utc_now()}
         )
         db.commit()
         ctx = get_summary_context(db, group.id, today=date(2026, 6, 1))
@@ -364,7 +365,7 @@ class TestSummaryMonthly:
             entry_date=date(2026, 3, 15),
         )
         db.query(FuelEntry).filter(FuelEntry.id == e2.id).update(
-            {"deleted_at": datetime.now(UTC)}
+            {"deleted_at": utc_now()}
         )
         db.commit()
         ctx = get_summary_context(db, group.id, today=date(2026, 6, 1))

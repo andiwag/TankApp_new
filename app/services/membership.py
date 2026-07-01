@@ -21,9 +21,11 @@ def get_membership(db: Session, user_id: int, group_id: int) -> UserGroup | None
 def count_group_admins(db: Session, group_id: int) -> int:
     return (
         db.query(UserGroup)
+        .join(User, User.id == UserGroup.user_id)
         .filter(
             UserGroup.group_id == group_id,
             UserGroup.role == Role.admin.value,
+            User.deleted_at == None,  # noqa: E711
         )
         .count()
     )

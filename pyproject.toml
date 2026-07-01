@@ -1,3 +1,6 @@
+[project]
+requires-python = ">=3.12"
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
@@ -18,6 +21,19 @@ ignore = ["B008", "E501"]
 
 [tool.ruff.lint.per-file-ignores]
 "app/models.py" = ["E402"]
+"app/time_utils.py" = ["UP017"]
+"app/logging_config.py" = ["UP017"]
+"app/services/sessions.py" = ["UP017"]
 
 [tool.ruff.format]
 quote-style = "double"
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/__init__.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+]

@@ -1,8 +1,11 @@
-const CACHE_NAME = 'tankly-static-v1';
+const CACHE_NAME = 'tankly-static-v2';
 const STATIC_ASSETS = [
   '/static/manifest.json',
   '/static/icon-192.png',
-  '/static/icon-512.png'
+  '/static/icon-512.png',
+  '/static/vendor/alpine.min.js',
+  '/static/vendor/tailwindcss.js',
+  '/static/vendor/chart.umd.min.js',
 ];
 
 self.addEventListener('install', (event) => {

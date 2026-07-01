@@ -1,6 +1,6 @@
 """Tests for L effort features: maintenance logs, service reminders, session revocation."""
 
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, timedelta
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -8,6 +8,7 @@ from app.config import settings
 from app.models import AuditLog, MaintenanceLog, UserSession
 from app.services.reminders import list_due_email_reminders, list_group_reminders
 from app.services.sessions import get_active_session, revoke_session
+from app.time_utils import utc_now
 
 from tests.conftest import create_authenticated_group
 
@@ -138,7 +139,7 @@ class TestServiceReminders:
             service_date=date.today() - timedelta(days=10),
             description="Filter change",
             next_service_date=date.today(),
-            reminder_sent_at=datetime.now(UTC),
+            reminder_sent_at=utc_now(),
         )
         db.add(log)
         db.commit()

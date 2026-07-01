@@ -1,10 +1,9 @@
 """Tests for Phase 5: Group System."""
 
-from datetime import UTC, datetime
-
 from app.auth import decode_session_cookie
 from app.config import settings
 from app.models import Group, UserGroup
+from app.time_utils import utc_now
 
 # ── Create Group ─────────────────────────────────────────────────────────────
 
@@ -154,7 +153,7 @@ class TestJoinGroup:
         group = create_test_group(
             name="Dead Farm", invite_code="FARM-DEAD1", created_by=owner.id
         )
-        group.deleted_at = datetime.now(UTC)
+        group.deleted_at = utc_now()
         db.commit()
 
         joiner = create_test_user(email="joiner@farm.com", name="Joiner")
