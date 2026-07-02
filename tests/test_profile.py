@@ -72,7 +72,7 @@ class TestProfileUpdate:
             follow_redirects=False,
         )
         assert response.status_code == 200
-        assert "already in use" in response.text.lower()
+        assert "bereits verwendet" in response.text.lower()
         db.expire_all()
         u = db.query(User).filter(User.id == user.id).first()
         assert u.email == "mine@example.com"
@@ -114,7 +114,7 @@ class TestProfilePassword:
             follow_redirects=False,
         )
         assert response.status_code == 200
-        assert "current password is incorrect" in response.text.lower()
+        assert "aktuelles passwort" in response.text.lower()
         db.expire_all()
         u = db.query(User).filter(User.id == user.id).first()
         assert verify_password("correct12", u.password_hash)
@@ -134,7 +134,7 @@ class TestProfilePassword:
             follow_redirects=False,
         )
         assert response.status_code == 200
-        assert "do not match" in response.text.lower()
+        assert "stimmen nicht" in response.text.lower()
         db.expire_all()
         u = db.query(User).filter(User.id == user.id).first()
         assert verify_password("correct12", u.password_hash)
@@ -154,7 +154,7 @@ class TestProfilePassword:
             follow_redirects=False,
         )
         assert response.status_code == 200
-        assert "at least" in response.text.lower()
+        assert "mindestens" in response.text.lower()
         db.expire_all()
         u = db.query(User).filter(User.id == user.id).first()
         assert verify_password("correct12", u.password_hash)

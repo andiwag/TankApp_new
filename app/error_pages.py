@@ -46,9 +46,9 @@ def api_error_response(status_code: int, error: str) -> JSONResponse:
 
 
 _HTTP_MESSAGES: dict[int, tuple[str, str]] = {
-    403: ("Access denied", "You do not have permission to view this page."),
-    404: ("Page not found", "The page you requested does not exist."),
-    429: ("Too many requests", "Please wait a moment and try again."),
+    403: ("Zugriff verweigert", "Du hast keine Berechtigung für diese Seite."),
+    404: ("Seite nicht gefunden", "Die angeforderte Seite existiert nicht."),
+    429: ("Zu viele Anfragen", "Bitte warte einen Moment und versuche es erneut."),
 }
 
 
@@ -64,7 +64,7 @@ def http_exception_response(request: Request, exc: StarletteHTTPException) -> Re
     if wants_html_response(request):
         title, message = _HTTP_MESSAGES.get(
             exc.status_code,
-            ("Request error", "Something went wrong with your request."),
+            ("Anfragefehler", "Bei deiner Anfrage ist ein Fehler aufgetreten."),
         )
         detail = _client_safe_http_detail(exc)
         if detail:

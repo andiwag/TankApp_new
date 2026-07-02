@@ -99,7 +99,7 @@ class TestMaintenanceLogs:
             },
         )
         assert response.status_code == 200
-        assert "next_service_date must be on or after service_date" in response.text
+        assert "Nächstes Servicedatum muss am oder nach dem Servicedatum liegen" in response.text
 
 
 class TestServiceReminders:
@@ -237,8 +237,8 @@ class TestSessionRevocation:
         auth_group()
         response = await client.get("/profile")
         assert response.status_code == 200
-        assert "Active sessions" in response.text
-        assert "this device" in response.text
+        assert "Aktive Sitzungen" in response.text
+        assert "dieses gerät" in response.text.lower()
 
     async def test_dashboard_shows_service_reminders(
         self,
@@ -272,5 +272,5 @@ class TestSessionRevocation:
 
         response = await client.get("/dashboard")
         assert response.status_code == 200
-        assert "Service reminders" in response.text
+        assert "Wartungserinnerungen" in response.text
         assert "Due Tractor" in response.text

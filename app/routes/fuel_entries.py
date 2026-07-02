@@ -9,6 +9,13 @@ from app.database import get_db
 from app.dependencies import get_active_group, require_role
 from app.enums import Role
 from app.flash import set_flash
+from app.form_parsing import (
+    parse_bool,
+    parse_date,
+    parse_float,
+    parse_int,
+    parse_optional_float,
+)
 from app.models import Group
 from app.responses import not_found_response
 from app.schemas import FuelEntryCreate, FuelEntryUpdate, first_validation_error_message
@@ -17,44 +24,6 @@ from app.services import vehicles as vehicle_service
 from app.templating import templates
 
 router = APIRouter()
-
-
-def _parse_int(value: str, field_label: str) -> int:
-    try:
-        return int(value)
-    except ValueError as exc:
-        raise ValueError(f"{field_label} must be selected") from exc
-
-
-def _parse_float(value: str, field_label: str) -> float:
-    try:
-        return float(value)
-    except ValueError as exc:
-        raise ValueError(f"{field_label} must be a number") from exc
-
-
-def _parse_date(value: str, field_label: str) -> date:
-    try:
-        return date.fromisoformat(value)
-    except ValueError as exc:
-        raise ValueError(f"{field_label} must be a valid date") from exc
-
-
-def _parse_full_tank(value: str) -> bool:
-    return value in ("1", "on", "true", "yes")
-
-
-def _parse_optional_float(value: str, field_label: str) -> float | None:
-    stripped = value.strip()
-    if not stripped:
-        return None
-    try:
-        parsed = float(stripped)
-    except ValueError as exc:
-        raise ValueError(f"{field_label} must be a number") from exc
-    if parsed < 0:
-        raise ValueError(f"{field_label} must not be negative")
-    return parsed
 
 
 def _fuel_form_response(
@@ -147,18 +116,18 @@ async def create_fuel_entry_post(
             form_usage_reading=usage_reading,
             form_entry_date=entry_date,
             form_notes=notes,
-            form_full_tank=_parse_full_tank(full_tank),
+            form_full_tank=parse_bool(full_tank),
             form_total_cost_eur=total_cost_eur,
         )
 
     try:
         data = FuelEntryCreate(
-            vehicle_id=_parse_int(vehicle_id, "Vehicle"),
-            fuel_amount_l=_parse_float(fuel_amount_l, "Fuel amount"),
-            usage_reading=_parse_float(usage_reading, "Usage reading"),
-            entry_date=_parse_date(entry_date, "Entry date"),
-            full_tank=_parse_full_tank(full_tank),
-            total_cost_eur=_parse_optional_float(total_cost_eur, "Total cost"),
+            vehicle_id=parse_int(vehicle_id, "Fahrzeug"),
+            fuel_amount_l=parse_float(fuel_amount_l, "Kraftstoffmenge"),
+            usage_reading=parse_float(usage_reading, "Betriebsstand"),
+            entry_date=parse_date(entry_date, "Datum"),
+            full_tank=parse_bool(full_tank),
+            total_cost_eur=parse_optional_float(total_cost_eur, "Gesamtkosten"),
             notes=notes.strip() or None,
         )
     except ValueError as exc:
@@ -168,11 +137,11 @@ async def create_fuel_entry_post(
 
     vehicle = vehicle_service.get_active_vehicle_in_group(db, data.vehicle_id, group.id)
     if not vehicle:
-        return _error_form("Choose a valid vehicle from this group.")
+        return _error_form("Bitte ein gültiges Fahrzeug aus dieser Gruppe wählen.")
 
     fuel_entry_service.create_fuel_entry(db, user.id, group.id, vehicle, data)
     response = RedirectResponse(url="/fuel", status_code=303)
-    set_flash(response, "Fuel entry added.", "success")
+    set_flash(response, "Tankvorgang hinzugefügt.", "success")
     return response
 
 
@@ -211,18 +180,18 @@ async def edit_fuel_entry_post(
     form = await request.form()
     try:
         update_fields: dict = {
-            "fuel_amount_l": _parse_float(form.get("fuel_amount_l", ""), "Fuel amount"),
-            "usage_reading": _parse_float(
-                form.get("usage_reading", ""), "Usage reading"
+            "fuel_amount_l": parse_float(form.get("fuel_amount_l", ""), "Kraftstoffmenge"),
+            "usage_reading": parse_float(
+                form.get("usage_reading", ""), "Betriebsstand"
             ),
-            "entry_date": _parse_date(form.get("entry_date", ""), "Entry date"),
+            "entry_date": parse_date(form.get("entry_date", ""), "Datum"),
             "notes": (form.get("notes", "") or "").strip() or None,
         }
         if "full_tank" in form:
-            update_fields["full_tank"] = _parse_full_tank(form["full_tank"])
+            update_fields["full_tank"] = parse_bool(form["full_tank"])
         if "total_cost_eur" in form:
-            update_fields["total_cost_eur"] = _parse_optional_float(
-                form.get("total_cost_eur", ""), "Total cost"
+            update_fields["total_cost_eur"] = parse_optional_float(
+                form.get("total_cost_eur", ""), "Gesamtkosten"
             )
         data = FuelEntryUpdate(**update_fields)
     except (ValueError, ValidationError) as exc:
@@ -242,7 +211,7 @@ async def edit_fuel_entry_post(
 
     fuel_entry_service.apply_fuel_entry_update(db, entry, data)
     response = RedirectResponse(url="/fuel", status_code=303)
-    set_flash(response, "Fuel entry updated.", "success")
+    set_flash(response, "Tankvorgang aktualisiert.", "success")
     return response
 
 
@@ -259,5 +228,5 @@ async def delete_fuel_entry_post(
 
     fuel_entry_service.soft_delete_fuel_entry(db, entry)
     response = RedirectResponse(url="/fuel", status_code=303)
-    set_flash(response, "Fuel entry removed.", "success")
+    set_flash(response, "Tankvorgang entfernt.", "success")
     return response

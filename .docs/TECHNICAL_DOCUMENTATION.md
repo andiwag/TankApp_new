@@ -11,13 +11,18 @@
 
 The system allows **multiple users** to work within a **shared group environment** (e.g. a farm business), ensuring accurate and consistent fuel tracking.
 
-Future expansion paths include:
+Implemented product areas include:
 
-* OCR entry from receipts
 * cost tracking
 * maintenance tracking
 * reporting & export
-* mobile offline functionality
+* installable mobile PWA support
+
+Future expansion paths include:
+
+* OCR entry from receipts
+* richer offline entry workflows
+* subscription billing
 
 ---
 
@@ -61,6 +66,8 @@ Each entry records:
 
 * fuel amount (liters)
 * usage reading at time of fueling (km or hours)
+* full/partial tank flag
+* optional total cost in EUR
 * vehicle
 * user
 * date
@@ -89,7 +96,7 @@ This enables consumption analytics (see Section 14 for calculation logic).
 * Alembic migrations
 * Pydantic validation
 * bcrypt password hashing
-* session-based authentication (signed cookies via itsdangerous)
+* session-based authentication (signed cookies via itsdangerous + DB-backed session records)
 
 ## Database
 
@@ -151,7 +158,15 @@ Benefits:
 
 ### Authentication architecture
 
-Session data (`user_id`, `active_group_id`) is stored in **signed cookies** using `itsdangerous`. This keeps the server stateless — no session table, no Redis. See DECISION_LOG.md D-001.
+Session identity is stored in **signed cookies** using `itsdangerous`. The cookie contains minimal claims (`user_id`, `active_group_id`, `session_id`), while `UserSession` rows provide expiry and revocation. This keeps SSR form auth simple while allowing logout/password-change flows to invalidate sessions. See DECISION_LOG.md D-001 and the later session decisions.
+
+### Application layering
+
+Routes own HTTP concerns: dependencies, form parsing, redirects, flash messages, template selection, and response status mapping.
+
+Services own domain concerns: scoped queries, mutations, aggregate context builders, membership checks, invite-code generation, exports, reminders, and analytics calculations.
+
+Templates own presentation only. Shared Jinja setup lives in `app/templating.py`, shared response helpers in `app/responses.py`, and shared membership/query helpers in `app/services/`.
 
 ---
 
@@ -583,7 +598,7 @@ invite_code
 
 # 9. Authentication
 
-Session-based authentication using **signed cookies** (via `itsdangerous`).
+Session-based authentication uses **signed cookies** (via `itsdangerous`) plus DB-backed `UserSession` records.
 
 ### Flow
 
@@ -597,7 +612,9 @@ hash password using bcrypt
 
 store user
 
-create signed session cookie
+create `UserSession`
+
+create signed session cookie containing `session_id`
 
 redirect to group selection
 
@@ -609,7 +626,9 @@ POST /login
 
 verify password
 
-create signed session cookie
+create `UserSession`
+
+create signed session cookie containing `session_id`
 
 redirect to dashboard (or group selection if no groups)
 
@@ -622,6 +641,7 @@ session
 
 user_id
 active_group_id
+session_id
 ```
 
 ---
@@ -629,6 +649,8 @@ active_group_id
 Logout:
 
 POST /logout
+
+revoke the current `UserSession`
 
 clear session cookie
 
@@ -877,9 +899,9 @@ Rules:
 1. "Previous reading" = the most recent fuel entry for the same vehicle with a **lower** `usage_reading`, sorted by `usage_reading` (not by `entry_date`).
 2. **First entry** for a vehicle: no consumption value (needs at least 2 data points).
 3. **Out-of-order entries:** Sorting by `usage_reading` handles this correctly.
-4. **Assumption:** All fills are **full tank fills**. Partial fills are not tracked in MVP.
+4. Only entries marked as full-tank fills participate in consumption segments. Partial fills are stored for volume and cost history but excluded from average consumption calculations.
 
-Limitation: Partial fills will produce inaccurate consumption numbers. A `full_tank` boolean field could be added later.
+Partial fills remain useful for total liters, costs, exports, and auditability even when they do not produce reliable consumption segments.
 
 See DECISION_LOG.md D-004 for full rationale.
 
@@ -899,7 +921,10 @@ CSRF protection:
 fastapi-csrf-protect (all unsafe requests require a valid signed-cookie + form-field CSRF token)
 
 Soft deletes:
-`deleted_at` fields on User, Group, Vehicle, FuelEntry
+`deleted_at` fields on User, Group, Vehicle, FuelEntry, and MaintenanceLog
+
+Session revocation:
+`UserSession` rows support revoking individual sessions and invalidating sessions after security-sensitive actions.
 
 Group filtering:
 all queries scoped to `active_group_id`
@@ -927,10 +952,9 @@ icons 192 and 512
 
 Service worker caches:
 
-* CSS
-* JS
-* templates
+* manifest
 * icons
+* static assets under `/static/`
 
 Goal:
 
@@ -984,15 +1008,10 @@ Denormalized `group_id` on FuelEntry optimizes the most common query pattern.
 # 19. Future Features
 
 * OCR fuel receipt scanning
-* cost tracking
-* maintenance logs
-* service reminders
-* data export
-* offline support
-* analytics dashboard
-* mobile optimization
+* richer offline entry workflows
 * subscription billing
-* partial fill tracking (`full_tank` boolean)
+* deeper fleet analytics
+* localization polish across marketing and authenticated app UI
 
 ---
 

@@ -54,10 +54,10 @@ def join_group_by_invite_code(db: Session, user: User, invite_code: str) -> Grou
         .first()
     )
     if not group:
-        raise GroupActionError("Invalid invite code")
+        raise GroupActionError("Ungültiger Einladungscode")
 
     if get_membership(db, user.id, group.id):
-        raise GroupActionError("You are already a member of this group")
+        raise GroupActionError("Du bist bereits Mitglied dieser Gruppe")
 
     db.add(
         UserGroup(
@@ -90,7 +90,8 @@ def leave_group(db: Session, user: User, group_id: int) -> bool:
 
     if membership.role == Role.admin.value and count_group_admins(db, group_id) <= 1:
         raise GroupActionError(
-            "You cannot leave as the sole admin. Promote another admin first."
+            "Als alleiniger Admin kannst du die Gruppe nicht verlassen. "
+            "Bitte zuerst einen weiteren Admin bestellen."
         )
 
     db.delete(membership)

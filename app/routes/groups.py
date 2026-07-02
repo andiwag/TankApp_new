@@ -79,7 +79,7 @@ async def create_group(
             db,
             user,
             session_data.get("active_group_id"),
-            "Could not generate an invite code. Please try again.",
+            "Einladungscode konnte nicht erzeugt werden. Bitte erneut versuchen.",
         )
 
     response = RedirectResponse(url="/groups", status_code=303)

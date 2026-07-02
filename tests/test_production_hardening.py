@@ -55,6 +55,21 @@ class TestProductionConfig:
         )
         assert settings.allowed_hosts == ["app.example.com", "*.code.run"]
 
+    def test_production_allowed_hosts_include_internal_probes(self):
+        settings = Settings(
+            ENV="production",
+            SECRET_KEY="unique-production-secret",
+            CRON_SECRET="cron-secret",
+            SINGLE_WORKER_MODE=True,
+            ALLOWED_HOSTS="tankly-web-abc.code.run",
+            _env_file=None,
+        )
+        assert settings.allowed_hosts == [
+            "tankly-web-abc.code.run",
+            "localhost",
+            "127.0.0.1",
+        ]
+
 
 class TestSecurityHeaders:
     async def test_security_headers_on_login_page(self, client):

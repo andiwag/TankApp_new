@@ -87,7 +87,7 @@ class TestServerValidationMessages:
         )
 
         assert response.status_code == 200
-        assert "Fuel amount must be a number" in response.text
+        assert "Kraftstoffmenge muss eine Zahl sein" in response.text
 
         response = await client.post(
             "/register",
@@ -100,7 +100,7 @@ class TestServerValidationMessages:
         )
 
         assert response.status_code == 200
-        assert "Password must be at least 8 characters" in response.text
+        assert "Passwort muss mindestens 8 Zeichen haben" in response.text
 
 
 class TestFlashMessages:
@@ -129,7 +129,7 @@ class TestFlashMessages:
         )
 
         assert response.status_code == 200
-        assert "Email already in use" in response.text
+        assert "E-Mail wird bereits verwendet" in response.text
         assert "bg-red-50" in response.text
 
 
@@ -205,4 +205,4 @@ class TestRateLimiting:
         )
 
         assert response.status_code == 429
-        assert "Too many attempts" in response.text
+        assert "Zu viele Versuche" in response.text

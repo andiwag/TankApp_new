@@ -9,7 +9,7 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-RATE_LIMIT_MESSAGE = "Too many attempts. Please wait a minute and try again."
+RATE_LIMIT_MESSAGE = "Zu viele Versuche. Bitte warte eine Minute und versuche es erneut."
 
 
 class InMemoryRateLimiter:

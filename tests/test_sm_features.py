@@ -158,7 +158,7 @@ class TestAuditLogUi:
 
         response = await client.get("/settings/audit")
         assert response.status_code == 200
-        assert "Audit log" in response.text
+        assert "Änderungsprotokoll" in response.text
         assert "vehicle.create" in response.text
 
     async def test_viewer_cannot_view_audit_log_page(self, client, auth_group):
@@ -203,6 +203,38 @@ class TestAnalyticsDashboard:
         assert ctx["has_cost_data"] is True
         assert any(m["cost_eur"] == 45.0 for m in ctx["monthly_chart"])
 
+    def test_analytics_vehicle_chart_uses_rolling_12_month_window(
+        self,
+        db,
+        create_test_user,
+        create_test_group,
+        create_test_vehicle,
+        create_test_fuel_entry,
+    ):
+        user = create_test_user()
+        group = create_test_group(created_by=user.id)
+        vehicle = create_test_vehicle(group_id=group.id, name="Window Tractor")
+        create_test_fuel_entry(
+            vehicle_id=vehicle.id,
+            group_id=group.id,
+            user_id=user.id,
+            fuel_amount_l=40.0,
+            usage_reading=100.0,
+            entry_date=date(2026, 6, 1),
+        )
+        create_test_fuel_entry(
+            vehicle_id=vehicle.id,
+            group_id=group.id,
+            user_id=user.id,
+            fuel_amount_l=90.0,
+            usage_reading=200.0,
+            entry_date=date(2025, 5, 31),
+        )
+
+        ctx = get_analytics_context(db, group.id, today=date(2026, 6, 15))
+
+        assert ctx["vehicle_chart"] == [{"name": "Window Tractor", "liters": 40.0}]
+
     async def test_analytics_page_renders(
         self, client, auth_group, create_test_vehicle
     ):
@@ -210,7 +242,7 @@ class TestAnalyticsDashboard:
         create_test_vehicle(group_id=group.id)
         response = await client.get("/analytics")
         assert response.status_code == 200
-        assert "Analytics" in response.text
+        assert "Einblicke" in response.text
         assert "vehicle-chart" in response.text
         assert "chart.umd.min.js" in response.text
 

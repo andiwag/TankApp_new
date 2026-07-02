@@ -1,11 +1,82 @@
-{% macro role_badge(role) -%}
-<span class="inline-block text-xs px-2 py-0.5 rounded-full
-    {% if role == 'admin' %}bg-purple-100 text-purple-700
-    {% elif role == 'contributor' %}bg-blue-100 text-blue-700
-    {% else %}bg-gray-100 text-gray-700{% endif %}
-">{{ role }}</span>
-{%- endmacro %}
-
 {% macro csrf_field() -%}
 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+{%- endmacro %}
+
+{% macro brand_logo(class="h-11 w-11 shrink-0 rounded-2xl object-contain shadow-lg shadow-emerald-900/20") -%}
+<img src="{{ product_logo_url() }}" alt="" class="{{ class }}" width="44" height="44" decoding="async">
+{%- endmacro %}
+
+{% macro glass_panel(class="") -%}
+bg-white/75 backdrop-blur-xl border border-white/70 shadow-xl shadow-emerald-900/5 rounded-2xl {{ class }}
+{%- endmacro %}
+
+{% macro button_class(variant="primary") -%}
+inline-flex min-h-[44px] items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-60
+{% if variant == "primary" %} bg-emerald-700 text-white shadow-lg shadow-emerald-900/10 hover:bg-emerald-800
+{% elif variant == "secondary" %} border border-emerald-200 bg-white/80 text-emerald-900 hover:bg-emerald-50
+{% elif variant == "ghost" %} text-emerald-800 hover:bg-emerald-100/70
+{% elif variant == "danger" %} border border-red-200 bg-red-50 text-red-700 hover:bg-red-100
+{% else %} border border-slate-200 bg-white/80 text-slate-700 hover:bg-slate-50{% endif %}
+{%- endmacro %}
+
+{% macro action_button(label, href, variant="primary", class="") -%}
+<a href="{{ href }}" class="{{ button_class(variant) }} {{ class }}">{{ label }}</a>
+{%- endmacro %}
+
+{% macro status_chip(label, tone="neutral") -%}
+<span class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold
+    {% if tone == 'success' %}border-emerald-200 bg-emerald-100 text-emerald-800
+    {% elif tone == 'warning' %}border-amber-200 bg-amber-100 text-amber-800
+    {% elif tone == 'danger' %}border-red-200 bg-red-100 text-red-800
+    {% elif tone == 'info' %}border-sky-200 bg-sky-100 text-sky-800
+    {% elif tone == 'purple' %}border-purple-200 bg-purple-100 text-purple-800
+    {% else %}border-slate-200 bg-slate-100 text-slate-700{% endif %}
+">{{ label }}</span>
+{%- endmacro %}
+
+{% macro role_badge(role) -%}
+    {% if role == 'admin' %}
+        {{ status_chip(role_label(role), "purple") }}
+    {% elif role == 'contributor' %}
+        {{ status_chip(role_label(role), "info") }}
+    {% else %}
+        {{ status_chip(role_label(role), "neutral") }}
+    {% endif %}
+{%- endmacro %}
+
+{% macro page_header(title, eyebrow="", subtitle="", primary_href="", primary_label="", secondary_href="", secondary_label="") -%}
+<div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+        {% if eyebrow %}<p class="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">{{ eyebrow }}</p>{% endif %}
+        <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">{{ title }}</h1>
+        {% if subtitle %}<p class="mt-2 max-w-2xl text-sm text-slate-600">{{ subtitle }}</p>{% endif %}
+    </div>
+    {% if primary_href or secondary_href %}
+    <div class="flex flex-wrap gap-2">
+        {% if secondary_href %}{{ action_button(secondary_label, secondary_href, "secondary") }}{% endif %}
+        {% if primary_href %}{{ action_button(primary_label, primary_href, "primary") }}{% endif %}
+    </div>
+    {% endif %}
+</div>
+{%- endmacro %}
+
+{% macro metric_card(label, value, helper="", tone="emerald") -%}
+<div class="{{ glass_panel('p-5') }}">
+    <p class="text-sm font-medium text-slate-500">{{ label }}</p>
+    <p class="mt-3 text-3xl font-bold tracking-tight
+        {% if tone == 'amber' %}text-amber-700
+        {% elif tone == 'sky' %}text-sky-700
+        {% else %}text-emerald-800{% endif %}
+    ">{{ value }}</p>
+    {% if helper %}<p class="mt-2 text-xs text-slate-500">{{ helper }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro empty_state(title, message, action_href="", action_label="") -%}
+<div class="{{ glass_panel('p-8 text-center') }}">
+    <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-xl text-emerald-800">+</div>
+    <h2 class="text-lg font-semibold text-slate-950">{{ title }}</h2>
+    <p class="mx-auto mt-2 max-w-md text-sm text-slate-600">{{ message }}</p>
+    {% if action_href %}<div class="mt-5">{{ action_button(action_label, action_href, "primary") }}</div>{% endif %}
+</div>
 {%- endmacro %}

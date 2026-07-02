@@ -102,7 +102,7 @@ class TestJoinGroup:
         )
         assert response.status_code == 200
         body = response.text.lower()
-        assert "invalid" in body or "not found" in body
+        assert "ungültig" in body or "nicht gefunden" in body
 
     async def test_join_group_sets_role_contributor(
         self, client, create_test_user, create_test_group, auth_cookie, db
@@ -145,7 +145,7 @@ class TestJoinGroup:
         response = await client.post("/groups/join", data={"invite_code": "FARM-MEMB1"})
         assert response.status_code == 200
         body = response.text.lower()
-        assert "already" in body or "member" in body
+        assert "bereits" in body or "mitglied" in body
 
     async def test_join_group_deleted_group_fails(
         self, client, create_test_user, create_test_group, auth_cookie, db
@@ -163,7 +163,7 @@ class TestJoinGroup:
         response = await client.post("/groups/join", data={"invite_code": "FARM-DEAD1"})
         assert response.status_code == 200
         body = response.text.lower()
-        assert "invalid" in body or "not found" in body
+        assert "ungültig" in body or "nicht gefunden" in body
 
 
 # ── Switch Group ─────────────────────────────────────────────────────────────

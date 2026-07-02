@@ -1,56 +1,108 @@
 {% extends "base.html" %}
-{% from "_macros.html" import csrf_field with context %}
 
-{% block title %}Fuel entries – Tankly{% endblock %}
+{% from "_macros.html" import action_button, csrf_field, empty_state, glass_panel, page_header, status_chip with context %}
+
+
+
+{% block title %}Tankvorgänge – Tankly{% endblock %}
+
+
 
 {% block content %}
-<div class="max-w-7xl mx-auto">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <h1 class="text-2xl font-bold text-gray-900">Fuel entries</h1>
-        <div class="flex flex-wrap gap-2">
-            <a href="/export/fuel-entries.csv" class="inline-flex justify-center items-center min-h-[44px] px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">Export CSV</a>
-            {% if can_edit %}
-            <a href="/fuel/new" class="inline-flex justify-center items-center min-h-[44px] px-4 py-2 rounded-md bg-green-700 text-white text-sm font-medium hover:bg-green-800 transition">
-                Add entry
-            </a>
-            {% endif %}
+
+<div>
+
+    {{ page_header("Kraftstoffprotokoll", "Erfassen", "Alle Tankvorgänge im Betrieb im Überblick.", "/fuel/new" if can_edit else "", "Tankvorgang erfassen", "/export/fuel-entries.csv", "CSV exportieren") }}
+
+
+
+    <div id="fuel-entry-list">
+
+        {% if entries %}
+
+        <div class="grid gap-4">
+
+            {% for e in entries %}
+
+            <article class="{{ glass_panel('p-5') }}">
+
+                <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+
+                    <div class="flex gap-4">
+
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-700 text-lg font-bold text-white">L</div>
+
+                        <div class="min-w-0">
+
+                            <div class="flex flex-wrap items-center gap-2">
+
+                                <h2 class="font-semibold text-slate-950">{{ e.vehicle.name }}</h2>
+
+                                {% if e.full_tank %}{{ status_chip("Voller Tank", "success") }}{% else %}{{ status_chip("Teilbefüllung", "warning") }}{% endif %}
+
+                            </div>
+
+                            <p class="mt-1 text-sm text-slate-500">{{ format_date(e.entry_date) }} · Erfasst von {{ e.user.name }}</p>
+
+                            <div class="mt-3 flex flex-wrap gap-2 text-sm font-semibold">
+
+                                <span class="rounded-full bg-emerald-100 px-3 py-1 text-emerald-800">{{ format_number(e.fuel_amount_l, 2) }} L</span>
+
+                                <span class="rounded-full bg-slate-100 px-3 py-1 text-slate-700">Stand {{ format_number(e.usage_reading, 2) }}</span>
+
+                                {% if e.total_cost_eur is not none %}<span class="rounded-full bg-amber-100 px-3 py-1 text-amber-800">€{{ format_number(e.total_cost_eur, 2) }}</span>{% endif %}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {% if e.notes %}
+
+                    <p class="rounded-2xl bg-white/70 px-4 py-3 text-sm text-slate-600 md:max-w-sm">{{ e.notes }}</p>
+
+                    {% endif %}
+
+                    <div class="flex shrink-0 flex-wrap gap-2">
+
+                    {% if can_edit %}
+
+                    <a href="/fuel/{{ e.id }}/edit" class="rounded-xl px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-100">Bearbeiten</a>
+
+                    {% endif %}
+
+                    {% if can_delete %}
+
+                    <form method="post" action="/fuel/{{ e.id }}/delete" class="inline" x-data="{ submitting: false }" @submit="if (!confirm('Diesen Tankvorgang entfernen?')) { $event.preventDefault(); return; } submitting = true">
+
+                        {{ csrf_field() }}
+
+                        <button type="submit" :disabled="submitting" class="rounded-xl px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60">Löschen</button>
+
+                    </form>
+
+                    {% endif %}
+
+                    </div>
+
+                </div>
+
+            </article>
+
+            {% endfor %}
+
         </div>
+
+        {% else %}
+
+        {{ empty_state("Noch keine Tankvorgänge", "Beginne mit dem nächsten Tanken – Tankly baut deine Betriebshistorie auf.", "/fuel/new" if can_edit else "", "Ersten Tankvorgang erfassen") }}
+
+        {% endif %}
+
     </div>
 
-    <div id="fuel-entry-list" class="bg-white rounded-lg shadow overflow-hidden">
-        {% if entries %}
-        <ul class="divide-y divide-gray-200">
-            {% for e in entries %}
-            <li class="px-6 py-4 flex flex-wrap gap-4 justify-between items-start">
-                <div class="min-w-0 flex-1">
-                    <p class="font-medium text-gray-900">{{ e.entry_date }} · {{ e.vehicle.name }}</p>
-                    <p class="text-sm text-gray-600 mt-1">
-                        {{ e.fuel_amount_l|round(2) }} L · reading {{ e.usage_reading }}
-                        {% if not e.full_tank %} · partial fill{% endif %}
-                        {% if e.total_cost_eur is not none %} · €{{ '%.2f'|format(e.total_cost_eur) }}{% endif %}
-                    </p>
-                    <p class="text-sm text-gray-500 mt-1">Logged by {{ e.user.name }}</p>
-                    {% if e.notes %}
-                    <p class="text-sm text-gray-500 mt-1">{{ e.notes }}</p>
-                    {% endif %}
-                </div>
-                <div class="flex flex-wrap gap-2 shrink-0">
-                    {% if can_edit %}
-                    <a href="/fuel/{{ e.id }}/edit" class="text-sm text-green-700 hover:text-green-900 font-medium">Edit</a>
-                    {% endif %}
-                    {% if can_delete %}
-                    <form method="post" action="/fuel/{{ e.id }}/delete" class="inline" x-data="{ submitting: false }" @submit="if (!confirm('Remove this fuel entry?')) { $event.preventDefault(); return; } submitting = true">
-                        {{ csrf_field() }}
-                        <button type="submit" :disabled="submitting" class="text-sm text-red-600 hover:text-red-800 font-medium disabled:opacity-60">Delete</button>
-                    </form>
-                    {% endif %}
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p class="px-6 py-10 text-gray-500 text-sm">No fuel entries yet.</p>
-        {% endif %}
-    </div>
 </div>
+
 {% endblock %}
+

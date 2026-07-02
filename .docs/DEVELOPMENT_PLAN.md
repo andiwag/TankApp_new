@@ -190,8 +190,9 @@ test_password_reset_confirm_mismatch_fails
 - [x] Create `app/auth.py`:
   - `hash_password(plain)` → bcrypt hash
   - `verify_password(plain, hashed)` → bool
-  - `create_session_cookie(user_id, active_group_id)` → signed cookie value
+  - `create_session_cookie(user_id, active_group_id, session_id=...)` → signed cookie value
   - `decode_session_cookie(cookie_value)` → dict or None
+- [x] Create `app/services/sessions.py` for DB-backed session creation, lookup, expiry, and revocation
 - [x] Create `app/dependencies.py`:
   - `get_current_user(request)` → User or redirect to login
   - `get_active_group(request)` → Group or redirect to group selection
@@ -201,7 +202,7 @@ test_password_reset_confirm_mismatch_fails
   - `POST /login` — authenticate, set cookie, redirect
   - `GET /register` — render registration form
   - `POST /register` — create user, set cookie, redirect
-  - `POST /logout` — clear cookie, redirect to login
+  - `POST /logout` — revoke session, clear cookie, redirect to login
 
 ### Tests (write FIRST)
 

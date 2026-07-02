@@ -1,89 +1,202 @@
 {% extends "base.html" %}
 
-{% block title %}Analytics – Tankly{% endblock %}
+{% from "_macros.html" import action_button, empty_state, glass_panel, metric_card, page_header with context %}
+
+
+
+{% block title %}Auswertung – Tankly{% endblock %}
+
+
 
 {% block content %}
-<div class="max-w-7xl mx-auto">
-    <h1 class="text-2xl font-bold text-gray-900 mb-2">Analytics</h1>
-    <p class="text-sm text-gray-600 mb-8">Charts for the active group (last 12 months).</p>
+
+<div>
+
+    {{ page_header("Einblicke", "Analysieren", "Diagramme und Überblicke für den aktiven Betrieb der letzten 12 Monate.", "", "", "/summary", "Detailtabellen") }}
+
+
 
     {% if show_empty_state %}
-    <p class="text-gray-500 text-sm">No vehicles in this group yet.</p>
+
+    {{ empty_state("Noch keine Fahrzeuge in diesem Betrieb", "Füge Fahrzeuge und Tankvorgänge hinzu, um Auswertungen freizuschalten.", "/vehicles/new", "Fahrzeug hinzufügen") }}
+
     {% else %}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-        <section class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Fuel by vehicle (L)</h2>
-            <canvas id="vehicle-chart" height="220" aria-label="Fuel by vehicle chart"></canvas>
-        </section>
-        <section class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Fuel by month (L)</h2>
-            <canvas id="monthly-chart" height="220" aria-label="Monthly fuel chart"></canvas>
-        </section>
+
+    <div class="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+        {{ metric_card("Kraftstoff letzte 12 Monate", format_number(total_12_month_liters) ~ ' L', "Über aktive Fahrzeuge", "emerald") }}
+
+        {{ metric_card("Top-Fahrzeug", top_vehicle.name if top_vehicle else "—", (format_number(top_vehicle.liters) ~ ' L') if top_vehicle else "Noch kein Kraftstoff", "sky") }}
+
+        {{ metric_card("Stärkster Monat", peak_month.label if peak_month else "—", (format_number(peak_month.liters) ~ ' L') if peak_month else "Noch kein Kraftstoff", "amber") }}
+
+        {{ metric_card("Erfasste Kosten", ('€' ~ format_number(total_12_month_cost, 2)) if total_12_month_cost else "—", "Aus Einträgen mit Kostendaten", "amber") }}
+
     </div>
 
-    {% if has_cost_data %}
-    <section class="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Cost by month (€)</h2>
-        <canvas id="cost-chart" height="220" aria-label="Monthly cost chart"></canvas>
-    </section>
+
+
+    <div class="grid grid-cols-1 gap-8 mb-10">
+
+        <section class="{{ glass_panel('p-6') }}">
+
+            <div class="mb-4 flex flex-col gap-1">
+
+                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">Trend</p>
+
+                <h2 class="text-xl font-bold text-slate-950">Kraftstoff nach Monat</h2>
+
+            </div>
+
+            <canvas id="monthly-chart" height="220" aria-label="Kraftstoffdiagramm nach Monat"></canvas>
+
+        </section>
+
+        <div class="grid gap-8 lg:grid-cols-2">
+
+            <section class="{{ glass_panel('p-6') }}">
+
+                <h2 class="text-lg font-bold text-slate-950 mb-4">Kraftstoff nach Fahrzeug</h2>
+
+                <canvas id="vehicle-chart" height="220" aria-label="Kraftstoffdiagramm nach Fahrzeug"></canvas>
+
+            </section>
+
+            {% if has_cost_data %}
+
+            <section class="{{ glass_panel('p-6') }}">
+
+                <h2 class="text-lg font-bold text-slate-950 mb-4">Kosten nach Monat</h2>
+
+                <canvas id="cost-chart" height="220" aria-label="Kostendiagramm nach Monat"></canvas>
+
+            </section>
+
+            {% else %}
+
+            <section class="{{ glass_panel('p-6 flex flex-col justify-center') }}">
+
+                <h2 class="text-lg font-bold text-slate-950">Noch kein Kostendiagramm</h2>
+
+                <p class="mt-2 text-sm text-slate-600">Ergänze die Gesamtkosten bei Tankvorgängen, um monatliche Kostentrends zu sehen.</p>
+
+            </section>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
     {% endif %}
 
-    <p class="text-sm text-gray-500">
-        <a href="/summary" class="text-green-700 hover:text-green-900 font-medium">View detailed summary tables →</a>
-    </p>
-    {% endif %}
 </div>
 
+
+
 {% if not show_empty_state %}
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+
 <script>
+
     const vehicleData = {{ vehicle_chart | tojson }};
+
     const monthlyData = {{ monthly_chart | tojson }};
+
     const hasCost = {{ has_cost_data | tojson }};
 
+
+
     new Chart(document.getElementById('vehicle-chart'), {
+
         type: 'bar',
+
         data: {
+
             labels: vehicleData.map((row) => row.name),
+
             datasets: [{
-                label: 'Liters',
+
+                label: 'Liter',
+
                 data: vehicleData.map((row) => row.liters),
-                backgroundColor: '#15803d',
+
+                backgroundColor: '#047857',
+
             }],
+
         },
+
         options: { responsive: true, plugins: { legend: { display: false } } },
+
     });
+
+
 
     new Chart(document.getElementById('monthly-chart'), {
+
         type: 'line',
+
         data: {
+
             labels: monthlyData.map((row) => row.label),
+
             datasets: [{
-                label: 'Liters',
+
+                label: 'Liter',
+
                 data: monthlyData.map((row) => row.liters),
-                borderColor: '#15803d',
-                backgroundColor: 'rgba(21, 128, 61, 0.1)',
+
+                borderColor: '#047857',
+
+                backgroundColor: 'rgba(4, 120, 87, 0.12)',
+
                 fill: true,
+
                 tension: 0.2,
+
             }],
+
         },
+
         options: { responsive: true, plugins: { legend: { display: false } } },
+
     });
 
+
+
     if (hasCost) {
+
         new Chart(document.getElementById('cost-chart'), {
+
             type: 'bar',
+
             data: {
+
                 labels: monthlyData.map((row) => row.label),
+
                 datasets: [{
+
                     label: 'EUR',
+
                     data: monthlyData.map((row) => row.cost_eur || 0),
-                    backgroundColor: '#ca8a04',
+
+                    backgroundColor: '#d97706',
+
                 }],
+
             },
+
             options: { responsive: true, plugins: { legend: { display: false } } },
+
         });
+
     }
+
 </script>
+
 {% endif %}
+
 {% endblock %}
+

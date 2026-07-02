@@ -87,7 +87,9 @@ def apply_maintenance_log_update(
         else log.next_service_date
     )
     if effective_next_date is not None and effective_next_date < effective_service_date:
-        raise ValueError("next_service_date must be on or after service_date")
+        raise ValueError(
+            "Nächstes Servicedatum muss am oder nach dem Servicedatum liegen"
+        )
 
     for name, value in data.model_dump(exclude_unset=True).items():
         setattr(log, name, value)

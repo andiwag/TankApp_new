@@ -1,50 +1,98 @@
 {% extends "base.html" %}
-{% from "_macros.html" import csrf_field with context %}
 
-{% block title %}Vehicles – Tankly{% endblock %}
+{% from "_macros.html" import action_button, csrf_field, empty_state, glass_panel, page_header, status_chip with context %}
+
+
+
+{% block title %}Fahrzeuge – Tankly{% endblock %}
+
+
 
 {% block content %}
-<div class="max-w-7xl mx-auto">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <h1 class="text-2xl font-bold text-gray-900">Vehicles</h1>
-        <div class="flex flex-wrap gap-2">
-            <a href="/export/vehicles.csv" class="inline-flex justify-center items-center min-h-[44px] px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">Export CSV</a>
-            {% if can_edit %}
-            <a href="/vehicles/new" class="inline-flex justify-center items-center min-h-[44px] px-4 py-2 rounded-md bg-green-700 text-white text-sm font-medium hover:bg-green-800 transition">
-                Add vehicle
-            </a>
-            {% endif %}
+
+<div>
+
+    {{ page_header("Fuhrpark", "Verwalten", "Fahrzeuge und Maschinen, auf denen Kraftstoff, Wartung und Auswertungen basieren.", "/vehicles/new" if can_edit else "", "Fahrzeug hinzufügen", "/export/vehicles.csv", "CSV exportieren") }}
+
+
+
+    <div id="vehicle-list">
+
+        {% if vehicles %}
+
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+
+            {% for v in vehicles %}
+
+            <article class="{{ glass_panel('p-5') }}">
+
+                <div class="flex items-start justify-between gap-4">
+
+                <div>
+
+                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-lg font-bold text-white">{{ v.name[:1] }}</div>
+
+                        <h2 class="mt-4 text-lg font-bold text-slate-950">{{ v.name }}</h2>
+
+                        <div class="mt-3 flex flex-wrap gap-2">
+
+                            {{ status_chip(vehicle_type_label(v.vtype), "info") }}
+
+                            {{ status_chip(fuel_type_label(v.fuel_type), "success") }}
+
+                            {{ status_chip(usage_unit_label(v.usage_unit), "neutral") }}
+
+                        </div>
+
+                </div>
+
+                    <div class="flex flex-col items-end gap-1">
+
+                    {% if can_edit %}
+
+                    <a href="/vehicles/{{ v.id }}/edit" class="rounded-xl px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-100">Bearbeiten</a>
+
+                    {% endif %}
+
+                    {% if can_delete %}
+
+                    <form method="post" action="/vehicles/{{ v.id }}/delete" class="inline" x-data="{ submitting: false }" @submit="if (!confirm('Dieses Fahrzeug entfernen?')) { $event.preventDefault(); return; } submitting = true">
+
+                        {{ csrf_field() }}
+
+                        <button type="submit" :disabled="submitting" class="rounded-xl px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60">Löschen</button>
+
+                    </form>
+
+                    {% endif %}
+
+                    </div>
+
+                </div>
+
+                <div class="mt-5 flex flex-wrap gap-2">
+
+                    {{ action_button("Kraftstoff", "/fuel/new", "secondary", "flex-1") }}
+
+                    {{ action_button("Wartung", "/maintenance/new", "ghost", "flex-1") }}
+
+                </div>
+
+            </article>
+
+            {% endfor %}
+
         </div>
+
+        {% else %}
+
+        {{ empty_state("Noch keine Fahrzeuge", "Füge dein erstes Fahrzeug hinzu, um Kraftstoff- und Wartungserfassung freizuschalten.", "/vehicles/new" if can_edit else "", "Erstes Fahrzeug hinzufügen") }}
+
+        {% endif %}
+
     </div>
 
-    <div id="vehicle-list" class="bg-white rounded-lg shadow overflow-hidden">
-        {% if vehicles %}
-        <ul class="divide-y divide-gray-200">
-            {% for v in vehicles %}
-            <li class="px-6 py-4 flex flex-wrap gap-4 justify-between items-center">
-                <div>
-                    <p class="font-medium text-gray-900">{{ v.name }}</p>
-                    <p class="text-sm text-gray-500 mt-1">
-                        {{ v.vtype }} · {{ v.fuel_type }} · {{ v.usage_unit }}
-                    </p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    {% if can_edit %}
-                    <a href="/vehicles/{{ v.id }}/edit" class="text-sm text-green-700 hover:text-green-900 font-medium">Edit</a>
-                    {% endif %}
-                    {% if can_delete %}
-                    <form method="post" action="/vehicles/{{ v.id }}/delete" class="inline" x-data="{ submitting: false }" @submit="if (!confirm('Remove this vehicle?')) { $event.preventDefault(); return; } submitting = true">
-                        {{ csrf_field() }}
-                        <button type="submit" :disabled="submitting" class="text-sm text-red-600 hover:text-red-800 font-medium disabled:opacity-60">Delete</button>
-                    </form>
-                    {% endif %}
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p class="px-6 py-10 text-gray-500 text-sm">No vehicles yet.</p>
-        {% endif %}
-    </div>
 </div>
+
 {% endblock %}
+

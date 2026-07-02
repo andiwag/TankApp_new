@@ -285,7 +285,7 @@ class TestChangeMemberRole:
         )
 
         assert response.status_code == 200
-        assert "cannot change your own role" in response.text.lower()
+        assert "eigene rolle" in response.text.lower()
         db.expire_all()
         ug = (
             db.query(UserGroup)
@@ -322,7 +322,7 @@ class TestChangeMemberRole:
         )
 
         assert response.status_code == 200
-        assert "invalid role" in response.text.lower()
+        assert "ungültige rolle" in response.text.lower()
         db.expire_all()
         ug = (
             db.query(UserGroup)
@@ -431,7 +431,7 @@ class TestRemoveMember:
         response = await client.post(f"/settings/group/members/{admin.id}/remove")
 
         assert response.status_code == 200
-        assert "cannot remove yourself" in response.text.lower()
+        assert "selbst entfernen" in response.text.lower()
         db.expire_all()
         ug = (
             db.query(UserGroup)

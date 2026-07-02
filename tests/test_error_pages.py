@@ -23,7 +23,7 @@ class TestErrorPages:
             )
 
         assert response.status_code == 500
-        assert "Something went wrong" in response.text
+        assert "Etwas ist schiefgegangen" in response.text
         assert "Tankly" in response.text
         assert "database unavailable" in response.text
 
@@ -52,7 +52,7 @@ class TestErrorPages:
         )
 
         assert response.status_code == 404
-        assert "Page not found" in response.text
+        assert "Seite nicht gefunden" in response.text
 
     def test_http_500_detail_hidden_in_production(self, monkeypatch):
         monkeypatch.setattr("app.error_pages.settings.ENV", "production")

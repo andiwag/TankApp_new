@@ -48,9 +48,9 @@ def change_member_role(
     role: str,
 ) -> bool:
     if role not in {role.value for role in Role}:
-        raise ValueError("Invalid role.")
+        raise ValueError("Ungültige Rolle.")
     if actor_user_id == member_user_id:
-        raise PermissionError("You cannot change your own role.")
+        raise PermissionError("Du kannst deine eigene Rolle nicht ändern.")
 
     membership = get_membership(db, member_user_id, group_id)
     if not membership:
@@ -69,7 +69,7 @@ def remove_member(
     member_user_id: int,
 ) -> bool:
     if actor_user_id == member_user_id:
-        raise PermissionError("You cannot remove yourself.")
+        raise PermissionError("Du kannst dich nicht selbst entfernen.")
 
     membership = get_membership(db, member_user_id, group_id)
     if not membership:

@@ -3,13 +3,14 @@
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
-from app.models import FuelEntry, Vehicle
+from app.models import FuelEntry, User, Vehicle
 from app.services.fuel_queries import active_fuel_entries_for_group
+from app.services.membership import group_page_capabilities
 
 RECENT_FUEL_ENTRIES_LIMIT = 10
 
 
-def get_dashboard_context(db: Session, group_id: int) -> dict:
+def get_dashboard_context(db: Session, user: User, group_id: int) -> dict:
     vehicle_count = (
         db.query(Vehicle)
         .filter(
@@ -19,20 +20,21 @@ def get_dashboard_context(db: Session, group_id: int) -> dict:
         .count()
     )
 
-    active_entries = active_fuel_entries_for_group(db, group_id)
-    fuel_entry_count = active_entries.count()
-
-    total_liters_row = (
-        db.query(func.coalesce(func.sum(FuelEntry.fuel_amount_l), 0.0))
+    fuel_stats = (
+        db.query(
+            func.count(FuelEntry.id),
+            func.coalesce(func.sum(FuelEntry.fuel_amount_l), 0.0),
+        )
         .join(Vehicle, Vehicle.id == FuelEntry.vehicle_id)
         .filter(
             FuelEntry.group_id == group_id,
             FuelEntry.deleted_at == None,  # noqa: E711
             Vehicle.deleted_at == None,  # noqa: E711
         )
-        .scalar()
+        .one()
     )
-    total_fuel_liters = float(total_liters_row or 0.0)
+    fuel_entry_count = int(fuel_stats[0] or 0)
+    total_fuel_liters = float(fuel_stats[1] or 0.0)
 
     recent_fuel_entries = (
         active_fuel_entries_for_group(db, group_id)
@@ -47,4 +49,5 @@ def get_dashboard_context(db: Session, group_id: int) -> dict:
         "fuel_entry_count": fuel_entry_count,
         "total_fuel_liters": total_fuel_liters,
         "recent_fuel_entries": recent_fuel_entries,
+        **group_page_capabilities(db, user, group_id),
     }

@@ -16,8 +16,8 @@ from app.enums import FuelType, VehicleType
 MIN_PASSWORD_LENGTH = 8
 
 # Shown when another account already holds this email (registration or profile update).
-EMAIL_DUPLICATE_MESSAGE = "Email already in use"
-INVITE_CODE_INVALID_MESSAGE = "Invalid invite code"
+EMAIL_DUPLICATE_MESSAGE = "E-Mail wird bereits verwendet"
+INVITE_CODE_INVALID_MESSAGE = "Ungültiger Einladungscode"
 
 
 # ── Validation helpers ───────────────────────────────────────────────────────
@@ -26,7 +26,7 @@ INVITE_CODE_INVALID_MESSAGE = "Invalid invite code"
 def first_validation_error_message(exc: ValidationError) -> str:
     errors = exc.errors()
     if not errors:
-        return "Invalid input"
+        return "Ungültige Eingabe"
     msg = errors[0]["msg"]
     prefix = "Value error, "
     if msg.startswith(prefix):
@@ -40,7 +40,7 @@ def first_validation_error_message(exc: ValidationError) -> str:
 def _strip_and_require(v: str) -> str:
     stripped = v.strip()
     if not stripped:
-        raise ValueError("Name must not be empty")
+        raise ValueError("Name darf nicht leer sein")
     return stripped
 
 
@@ -52,12 +52,12 @@ NonEmptyStr = Annotated[str, AfterValidator(_strip_and_require)]
 
 def _validate_password_match(password: str, confirm: str) -> None:
     if password != confirm:
-        raise ValueError("Passwords do not match")
+        raise ValueError("Passwörter stimmen nicht überein")
 
 
 def _validate_password_length(password: str) -> None:
     if len(password) < MIN_PASSWORD_LENGTH:
-        raise ValueError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters")
+        raise ValueError(f"Passwort muss mindestens {MIN_PASSWORD_LENGTH} Zeichen haben")
 
 
 # ── User schemas ─────────────────────────────────────────────────────────────
@@ -113,7 +113,7 @@ class UserUpdate(BaseModel):
     @model_validator(mode="after")
     def at_least_one_field(self) -> "UserUpdate":
         if self.name is None and self.email is None:
-            raise ValueError("At least one of name or email must be provided")
+            raise ValueError("Mindestens Name oder E-Mail muss angegeben werden")
         return self
 
 
@@ -171,7 +171,7 @@ class VehicleUpdate(BaseModel):
     @model_validator(mode="after")
     def require_at_least_one_field(self) -> "VehicleUpdate":
         if self.name is None and self.fuel_type is None:
-            raise ValueError("At least one of name or fuel_type must be provided")
+            raise ValueError("Mindestens Name oder Kraftstofftyp muss angegeben werden")
         return self
 
 
@@ -190,7 +190,7 @@ class FuelEntryCreate(BaseModel):
     @model_validator(mode="after")
     def validate_date_not_future(self) -> "FuelEntryCreate":
         if self.entry_date > date.today():
-            raise ValueError("entry_date must not be in the future")
+            raise ValueError("Datum darf nicht in der Zukunft liegen")
         return self
 
 
@@ -212,13 +212,13 @@ class FuelEntryUpdate(BaseModel):
             and self.total_cost_eur is None
             and self.notes is None
         ):
-            raise ValueError("At least one field must be provided")
+            raise ValueError("Mindestens ein Feld muss angegeben werden")
         return self
 
     @model_validator(mode="after")
     def validate_date_not_future(self) -> "FuelEntryUpdate":
         if self.entry_date is not None and self.entry_date > date.today():
-            raise ValueError("entry_date must not be in the future")
+            raise ValueError("Datum darf nicht in der Zukunft liegen")
         return self
 
 
@@ -248,12 +248,14 @@ class MaintenanceLogCreate(BaseModel):
     @model_validator(mode="after")
     def validate_dates(self) -> "MaintenanceLogCreate":
         if self.service_date > date.today():
-            raise ValueError("service_date must not be in the future")
+            raise ValueError("Servicedatum darf nicht in der Zukunft liegen")
         if (
             self.next_service_date is not None
             and self.next_service_date < self.service_date
         ):
-            raise ValueError("next_service_date must be on or after service_date")
+            raise ValueError(
+                "Nächstes Servicedatum muss am oder nach dem Servicedatum liegen"
+            )
         return self
 
 
@@ -275,11 +277,11 @@ class MaintenanceLogUpdate(BaseModel):
             and self.next_service_date is None
             and self.next_service_usage is None
         ):
-            raise ValueError("At least one field must be provided")
+            raise ValueError("Mindestens ein Feld muss angegeben werden")
         return self
 
     @model_validator(mode="after")
     def validate_dates(self) -> "MaintenanceLogUpdate":
         if self.service_date is not None and self.service_date > date.today():
-            raise ValueError("service_date must not be in the future")
+            raise ValueError("Servicedatum darf nicht in der Zukunft liegen")
         return self

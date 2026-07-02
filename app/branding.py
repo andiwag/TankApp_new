@@ -1,6 +1,7 @@
 """Product branding constants."""
 
 PRODUCT_NAME = "Tankly"
+LOGO_STATIC_PATH = "/static/logo.png"
 PRODUCT_DOMAIN = "tankly.at"
 PRODUCT_URL = f"https://www.{PRODUCT_DOMAIN}"
 

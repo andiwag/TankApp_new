@@ -7,7 +7,9 @@
     <meta name="description" content="{% block meta_description %}{{ product_name() }} – Kraftstoff- und Flottenverwaltung für landwirtschaftliche Betriebe in Österreich.{% endblock %}">
     <title>{% block title %}{{ product_name() }}{% endblock %}</title>
     <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#15803d">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <meta name="theme-color" content="#047857">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 </head>
@@ -16,7 +18,10 @@
     <header class="border-b border-gray-100 bg-white/90 backdrop-blur sticky top-0 z-10" x-data="{ open: false }">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                <a href="/" class="font-bold text-xl text-green-800 tracking-tight">{{ product_name() }}</a>
+                <a href="/" class="flex items-center gap-2 font-bold text-xl text-green-800 tracking-tight">
+                    <img src="{{ product_logo_url() }}" alt="" class="h-10 w-10 shrink-0 rounded-xl object-contain" width="40" height="40" decoding="async">
+                    <span>{{ product_name() }}</span>
+                </a>
 
                 <nav class="hidden md:flex items-center gap-8 text-sm font-medium">
                     <a href="/#features" class="text-gray-600 hover:text-green-700 transition">Funktionen</a>
@@ -52,7 +57,10 @@
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
             <div class="flex flex-col sm:flex-row justify-between gap-6 text-sm text-gray-600">
                 <div>
-                    <p class="font-semibold text-gray-900 mb-1">{{ product_name() }}</p>
+                    <div class="flex items-center gap-2 mb-1">
+                        <img src="{{ product_logo_url() }}" alt="" class="h-8 w-8 shrink-0 rounded-lg object-contain" width="32" height="32" decoding="async">
+                        <p class="font-semibold text-gray-900">{{ product_name() }}</p>
+                    </div>
                     <p>Kraftstoff- und Flottenverwaltung für Betriebe.</p>
                 </div>
                 <div class="flex flex-wrap gap-x-6 gap-y-2">

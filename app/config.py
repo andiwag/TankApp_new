@@ -83,7 +83,15 @@ class Settings(BaseSettings):
         if not raw or raw == "*":
             return ["*"]
 
-        return [host.strip() for host in raw.split(",") if host.strip()]
+        hosts = [host.strip() for host in raw.split(",") if host.strip()]
+
+        # Northflank/K8s readiness probes often use Host: localhost or 127.0.0.1
+        if self.is_production:
+            for internal_host in ("localhost", "127.0.0.1"):
+                if internal_host not in hosts:
+                    hosts.append(internal_host)
+
+        return hosts
 
     @model_validator(mode="after")
     def validate_production_settings(self) -> "Settings":

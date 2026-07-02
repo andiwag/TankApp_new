@@ -5,18 +5,19 @@ from datetime import UTC, date
 
 import pytest
 from app.models import FuelEntry, Vehicle
+from tests.helpers import parse_display_number
 
 
 def _stat(html: str, stat_id: str) -> int:
-    m = re.search(rf'id="{re.escape(stat_id)}">(\d+)</', html)
+    m = re.search(rf'id="{re.escape(stat_id)}">([\d.,]+)</', html)
     assert m is not None, f"missing {stat_id} in response"
-    return int(m.group(1))
+    return int(parse_display_number(m.group(1)))
 
 
 def _stat_float(html: str, stat_id: str) -> float:
-    m = re.search(rf'id="{re.escape(stat_id)}">([\d.]+)</', html)
+    m = re.search(rf'id="{re.escape(stat_id)}">([\d.,]+)</', html)
     assert m is not None, f"missing {stat_id} in response"
-    return float(m.group(1))
+    return parse_display_number(m.group(1))
 
 
 class TestDashboardAuth:
@@ -144,6 +145,25 @@ class TestDashboardStats:
         assert "Alpha Tractor" in html
         assert "45" in html and "20" in html
         assert "recent-fuel-entries" in html
+
+    async def test_dashboard_promotes_fuel_entry_for_contributors(
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+    ):
+        user = create_test_user()
+        group = create_test_group(created_by=user.id)
+        create_test_user_group(user.id, group.id, role="contributor")
+        auth_cookie(client, user.id, group.id)
+
+        response = await client.get("/dashboard")
+
+        assert response.status_code == 200
+        assert 'href="/fuel/new"' in response.text
+        assert "Tankvorgang erfassen" in response.text
 
     async def test_dashboard_scoped_to_active_group(
         self,

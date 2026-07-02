@@ -114,7 +114,7 @@ class TestLoginRoute:
             data={"email": "nonexistent@example.com", "password": "secret1234"},
         )
         assert response.status_code == 200
-        assert "invalid" in response.text.lower()
+        assert "ungültig" in response.text.lower()
 
     async def test_login_invalid_password_shows_error(self, client, create_test_user):
         create_test_user(password="secret1234")
@@ -123,7 +123,7 @@ class TestLoginRoute:
             data={"email": "test@example.com", "password": "wrongpassword"},
         )
         assert response.status_code == 200
-        assert "invalid" in response.text.lower()
+        assert "ungültig" in response.text.lower()
 
     async def test_login_sets_session_cookie(self, client, create_test_user):
         create_test_user(password="secret1234")
@@ -143,7 +143,7 @@ class TestLoginRoute:
             data={"email": "test@example.com", "password": "secret1234"},
         )
         assert response.status_code == 200
-        assert "invalid" in response.text.lower()
+        assert "ungültig" in response.text.lower()
 
 
 # ── Integration tests: register route ────────────────────────────────────────
@@ -367,7 +367,7 @@ class TestForgotPasswordRoute:
         )
         assert response.status_code == 200
         body = response.text.lower()
-        assert "reset" in body or "sent" in body
+        assert "gesendet" in body or "zurücksetzen" in body
 
     async def test_forgot_password_nonexistent_email_succeeds_silently(self, client):
         response = await client.post(
@@ -375,7 +375,7 @@ class TestForgotPasswordRoute:
         )
         assert response.status_code == 200
         body = response.text.lower()
-        assert "reset" in body or "sent" in body
+        assert "gesendet" in body or "zurücksetzen" in body
 
     async def test_forgot_password_generates_token(self, client, create_test_user):
         user = create_test_user(email="alice@farm.com", password="secret1234")
@@ -409,7 +409,7 @@ class TestResetPasswordRoute:
         response = await client.get("/reset-password/invalid_token_xyz")
         assert response.status_code == 200
         body = response.text.lower()
-        assert "invalid" in body or "expired" in body
+        assert "ungültig" in body or "abgelaufen" in body
 
     async def test_get_reset_password_page_expired_token_shows_error(
         self, client, create_test_user
@@ -421,7 +421,7 @@ class TestResetPasswordRoute:
             response = await client.get(f"/reset-password/{token}")
         assert response.status_code == 200
         body = response.text.lower()
-        assert "invalid" in body or "expired" in body
+        assert "ungültig" in body or "abgelaufen" in body
 
     async def test_reset_password_valid_token_changes_password(
         self, client, create_test_user
@@ -455,7 +455,7 @@ class TestResetPasswordRoute:
         )
         assert response.status_code == 200
         body = response.text.lower()
-        assert "invalid" in body or "expired" in body
+        assert "ungültig" in body or "abgelaufen" in body
 
     async def test_reset_password_expired_token_fails(self, client, create_test_user):
         user = create_test_user(password="secret1234")
@@ -471,7 +471,7 @@ class TestResetPasswordRoute:
             )
         assert response.status_code == 200
         body = response.text.lower()
-        assert "invalid" in body or "expired" in body
+        assert "ungültig" in body or "abgelaufen" in body
 
     async def test_reset_password_password_mismatch_shows_error(
         self, client, create_test_user
@@ -512,4 +512,4 @@ class TestResetPasswordRoute:
         )
         assert response.status_code == 200
         body = response.text.lower()
-        assert "invalid" in body or "expired" in body
+        assert "ungültig" in body or "abgelaufen" in body

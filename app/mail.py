@@ -23,11 +23,11 @@ def _mail_connection() -> ConnectionConfig:
 
 async def send_password_reset_email(to_email: str, reset_url: str) -> None:
     message = MessageSchema(
-        subject=f"{PRODUCT_NAME} password reset",
+        subject=f"{PRODUCT_NAME} – Passwort zurücksetzen",
         recipients=[to_email],
         body=(
-            f"Use the link below to reset your {PRODUCT_NAME} password. "
-            "It is valid for 1 hour.\n\n"
+            f"Nutze den folgenden Link, um dein {PRODUCT_NAME}-Passwort zurückzusetzen. "
+            "Er ist 1 Stunde gültig.\n\n"
             f"{reset_url}\n"
         ),
         subtype=MessageType.plain,
@@ -46,13 +46,13 @@ async def send_service_reminder_email(
     due_detail: str,
 ) -> None:
     message = MessageSchema(
-        subject=f"{PRODUCT_NAME} service reminder: {vehicle_name}",
+        subject=f"{PRODUCT_NAME} – Servicehinweis: {vehicle_name}",
         recipients=[to_email],
         body=(
-            f"Service reminder for {vehicle_name}.\n\n"
-            f"Task: {description}\n"
-            f"Due: {due_detail}\n\n"
-            f"Log in to {PRODUCT_NAME} to review maintenance records."
+            f"Servicehinweis für {vehicle_name}.\n\n"
+            f"Aufgabe: {description}\n"
+            f"Fällig: {due_detail}\n\n"
+            f"Melde dich bei {PRODUCT_NAME} an, um Wartungseinträge zu prüfen."
         ),
         subtype=MessageType.plain,
     )

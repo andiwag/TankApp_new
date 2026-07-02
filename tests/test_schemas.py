@@ -26,7 +26,7 @@ class TestUserCreate:
         assert u.name == "Alice"
 
     def test_user_create_password_mismatch_fails(self):
-        with pytest.raises(ValidationError, match="[Pp]assword"):
+        with pytest.raises(ValidationError, match="stimmen"):
             UserCreate(
                 email="a@b.com",
                 name="A",
@@ -35,7 +35,7 @@ class TestUserCreate:
             )
 
     def test_user_create_short_password_fails(self):
-        with pytest.raises(ValidationError, match="[Pp]assword"):
+        with pytest.raises(ValidationError, match="mindestens"):
             UserCreate(
                 email="a@b.com",
                 name="A",
@@ -148,7 +148,7 @@ class TestFuelEntryCreate:
 
     def test_fuel_entry_create_future_date_fails(self):
         future = date.today() + timedelta(days=1)
-        with pytest.raises(ValidationError, match="entry_date"):
+        with pytest.raises(ValidationError, match="Zukunft"):
             FuelEntryCreate(
                 vehicle_id=1,
                 fuel_amount_l=30.0,
@@ -175,7 +175,7 @@ class TestGroupCreate:
 
 class TestPasswordChange:
     def test_password_change_mismatch_fails(self):
-        with pytest.raises(ValidationError, match="[Pp]assword"):
+        with pytest.raises(ValidationError, match="stimmen"):
             PasswordChange(
                 current_password="oldpass123",
                 new_password="newpass1234",
@@ -188,7 +188,7 @@ class TestPasswordChange:
 
 class TestPasswordResetConfirm:
     def test_password_reset_confirm_mismatch_fails(self):
-        with pytest.raises(ValidationError, match="[Pp]assword"):
+        with pytest.raises(ValidationError, match="stimmen"):
             PasswordResetConfirm(
                 token="sometoken",
                 new_password="newpass1234",

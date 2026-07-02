@@ -6,17 +6,18 @@ This document records architectural and design decisions made during planning, a
 
 ## D-001: Authentication — Session-based with signed cookies
 
-**Decision:** Use session-based authentication with signed cookies (via `itsdangerous`).
+**Decision:** Use session-based authentication with signed cookies (via `itsdangerous`). The current implementation also stores a `UserSession` row per login so sessions can expire and be revoked server-side.
 
 **Context:** The app is server-side rendered (Jinja2 templates, form POSTs). The question was whether session-based auth is optimal, and if so, how to store session data.
 
 **Rationale:**
 - Session-based auth is the natural fit for SSR apps with form submissions.
 - JWT tokens add complexity that benefits SPAs/decoupled APIs — not relevant here.
-- Signed cookies keep things stateless: no session table, no Redis, no server-side cleanup.
-- Session payload is minimal (`user_id`, `active_group_id`), well within cookie size limits.
+- Signed cookies keep browser auth natural for SSR forms and avoid JWT complexity.
+- Session payload is minimal (`user_id`, `active_group_id`, `session_id`), well within cookie size limits.
+- The DB-backed `session_id` allows logout, password-change flows, and profile session management to invalidate existing sessions.
 
-**Trade-off:** Sessions cannot be revoked server-side (e.g., force-logout a user). Acceptable for MVP. If needed later, migrate to a `Session` DB table.
+**Trade-off:** Authentication is no longer fully stateless; each authenticated request must verify the `UserSession` row. This is acceptable because it provides revocation without adding Redis or an external session store.
 
 ---
 
@@ -60,9 +61,9 @@ This document records architectural and design decisions made during planning, a
 1. "Previous reading" = the most recent fuel entry for the same vehicle with a **lower** `usage_reading`, sorted by `usage_reading` (not by `entry_date`).
 2. **First entry** for a vehicle: no consumption value (needs at least 2 data points).
 3. **Out-of-order entries:** Sorting by `usage_reading` handles this correctly — chronological order of entry creation doesn't matter.
-4. **Assumption:** All fills are **full tank fills**. Partial fills are not tracked in MVP. This is a documented limitation.
+4. Only entries marked as **full tank** anchor consumption segments. Partial fills are stored for totals and cost history but excluded from average consumption calculations.
 
-**Trade-off:** Partial fills will produce inaccurate consumption numbers. A `full_tank` boolean field could be added later to handle this.
+**Trade-off:** Partial fills do not directly improve average consumption until a later full-tank reading closes the interval. This keeps calculations conservative and avoids presenting misleading L/100km or L/h values.
 
 ---
 

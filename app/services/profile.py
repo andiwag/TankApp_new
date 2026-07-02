@@ -7,7 +7,7 @@ from app.auth import hash_password, verify_password
 from app.models import User
 from app.schemas import EMAIL_DUPLICATE_MESSAGE, PasswordChange, UserUpdate
 
-_WRONG_CURRENT_PASSWORD = "Current password is incorrect"
+_WRONG_CURRENT_PASSWORD = "Das aktuelle Passwort ist falsch"
 
 
 def update_user_profile(db: Session, user: User, data: UserUpdate) -> str | None:

@@ -65,7 +65,7 @@ async def profile_update(
         )
 
     response = RedirectResponse(url="/profile", status_code=303)
-    set_flash(response, "Profile updated", category="success")
+    set_flash(response, "Profil aktualisiert", category="success")
     return response
 
 
@@ -104,7 +104,7 @@ async def profile_change_password(
     db.commit()
 
     response = RedirectResponse(url="/profile", status_code=303)
-    set_flash(response, "Password changed", category="success")
+    set_flash(response, "Passwort geändert", category="success")
     return response
 
 
@@ -128,7 +128,7 @@ async def revoke_profile_session(
         return response
 
     response = RedirectResponse(url="/profile", status_code=303)
-    set_flash(response, "Session revoked.", category="success")
+    set_flash(response, "Sitzung beendet.", category="success")
     return response
 
 
@@ -142,5 +142,5 @@ async def revoke_all_profile_sessions(
     revoke_all_user_sessions(db, user.id, except_session_id=current_session_id)
     db.commit()
     response = RedirectResponse(url="/profile", status_code=303)
-    set_flash(response, "Other sessions signed out.", category="success")
+    set_flash(response, "Alle anderen Geräte abgemeldet.", category="success")
     return response

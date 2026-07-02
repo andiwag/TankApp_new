@@ -87,7 +87,7 @@ async def create_vehicle_post(
     log_event(db, group.id, user.id, "vehicle.create", "vehicle", vehicle.id)
     db.commit()
     db.refresh(vehicle)
-    set_flash(response, "Vehicle created.", "success")
+    set_flash(response, "Fahrzeug erstellt.", "success")
     return response
 
 
@@ -134,7 +134,7 @@ async def edit_vehicle_post(
 
     vehicle_service.apply_vehicle_update(db, vehicle, data)
     response = RedirectResponse(url="/vehicles", status_code=303)
-    set_flash(response, "Vehicle updated.", "success")
+    set_flash(response, "Fahrzeug aktualisiert.", "success")
     return response
 
 
@@ -161,5 +161,5 @@ async def delete_vehicle_post(
     )
     db.commit()
     db.refresh(vehicle)
-    set_flash(response, "Vehicle removed.", "success")
+    set_flash(response, "Fahrzeug entfernt.", "success")
     return response

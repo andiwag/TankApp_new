@@ -1,71 +1,300 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard – Tankly{% endblock %}
+{% from "_macros.html" import action_button, empty_state, glass_panel, metric_card, status_chip with context %}
+
+
+
+{% block title %}Übersicht – Tankly{% endblock %}
+
+
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
 
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-        <div class="bg-white rounded-lg shadow p-6">
-            <p class="text-sm font-medium text-gray-500">Vehicles</p>
-            <p class="mt-2 text-3xl font-semibold text-gray-900"><span id="stat-vehicles">{{ vehicle_count }}</span></p>
+<div class="space-y-8">
+
+    <section class="{{ glass_panel('overflow-hidden') }}">
+
+        <div class="grid gap-6 p-6 lg:grid-cols-[1.6fr_1fr] lg:p-8">
+
+            <div>
+
+                <p class="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">{{ request.state.active_group.name if request.state.active_group else "Betrieb" }}</p>
+
+                <h1 class="mt-3 max-w-2xl text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">Bereit für die heutigen Einträge?</h1>
+
+                <p class="mt-4 max-w-xl text-sm leading-6 text-slate-600">Erfasse Kraftstoff und Wartung schnell – Tankly macht aus der Betriebshistorie nützliche Fuhrpark-Einblicke.</p>
+
+                <div class="mt-6 flex flex-wrap gap-3">
+
+                    {% if can_edit %}
+
+                    {{ action_button("Tankvorgang erfassen", "/fuel/new", "primary", "text-base") }}
+
+                    {{ action_button("Wartung erfassen", "/maintenance/new", "secondary") }}
+
+                    {% else %}
+
+                    {{ action_button("Kraftstoffprotokoll ansehen", "/fuel", "primary", "text-base") }}
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+            <div class="rounded-3xl border border-emerald-100 bg-emerald-900 p-5 text-white shadow-2xl shadow-emerald-900/20">
+
+                <p class="text-sm font-medium text-emerald-100">Betriebsüberblick</p>
+
+                <div class="mt-5 grid grid-cols-2 gap-3">
+
+                    <div class="rounded-2xl bg-white/10 p-4">
+
+                        <p class="text-xs text-emerald-100">Fahrzeuge</p>
+
+                        <p class="mt-2 text-3xl font-bold">{{ vehicle_count }}</p>
+
+                    </div>
+
+                    <div class="rounded-2xl bg-white/10 p-4">
+
+                        <p class="text-xs text-emerald-100">Einträge</p>
+
+                        <p class="mt-2 text-3xl font-bold">{{ fuel_entry_count }}</p>
+
+                    </div>
+
+                </div>
+
+                <div class="mt-3 rounded-2xl bg-white/10 p-4">
+
+                    <p class="text-xs text-emerald-100">Erfasster Kraftstoff gesamt</p>
+
+                    <p class="mt-2 text-3xl font-bold">{{ format_number(total_fuel_liters) }} L</p>
+
+                </div>
+
+            </div>
+
         </div>
-        <div class="bg-white rounded-lg shadow p-6">
-            <p class="text-sm font-medium text-gray-500">Fuel entries</p>
-            <p class="mt-2 text-3xl font-semibold text-gray-900"><span id="stat-entries">{{ fuel_entry_count }}</span></p>
+
+    </section>
+
+
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+
+        <div class="{{ glass_panel('p-5') }}">
+
+            <p class="text-sm font-medium text-slate-500">Fahrzeuge</p>
+
+            <p class="mt-3 text-3xl font-bold tracking-tight text-emerald-800"><span id="stat-vehicles">{{ vehicle_count }}</span></p>
+
+            <p class="mt-2 text-xs text-slate-500">Aktive Fuhrpark-Fahrzeuge</p>
+
         </div>
-        <div class="bg-white rounded-lg shadow p-6">
-            <p class="text-sm font-medium text-gray-500">Total fuel (L)</p>
-            <p class="mt-2 text-3xl font-semibold text-gray-900"><span id="stat-liters">{{ '%.1f'|format(total_fuel_liters) }}</span></p>
+
+        <div class="{{ glass_panel('p-5') }}">
+
+            <p class="text-sm font-medium text-slate-500">Tankvorgänge</p>
+
+            <p class="mt-3 text-3xl font-bold tracking-tight text-sky-700"><span id="stat-entries">{{ fuel_entry_count }}</span></p>
+
+            <p class="mt-2 text-xs text-slate-500">Erfasste Tankvorgänge</p>
+
         </div>
+
+        <div class="{{ glass_panel('p-5') }}">
+
+            <p class="text-sm font-medium text-slate-500">Kraftstoff gesamt (L)</p>
+
+            <p class="mt-3 text-3xl font-bold tracking-tight text-amber-700"><span id="stat-liters">{{ format_number(total_fuel_liters) }}</span></p>
+
+            <p class="mt-2 text-xs text-slate-500">Alle aktiven Einträge</p>
+
+        </div>
+
     </div>
 
-    {% if service_reminders %}
-    <section class="bg-white rounded-lg shadow overflow-hidden mb-10">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900">Service reminders</h2>
+
+
+    {% if can_edit %}
+
+    <section>
+
+        <div class="mb-4 flex items-center justify-between">
+
+            <h2 class="text-lg font-bold text-slate-950">Schnellaktionen</h2>
+
+            <span class="text-sm font-medium text-slate-500">Kurzwege fürs Feld</span>
+
         </div>
-        <ul class="divide-y divide-gray-200">
-            {% for reminder in service_reminders %}
-            <li class="px-6 py-4 flex flex-wrap gap-4 justify-between items-baseline">
-                <div>
-                    <span class="font-medium text-gray-900">{{ reminder.vehicle_name }}</span>
-                    <span class="text-gray-500 text-sm ml-2">{{ reminder.description }}</span>
-                </div>
-                <span class="text-sm font-medium {% if reminder.status == 'overdue' %}text-red-700{% else %}text-amber-700{% endif %}">
-                    {% if reminder.status == 'overdue' %}Overdue{% else %}Due soon{% endif %}
-                    {% if reminder.next_service_date %} · {{ reminder.next_service_date }}{% endif %}
-                </span>
-            </li>
-            {% endfor %}
-        </ul>
+
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+            <a href="/fuel/new" class="{{ glass_panel('group p-5 transition hover:-translate-y-0.5 hover:bg-white/90') }}">
+
+                <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-700 text-lg font-bold text-white">L</span>
+
+                <h3 class="mt-4 font-semibold text-slate-950">Tankvorgang</h3>
+
+                <p class="mt-1 text-sm text-slate-600">Liter, Stand, Kosten und Tankart erfassen.</p>
+
+            </a>
+
+            <a href="/maintenance/new" class="{{ glass_panel('group p-5 transition hover:-translate-y-0.5 hover:bg-white/90') }}">
+
+                <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-lg font-bold text-amber-900">S</span>
+
+                <h3 class="mt-4 font-semibold text-slate-950">Wartung</h3>
+
+                <p class="mt-1 text-sm text-slate-600">Wartungsarbeiten und nächste Erinnerungen protokollieren.</p>
+
+            </a>
+
+            <a href="/vehicles/new" class="{{ glass_panel('group p-5 transition hover:-translate-y-0.5 hover:bg-white/90') }}">
+
+                <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-lg font-bold text-slate-800">V</span>
+
+                <h3 class="mt-4 font-semibold text-slate-950">Fahrzeug</h3>
+
+                <p class="mt-1 text-sm text-slate-600">Traktoren, Autos, Maschinen und mehr hinzufügen.</p>
+
+            </a>
+
+            <a href="/export/fuel-entries.csv" class="{{ glass_panel('group p-5 transition hover:-translate-y-0.5 hover:bg-white/90') }}">
+
+                <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-100 text-lg font-bold text-sky-900">E</span>
+
+                <h3 class="mt-4 font-semibold text-slate-950">Daten exportieren</h3>
+
+                <p class="mt-1 text-sm text-slate-600">Kraftstoffhistorie für Berichte herunterladen.</p>
+
+            </a>
+
+        </div>
+
     </section>
+
     {% endif %}
 
-    <section id="recent-fuel-entries" class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900">Recent fuel entries</h2>
+
+
+    {% if service_reminders %}
+
+    <section class="{{ glass_panel('p-6') }}">
+
+        <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+
+            <div>
+
+                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-amber-700">Achtung</p>
+
+                <h2 class="text-xl font-bold text-slate-950">Wartungserinnerungen</h2>
+
+            </div>
+
+            <a href="/maintenance" class="text-sm font-semibold text-emerald-800 hover:text-emerald-950">Wartung öffnen</a>
+
         </div>
-        {% if recent_fuel_entries %}
-        <ul class="divide-y divide-gray-200">
-            {% for entry in recent_fuel_entries %}
-            <li class="px-6 py-4 flex flex-wrap gap-4 justify-between items-baseline">
-                <div>
-                    <span class="font-medium text-gray-900">{{ entry.vehicle.name }}</span>
-                    <span class="text-gray-500 text-sm ml-2">{{ entry.entry_date.isoformat() }}</span>
+
+        <div class="grid gap-3">
+
+            {% for reminder in service_reminders %}
+
+            <div class="rounded-2xl border {% if reminder.status == 'overdue' %}border-red-200 bg-red-50/80{% else %}border-amber-200 bg-amber-50/80{% endif %} p-4">
+
+                <div class="flex flex-wrap items-start justify-between gap-3">
+
+                    <div>
+
+                        <p class="font-semibold text-slate-950">{{ reminder.vehicle_name }}</p>
+
+                        <p class="mt-1 text-sm text-slate-600">{{ reminder.description }}</p>
+
+                    </div>
+
+                    {% if reminder.status == 'overdue' %}{{ status_chip("Überfällig", "danger") }}{% else %}{{ status_chip("Bald fällig", "warning") }}{% endif %}
+
                 </div>
-                <div class="text-sm text-gray-700">
-                    <span>{{ entry.fuel_amount_l }} L</span>
-                    <span class="text-gray-400 mx-2">·</span>
-                    <span>{{ entry.user.name }}</span>
-                </div>
-            </li>
+
+                {% if reminder.next_service_date %}<p class="mt-2 text-sm text-slate-500">Zieldatum {{ format_date(reminder.next_service_date) }}</p>{% endif %}
+
+            </div>
+
             {% endfor %}
-        </ul>
-        {% else %}
-        <p class="px-6 py-8 text-gray-500 text-sm">No fuel entries yet.</p>
-        {% endif %}
+
+        </div>
+
     </section>
+
+    {% endif %}
+
+
+
+    <section id="recent-fuel-entries" class="{{ glass_panel('p-6') }}">
+
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+            <div>
+
+                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">Aktivität</p>
+
+                <h2 class="text-xl font-bold text-slate-950">Letzte Tankvorgänge</h2>
+
+            </div>
+
+            {% if can_edit %}
+
+            {{ action_button("Weiteren erfassen", "/fuel/new", "secondary") }}
+
+            {% endif %}
+
+        </div>
+
+        {% if recent_fuel_entries %}
+
+        <div class="space-y-3">
+
+            {% for entry in recent_fuel_entries %}
+
+            <div class="rounded-2xl border border-white/70 bg-white/70 p-4">
+
+                <div class="flex flex-wrap items-start justify-between gap-3">
+
+                    <div>
+
+                        <p class="font-semibold text-slate-950">{{ entry.vehicle.name }}</p>
+
+                        <p class="mt-1 text-sm text-slate-500">{{ format_date(entry.entry_date) }} · {{ entry.user.name }}</p>
+
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2 text-sm font-semibold">
+
+                        <span class="text-emerald-800">{{ format_number(entry.fuel_amount_l, 2) }} L</span>
+
+                        {% if entry.full_tank %}{{ status_chip("Voller Tank", "success") }}{% else %}{{ status_chip("Teilbefüllung", "warning") }}{% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        {{ empty_state("Noch keine Tankvorgänge", "Beginne mit dem nächsten Tanken – Tankly baut deine Betriebshistorie auf.", "/fuel/new" if can_edit else "", "Tankvorgang erfassen") }}
+
+        {% endif %}
+
+    </section>
+
 </div>
+
 {% endblock %}
+

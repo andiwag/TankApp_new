@@ -17,6 +17,6 @@ async def dashboard_page(
     db: Session = Depends(get_db),
     group: Group = Depends(get_active_group),
 ):
-    ctx = get_dashboard_context(db, group.id)
+    ctx = get_dashboard_context(db, request.state.user, group.id)
     ctx["service_reminders"] = list_group_reminders(db, group.id)
     return templates.TemplateResponse(request, "dashboard.html", context=ctx)

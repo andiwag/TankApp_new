@@ -1,55 +1,128 @@
 {% extends "base.html" %}
-{% from "_macros.html" import csrf_field with context %}
 
-{% block title %}Register – Tankly{% endblock %}
+{% from "_macros.html" import button_class, csrf_field, glass_panel with context %}
+
+
+
+{% block title %}Registrieren – Tankly{% endblock %}
+
+
 
 {% block content %}
-<div class="max-w-md mx-auto">
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Register</h1>
+
+<div class="mx-auto grid w-full max-w-5xl items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+
+    <section class="hidden lg:block">
+
+        <p class="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">Erfassung starten</p>
+
+        <h1 class="mt-4 text-5xl font-bold tracking-tight text-slate-950">Schaffe dir eine klare Kraftstoff- und Wartungsroutine.</h1>
+
+        <p class="mt-5 max-w-xl text-slate-600">Richte dein Konto ein, erstelle oder tritt einem Betrieb bei und bündle deine Fuhrparkhistorie an einem Ort.</p>
+
+    </section>
+
+
+
+    <section class="{{ glass_panel('w-full p-6 sm:p-8') }}">
+
+    <h1 class="text-3xl font-bold text-slate-950 mb-2">Registrieren</h1>
+
+        <p class="mb-6 text-sm text-slate-600">Erstelle dein Tankly-Konto.</p>
+
+
 
     {% if error %}
-    <div class="bg-red-50 text-red-800 border border-red-200 rounded-md p-4 mb-4">
+
+    <div class="bg-red-50 text-red-800 border border-red-200 rounded-2xl p-4 mb-4">
+
         <p class="text-sm">{{ error }}</p>
+
     </div>
+
     {% endif %}
 
+
+
     <form method="post" action="/register" class="space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
+
         {{ csrf_field() }}
+
         {% if registration_invite_required() %}
+
         <div>
-            <label for="invite_code" class="block text-sm font-medium text-gray-700 mb-1">Invite code</label>
+
+            <label for="invite_code" class="block text-sm font-medium text-slate-700 mb-1">Einladungscode</label>
+
             <input type="text" id="invite_code" name="invite_code" required autocomplete="off"
-                   class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-500">
-            <p class="mt-1 text-xs text-gray-500">Private beta — enter the invite code you received.</p>
+
+                   class="min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+
+            <p class="mt-1 text-xs text-slate-500">Private Beta — gib den Einladungscode ein, den du erhalten hast.</p>
+
         </div>
+
         {% endif %}
+
         <div>
-            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+
+            <label for="name" class="block text-sm font-medium text-slate-700 mb-1">Name</label>
+
             <input type="text" id="name" name="name" required
-                   class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-500">
+
+                   class="min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+
         </div>
+
         <div>
-            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+
+            <label for="email" class="block text-sm font-medium text-slate-700 mb-1">E-Mail</label>
+
             <input type="email" id="email" name="email" required
-                   class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-500">
+
+                   class="min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+
         </div>
+
         <div>
-            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+
+            <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Passwort</label>
+
             <input type="password" id="password" name="password" required minlength="8"
-                   class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-500">
+
+                   class="min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+
         </div>
+
         <div>
-            <label for="password_confirm" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+
+            <label for="password_confirm" class="block text-sm font-medium text-slate-700 mb-1">Passwort bestätigen</label>
+
             <input type="password" id="password_confirm" name="password_confirm" required minlength="8"
-                   class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-500">
+
+                   class="min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+
         </div>
-        <button type="submit" :disabled="submitting" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition font-medium disabled:opacity-60">
-            Register
+
+        <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} w-full disabled:opacity-60">
+
+            Registrieren
+
         </button>
+
     </form>
 
-    <p class="mt-4 text-sm text-gray-600 text-center">
-        Already have an account? <a href="/login" class="text-green-600 hover:text-green-700">Login</a>
+
+
+    <p class="mt-4 text-sm text-slate-600 text-center">
+
+        Bereits ein Konto? <a href="/login" class="font-semibold text-emerald-700 hover:text-emerald-900">Anmelden</a>
+
     </p>
+
+    </section>
+
 </div>
+
 {% endblock %}
+

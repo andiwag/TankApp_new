@@ -11,15 +11,16 @@ from app.services.consumption import (
     consumption_unit_label,
 )
 from app.services.summary import get_summary_context
+from tests.helpers import parse_display_number
 
 
 def _find_vehicle_liters(html: str, vehicle_id: int) -> float:
     m = re.search(
-        rf'id="sum-liters-{vehicle_id}">([\d.]+)</',
+        rf'id="sum-liters-{vehicle_id}">([\d.,]+)</',
         html,
     )
     assert m is not None, f"missing sum-liters-{vehicle_id}"
-    return float(m.group(1))
+    return parse_display_number(m.group(1))
 
 
 def _find_vehicle_count(html: str, vehicle_id: int) -> int:
@@ -30,11 +31,11 @@ def _find_vehicle_count(html: str, vehicle_id: int) -> int:
 
 def _month_liters(html: str, year: int, month: int) -> float:
     m = re.search(
-        rf'id="sum-month-{year:d}-{month:02d}">([\d.]+)</',
+        rf'id="sum-month-{year:d}-{month:02d}">([\d.,]+)</',
         html,
     )
     assert m is not None, f"missing sum-month-{year}-{month:02d}"
-    return float(m.group(1))
+    return parse_display_number(m.group(1))
 
 
 # ── Pure consumption (D-004) ─────────────────────────────────────────────────

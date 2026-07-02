@@ -122,10 +122,10 @@ async def _handle_unhandled_error(request: Request, exc: BaseException):
         return error_page_response(
             request,
             status_code=500,
-            title="Something went wrong",
+            title="Etwas ist schiefgegangen",
             message=(
-                "An unexpected error occurred. Please try again. "
-                "If the problem persists, contact support."
+                "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut. "
+                "Wenn das Problem bestehen bleibt, kontaktiere den Support."
             ),
             detail=str(exc),
         )

@@ -55,10 +55,10 @@ async def regenerate_invite_code_post(
             request,
             db,
             group,
-            error="Could not generate an invite code. Please try again.",
+            error="Einladungscode konnte nicht erzeugt werden. Bitte erneut versuchen.",
         )
     response = RedirectResponse(url="/settings/group", status_code=303)
-    set_flash(response, "Invite code regenerated.")
+    set_flash(response, "Einladungscode neu erzeugt.")
     return response
 
 
@@ -95,7 +95,7 @@ async def change_member_role_post(
         user_id,
     )
     db.commit()
-    set_flash(response, "Member role updated.")
+    set_flash(response, "Mitgliedsrolle aktualisiert.")
     return response
 
 
@@ -130,5 +130,5 @@ async def remove_member_post(
         user_id,
     )
     db.commit()
-    set_flash(response, "Member removed.")
+    set_flash(response, "Mitglied entfernt.")
     return response

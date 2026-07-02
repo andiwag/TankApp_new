@@ -34,7 +34,7 @@ class TestRegistrationInviteCode:
         )
 
         assert response.status_code == 200
-        assert "Invalid invite code" in response.text
+        assert "Ungültiger Einladungscode" in response.text
 
     async def test_register_with_valid_invite_code(self, client, monkeypatch):
         monkeypatch.setattr(
@@ -108,7 +108,7 @@ class TestRegistrationInviteCode:
                 },
             )
             assert response.status_code == 200
-            assert "Invalid invite code" in response.text
+            assert "Ungültiger Einladungscode" in response.text
 
         response = await client.post(
             "/register",
@@ -122,7 +122,7 @@ class TestRegistrationInviteCode:
         )
 
         assert response.status_code == 429
-        assert "Too many attempts" in response.text
+        assert "Zu viele Versuche" in response.text
 
     async def test_register_page_shows_invite_field_when_configured(
         self, client, monkeypatch

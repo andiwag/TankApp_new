@@ -10,6 +10,12 @@ from app.database import get_db
 from app.dependencies import get_active_group, require_role
 from app.enums import Role
 from app.flash import set_flash
+from app.form_parsing import (
+    parse_date,
+    parse_int,
+    parse_optional_date,
+    parse_optional_float,
+)
 from app.models import Group
 from app.responses import not_found_response
 from app.schemas import (
@@ -22,47 +28,6 @@ from app.services import vehicles as vehicle_service
 from app.templating import templates
 
 router = APIRouter()
-
-
-def _parse_int(value: str, field_label: str) -> int:
-    try:
-        return int(value)
-    except ValueError as exc:
-        raise ValueError(f"{field_label} must be selected") from exc
-
-
-def _parse_float(value: str, field_label: str) -> float:
-    try:
-        return float(value)
-    except ValueError as exc:
-        raise ValueError(f"{field_label} must be a number") from exc
-
-
-def _parse_date(value: str, field_label: str) -> date:
-    try:
-        return date.fromisoformat(value)
-    except ValueError as exc:
-        raise ValueError(f"{field_label} must be a valid date") from exc
-
-
-def _parse_optional_float(value: str, field_label: str) -> float | None:
-    stripped = value.strip()
-    if not stripped:
-        return None
-    try:
-        parsed = float(stripped)
-    except ValueError as exc:
-        raise ValueError(f"{field_label} must be a number") from exc
-    if parsed < 0:
-        raise ValueError(f"{field_label} must not be negative")
-    return parsed
-
-
-def _parse_optional_date(value: str, field_label: str) -> date | None:
-    stripped = value.strip()
-    if not stripped:
-        return None
-    return _parse_date(stripped, field_label)
 
 
 def _maintenance_form_response(
@@ -161,16 +126,16 @@ async def create_maintenance_post(
 
     try:
         data = MaintenanceLogCreate(
-            vehicle_id=_parse_int(vehicle_id, "Vehicle"),
-            service_date=_parse_date(service_date, "Service date"),
-            usage_reading=_parse_optional_float(usage_reading, "Usage reading"),
+            vehicle_id=parse_int(vehicle_id, "Fahrzeug"),
+            service_date=parse_date(service_date, "Servicedatum"),
+            usage_reading=parse_optional_float(usage_reading, "Betriebsstand"),
             description=description.strip(),
-            cost_eur=_parse_optional_float(cost_eur, "Cost"),
-            next_service_date=_parse_optional_date(
-                next_service_date, "Next service date"
+            cost_eur=parse_optional_float(cost_eur, "Kosten"),
+            next_service_date=parse_optional_date(
+                next_service_date, "Nächstes Servicedatum"
             ),
-            next_service_usage=_parse_optional_float(
-                next_service_usage, "Next service usage"
+            next_service_usage=parse_optional_float(
+                next_service_usage, "Nächster Betriebsstand"
             ),
         )
     except ValueError as exc:
@@ -180,7 +145,7 @@ async def create_maintenance_post(
 
     vehicle = vehicle_service.get_active_vehicle_in_group(db, data.vehicle_id, group.id)
     if not vehicle:
-        return _error_form("Choose a valid vehicle from this group.")
+        return _error_form("Bitte ein gültiges Fahrzeug aus dieser Gruppe wählen.")
 
     log = maintenance_service.create_maintenance_log(
         db, user.id, group.id, vehicle, data
@@ -188,7 +153,7 @@ async def create_maintenance_post(
     log_event(db, group.id, user.id, "maintenance.create", "maintenance", log.id)
     db.commit()
     response = RedirectResponse(url="/maintenance", status_code=303)
-    set_flash(response, "Maintenance record added.", "success")
+    set_flash(response, "Wartungseintrag hinzugefügt.", "success")
     return response
 
 
@@ -227,24 +192,24 @@ async def edit_maintenance_post(
     form = await request.form()
     try:
         update_fields: dict = {
-            "service_date": _parse_date(form.get("service_date", ""), "Service date"),
+            "service_date": parse_date(form.get("service_date", ""), "Servicedatum"),
             "description": (form.get("description", "") or "").strip(),
         }
         if "usage_reading" in form:
-            update_fields["usage_reading"] = _parse_optional_float(
-                form.get("usage_reading", ""), "Usage reading"
+            update_fields["usage_reading"] = parse_optional_float(
+                form.get("usage_reading", ""), "Betriebsstand"
             )
         if "cost_eur" in form:
-            update_fields["cost_eur"] = _parse_optional_float(
-                form.get("cost_eur", ""), "Cost"
+            update_fields["cost_eur"] = parse_optional_float(
+                form.get("cost_eur", ""), "Kosten"
             )
         if "next_service_date" in form:
-            update_fields["next_service_date"] = _parse_optional_date(
-                form.get("next_service_date", ""), "Next service date"
+            update_fields["next_service_date"] = parse_optional_date(
+                form.get("next_service_date", ""), "Nächstes Servicedatum"
             )
         if "next_service_usage" in form:
-            update_fields["next_service_usage"] = _parse_optional_float(
-                form.get("next_service_usage", ""), "Next service usage"
+            update_fields["next_service_usage"] = parse_optional_float(
+                form.get("next_service_usage", ""), "Nächster Betriebsstand"
             )
         data = MaintenanceLogUpdate(**update_fields)
         maintenance_service.apply_maintenance_log_update(db, log, data)
@@ -268,7 +233,7 @@ async def edit_maintenance_post(
     )
     db.commit()
     response = RedirectResponse(url="/maintenance", status_code=303)
-    set_flash(response, "Maintenance record updated.", "success")
+    set_flash(response, "Wartungseintrag aktualisiert.", "success")
     return response
 
 
@@ -288,5 +253,5 @@ async def delete_maintenance_post(
     log_event(db, group.id, user.id, "maintenance.delete", "maintenance", log.id)
     db.commit()
     response = RedirectResponse(url="/maintenance", status_code=303)
-    set_flash(response, "Maintenance record removed.", "success")
+    set_flash(response, "Wartungseintrag entfernt.", "success")
     return response

@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-_INVALID_RESET_LINK = "Invalid or expired reset link"
+_INVALID_RESET_LINK = "Ungültiger oder abgelaufener Link zum Zurücksetzen"
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -185,7 +185,7 @@ async def login(
         return templates.TemplateResponse(
             request,
             "login.html",
-            context={"error": "Invalid email or password"},
+            context={"error": "Ungültige E-Mail oder Passwort"},
         )
 
     login_rate_limiter.clear(rate_limit_key)

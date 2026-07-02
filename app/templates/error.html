@@ -1,24 +1,46 @@
 {% extends "base.html" %}
 
+{% from "_macros.html" import action_button, glass_panel with context %}
+
+
+
 {% block title %}{{ title }} – Tankly{% endblock %}
 
+
+
 {% block content %}
-<div class="max-w-lg mx-auto py-12 text-center">
-    <p class="text-5xl font-bold text-gray-300">{{ status_code }}</p>
-    <h1 class="text-2xl font-bold text-gray-900 mt-4">{{ title }}</h1>
-    <p class="text-gray-600 mt-3 text-sm leading-relaxed">{{ message }}</p>
+
+<div class="mx-auto max-w-lg py-12 text-center">
+
+    <section class="{{ glass_panel('p-8') }}">
+
+    <p class="text-6xl font-bold text-emerald-100">{{ status_code }}</p>
+
+    <h1 class="text-2xl font-bold text-slate-950 mt-4">{{ title }}</h1>
+
+    <p class="text-slate-600 mt-3 text-sm leading-relaxed">{{ message }}</p>
+
+
 
     {% if detail %}
-    <pre class="mt-6 text-left text-xs bg-gray-100 border border-gray-200 rounded-md p-4 overflow-x-auto text-red-800">{{ detail }}</pre>
+
+    <pre class="mt-6 text-left text-xs bg-red-50 border border-red-200 rounded-2xl p-4 overflow-x-auto text-red-800">{{ detail }}</pre>
+
     {% endif %}
 
+
+
     <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-        <a href="/" class="inline-flex justify-center items-center min-h-[44px] px-5 py-2 rounded-md bg-green-700 text-white text-sm font-medium hover:bg-green-800 transition">
-            Home
-        </a>
-        <a href="/login" class="inline-flex justify-center items-center min-h-[44px] px-5 py-2 rounded-md border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 transition">
-            Login
-        </a>
+
+        {{ action_button("Startseite", "/", "primary") }}
+
+        {{ action_button("Anmelden", "/login", "secondary") }}
+
     </div>
+
+    </section>
+
 </div>
+
 {% endblock %}
+
