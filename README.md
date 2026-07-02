@@ -2,9 +2,11 @@
 
 Collaborative fuel and fleet tracking for farms and small businesses. Server-rendered FastAPI app with Jinja2 templates, PostgreSQL (production), and SQLite (local dev).
 
+**Plan status:** Phases 0–21 complete (~371 tests). Next: [Platform admin](.docs/PLATFORM_ADMIN.md) (Phase 22), then [Stripe billing](.docs/STRIPE_BILLING.md) (Phase 23).
+
 ## Quick start
 
-**Python 3.12** required (matches CI and Docker). Download from [python.org](https://www.python.org/downloads/) if needed. Check with `python --version`.
+**Python 3.12** required (matches CI and Docker). Check with `python --version`.
 
 ```powershell
 python -m venv .venv
@@ -18,19 +20,21 @@ Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 ## Environment variables
 
-Copy `.env.example` to `.env`. Key settings:
+Copy `.env.example` to `.env` (or `.env.beta.example` for Northflank). Key settings:
 
 | Variable | Default | Notes |
 |----------|---------|-------|
-| `DATABASE_URL` | `sqlite:///./dev.db` | Use Postgres in production |
+| `DATABASE_URL` | `sqlite:///./dev.db` | Postgres in production |
 | `SECRET_KEY` | dev default | **Required** unique value when `ENV=production` |
-| `ENV` | `development` | Set to `production` for deploy |
+| `ENV` | `development` | `production` for deploy |
 | `BASE_URL` | — | Public URL for password-reset links |
 | `REDIS_URL` | — | Required in production unless `SINGLE_WORKER_MODE=true` |
-| `CRON_SECRET` | — | Required when `ENV=production` |
+| `CRON_SECRET` | — | Required when `ENV=production`; cron uses `Authorization: Bearer …` |
+| `REGISTRATION_INVITE_CODE` | — | Optional private-beta registration gate |
 | `ALLOWED_HOSTS` | `*` | Comma-separated hostnames in production |
-| `MAIL_*` | — | SMTP for password reset and service reminders |
+| `MAIL_*` | — | Brevo/SMTP for password reset and service reminders |
 | `SENTRY_DSN` | — | Optional error tracking |
+| `PLATFORM_ADMIN_EMAILS` | — | **Planned** (Phase 22) — see `.docs/PLATFORM_ADMIN.md` |
 
 See `.env.example` for the full list.
 
@@ -66,6 +70,8 @@ $env:DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/tankapp_test"
 pytest
 ```
 
+(`tankapp_test` is the CI database name — local only.)
+
 ## Lint
 
 ```powershell
@@ -77,29 +83,38 @@ ruff format --check app tests
 
 Production Docker image installs only `requirements-prod.txt` (no pytest/ruff).
 
-Frontend vendor assets live in `app/static/vendor/` and are committed to git. To refresh them after a version bump, run `scripts/fetch-vendor.sh` (requires curl).
+Frontend vendor assets live in `app/static/vendor/` and are committed to git. Refresh after a version bump: `scripts/fetch-vendor.sh` (requires curl).
 
 ```powershell
-docker build -t tankapp .
+docker build -t tankly .
 ```
 
-Full beta deployment guide: [.docs/PRODUCTION.md](.docs/PRODUCTION.md)
+| Guide | When |
+|-------|------|
+| [.docs/BETA_DEPLOY.md](.docs/BETA_DEPLOY.md) | Private beta on Northflank ($0) |
+| [.docs/PRODUCTION.md](.docs/PRODUCTION.md) | Full production reference |
 
 ## Documentation
 
 | Doc | Purpose |
 |-----|---------|
-| [.docs/PRODUCTION.md](.docs/PRODUCTION.md) | Deploy, env vars, security checklist |
+| [.docs/DEVELOPMENT_PLAN.md](.docs/DEVELOPMENT_PLAN.md) | Phases 0–23, tests, acceptance criteria |
 | [.docs/TECHNICAL_DOCUMENTATION.md](.docs/TECHNICAL_DOCUMENTATION.md) | Architecture, schema, routes |
-| [.docs/DEVELOPMENT_PLAN.md](.docs/DEVELOPMENT_PLAN.md) | Feature phases and test plan |
-| [.docs/DECISION_LOG.md](.docs/DECISION_LOG.md) | Design decisions |
+| [.docs/DECISION_LOG.md](.docs/DECISION_LOG.md) | Design decisions (`D-XXX`) |
+| [.docs/PLATFORM_ADMIN.md](.docs/PLATFORM_ADMIN.md) | Operator dashboard — **planned** (Phase 22) |
+| [.docs/STRIPE_BILLING.md](.docs/STRIPE_BILLING.md) | Stripe billing — **planned** (Phase 23) |
+| [.docs/BETA_DEPLOY.md](.docs/BETA_DEPLOY.md) | Quick beta deploy |
+| [.docs/PRODUCTION.md](.docs/PRODUCTION.md) | Production hardening & deploy |
+
+Agent instructions: [.prompts/AGENT_PROMPT.md](.prompts/AGENT_PROMPT.md)
 
 ## Project layout
 
 ```
 app/           FastAPI application (routes, services, models, templates)
 alembic/       Database migrations
-tests/         pytest suite
-scripts/       start.sh, migrate.sh, fetch-vendor.sh
+tests/         pytest suite (~371 tests)
+scripts/       start.sh, migrate.sh, fetch-vendor.sh, generate-beta-secrets.*
 .docs/         Internal documentation
+.prompts/      Cursor agent prompt
 ```

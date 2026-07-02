@@ -6,6 +6,8 @@ This document covers **production hardening** and **step-by-step deployment** fo
 
 **Quick start:** see [BETA_DEPLOY.md](./BETA_DEPLOY.md) for a focused private-beta checklist.
 
+**Documentation index:** [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) · [TECHNICAL_DOCUMENTATION.md](./TECHNICAL_DOCUMENTATION.md) · [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) (planned) · [STRIPE_BILLING.md](./STRIPE_BILLING.md) (planned)
+
 | Component | Service | Cost |
 |-----------|---------|------|
 | Web app | Northflank Sandbox (combined service) | $0 |
@@ -233,7 +235,7 @@ The job claims each due log atomically so concurrent runs do not duplicate email
 1. Sign up at [northflank.com](https://northflank.com).
 2. Add a payment method when prompted (identity verification — Sandbox usage is $0; set billing alerts under **Billing**).
 3. Create a **team** (or use your personal team).
-4. Create a **project** named `tankapp-beta`.
+4. Create a **project** (e.g. `Tankly-beta`).
 5. Connect your **GitHub** account and grant access to the `TankApp_new` repository.
 
 **Sandbox limits (free forever):**
@@ -289,7 +291,7 @@ Commit and push these files before creating the service.
 ### 4.3 Create PostgreSQL addon
 
 1. In your project: **Create new → Addon → PostgreSQL**.
-2. Name: `tankapp-db`.
+2. Name: `Tankly-db` (or similar).
 3. Version: default (16+ is fine).
 4. **Networking:** keep internal (not publicly accessible) — the app connects within the same project.
 5. **Resources:** Sandbox defaults are sufficient for beta.
@@ -306,7 +308,7 @@ Note the connection details on the addon's **Connection details** page — you w
 **Option A — Secret group (recommended):**
 
 1. **Create new → Secret group** in your project.
-2. Link the `tankapp-db` addon.
+2. Link the `Tankly-db` addon.
 3. Select `POSTGRES_URI` and set alias **`DATABASE_URL`**.
 4. Enable **Apply secrets to specific services** and select your web service (after creating it in §4.5).
 
@@ -325,7 +327,7 @@ Note the connection details on the addon's **Connection details** page — you w
 A **combined service** builds from Git and deploys in one step — simplest for beta.
 
 1. **Create new → Service → Combined service**.
-2. Name: `tankapp-web`.
+2. Name: `Tankly-web`.
 3. **Repository:** select `TankApp_new`, branch `main`.
 4. **Build type:** `Dockerfile` (path: `/Dockerfile`, context: repo root).
 5. **Networking:** Northflank auto-detects port 8000 from `EXPOSE`. Confirm public HTTP is enabled — you get a `*.code.run` URL with free TLS.
@@ -341,7 +343,7 @@ A **combined service** builds from Git and deploys in one step — simplest for 
 Northflank builds the Docker image, runs the container, and provides a public HTTPS URL like:
 
 ```
-https://tankapp-web-<hash>.code.run
+https://tankly-web-<hash>.code.run
 ```
 
 ### 4.6 Verify first deploy
@@ -396,7 +398,7 @@ MAIL_FROM=noreply@yourdomain.com
 4. Password reset uses `fastapi-mail` (`app/mail.py`). Set `BASE_URL` to your public Northflank URL so reset links resolve correctly:
 
 ```
-https://tankapp-web-<hash>.code.run
+https://tankly-web-<hash>.code.run
 ```
 
 ---
@@ -480,7 +482,7 @@ Unlike Render's free tier, Northflank Sandbox does **not** spin down after idle 
 | Migrations fail | DB not ready / wrong URL | Verify addon is running; check `postgresql://` prefix |
 | CSRF errors | Cookie mismatch HTTP/HTTPS | Ensure `ENV=production` |
 | 502 after deploy | App not listening on `PORT` | Use `$PORT` in start script, not hardcoded 8000 |
-| Password reset does nothing | Email not implemented | See [§5](#5-optional-password-reset-email-brevo) |
+| Password reset does nothing | Mail not configured | Set all `MAIL_*` vars and `BASE_URL` — see [§5](#5-optional-password-reset-email-brevo) |
 | Unexpected charge | Exceeded Sandbox limits | Check billing; stay on Sandbox plan |
 
 ---
@@ -543,6 +545,8 @@ See Northflank's own [FastAPI + Postgres guide](https://northflank.com/guides/de
 ## Related docs
 
 - [BETA_DEPLOY.md](./BETA_DEPLOY.md) — private beta quick start
-- [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) — MVP feature phases (all complete)
+- [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) — Phases 0–21 complete; 22–23 planned
 - [TECHNICAL_DOCUMENTATION.md](./TECHNICAL_DOCUMENTATION.md) — architecture, schema, routes
-- [DECISION_LOG.md](./DECISION_LOG.md) — design decisions (auth, audit, rate limits, email deferral)
+- [DECISION_LOG.md](./DECISION_LOG.md) — design decisions
+- [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) — operator dashboard (planned)
+- [STRIPE_BILLING.md](./STRIPE_BILLING.md) — billing (planned)

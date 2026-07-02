@@ -2,6 +2,8 @@
 
 Step-by-step guide to deploy Tankly for a **private beta** with 1–2 invited farms. For full production (billing, legal, paid hosting), see [PRODUCTION.md](./PRODUCTION.md) and [STRIPE_BILLING.md](./STRIPE_BILLING.md).
 
+**Related:** [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) (Phases 0–21 complete), [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) (operator dashboard — planned before paid support).
+
 ---
 
 ## What you need
@@ -59,7 +61,7 @@ CI runs lint, full pytest on Postgres (with coverage), and a Docker build on eve
 ### Web service
 
 1. **Create new → Service → Combined service** — name `Tankly-web`
-2. Repository: `Tankly_new`, branch `main`
+2. Repository: `TankApp_new` (or your fork), branch `main`
 3. Build: **Dockerfile** at repo root
 4. Public HTTP enabled → note your `https://….code.run` URL
 5. Health check: **`/health/ready`** (readiness)
@@ -148,5 +150,8 @@ Run on the live URL:
 
 ## Related docs
 
+- [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) — phase status (0–21 done, 22–23 planned)
+- [TECHNICAL_DOCUMENTATION.md](./TECHNICAL_DOCUMENTATION.md) — architecture reference
+- [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) — operator dashboard (planned)
 - [PRODUCTION.md](./PRODUCTION.md) — full deployment reference
 - [STRIPE_BILLING.md](./STRIPE_BILLING.md) — when you're ready to charge

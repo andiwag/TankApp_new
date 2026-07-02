@@ -1,8 +1,10 @@
-# TankApp – Stripe Billing Implementation Guide
+# Tankly – Stripe Billing Implementation Guide
 
-Step-by-step checklist for integrating **Stripe Checkout + Billing + Tax** into TankApp. Billing is **per Group** (farm/business), not per user. The existing `Group.subscription_tier` column becomes a denormalized cache updated from webhooks.
+Step-by-step checklist for integrating **Stripe Checkout + Billing + Tax** into Tankly. Billing is **per Group** (farm/business), not per user. The existing `Group.subscription_tier` column becomes a denormalized cache updated from webhooks.
 
-**Prerequisites:** Landing page live (`/`), legal pages filled in (`/impressum`, `/datenschutz`, `/agb`), Steuerberater consulted.
+**Status:** Planned (Development Plan Phase 23) — **not implemented** in the app yet.
+
+**Prerequisites:** Landing page live (`/`), legal pages filled in (`/impressum`, `/datenschutz`, `/agb`), Steuerberater consulted. Operator support tooling: [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) (Phase 22, also planned).
 
 ---
 
@@ -59,10 +61,10 @@ Create three products matching the landing page:
 
 | Product | Price | Billing | Stripe lookup key (suggested) |
 |---------|-------|---------|-------------------------------|
-| TankApp Pro | €19.00 | Monthly recurring | `tankapp_pro_monthly` |
-| TankApp Pro | €190.00 | Yearly (optional) | `tankapp_pro_yearly` |
-| TankApp Farm | €49.00 | Monthly recurring | `tankapp_farm_monthly` |
-| TankApp Farm | €490.00 | Yearly (optional) | `tankapp_farm_yearly` |
+| Tankly Pro | €19.00 | Monthly recurring | `tankly_pro_monthly` |
+| Tankly Pro | €190.00 | Yearly (optional) | `tankly_pro_yearly` |
+| Tankly Farm | €49.00 | Monthly recurring | `tankly_farm_monthly` |
+| Tankly Farm | €490.00 | Yearly (optional) | `tankly_farm_yearly` |
 
 - [ ] Tax behavior: **Exclusive** (netto + USt) – standard for AT B2B
 - [ ] Product tax code: **SaaS / electronically supplied services**
@@ -126,7 +128,7 @@ STRIPE_PRICE_FARM_MONTHLY: str = ""
 # ...
 ```
 
-Add to `requirements.txt`:
+Add to `requirements-prod.txt`:
 
 ```
 stripe==11.6.0
@@ -236,7 +238,7 @@ if request.url.path.startswith(("/cron/", "/webhooks/")):
 
 ### Phase 1 – Foundation (no charges yet)
 
-- [ ] Add `stripe` to `requirements.txt`
+- [ ] Add `stripe` to `requirements-prod.txt`
 - [ ] Add Stripe settings to `app/config.py` and `.env.example`
 - [ ] Create Alembic migration (`group_subscriptions`, `billing_events`)
 - [ ] Add `SubscriptionTier` / `SubscriptionStatus` enums
@@ -504,7 +506,8 @@ Stripe is the payment processor; **you** remain the seller (not MoR).
 ## Related docs
 
 - [PRODUCTION.md](./PRODUCTION.md) – deployment, env vars, health checks
-- [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) – original MVP phases
+- [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) – Phase 23 (planned)
+- [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) – operator dashboard (Phase 22, planned)
 - [Stripe Docs: Checkout subscriptions](https://docs.stripe.com/billing/subscriptions/build-subscriptions?ui=checkout)
 - [Stripe Tax EU](https://docs.stripe.com/tax)
 

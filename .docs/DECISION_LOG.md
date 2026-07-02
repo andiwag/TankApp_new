@@ -1,6 +1,6 @@
-# TankApp – Decision Log
+# Tankly – Decision Log
 
-This document records architectural and design decisions made during planning, along with rationale and trade-offs.
+Architectural and design decisions for **Tankly**. Cookie names in older entries may say `tankapp_*`; production code uses `tankly_*` (see `app/branding.py`).
 
 ---
 
@@ -18,6 +18,8 @@ This document records architectural and design decisions made during planning, a
 - The DB-backed `session_id` allows logout, password-change flows, and profile session management to invalidate existing sessions.
 
 **Trade-off:** Authentication is no longer fully stateless; each authenticated request must verify the `UserSession` row. This is acceptable because it provides revocation without adding Redis or an external session store.
+
+**Update (D-046):** `UserSession` table added — server-side revocation is now implemented. Cookie still carries minimal payload; DB row is source of truth for validity.
 
 ---
 
@@ -61,9 +63,9 @@ This document records architectural and design decisions made during planning, a
 1. "Previous reading" = the most recent fuel entry for the same vehicle with a **lower** `usage_reading`, sorted by `usage_reading` (not by `entry_date`).
 2. **First entry** for a vehicle: no consumption value (needs at least 2 data points).
 3. **Out-of-order entries:** Sorting by `usage_reading` handles this correctly — chronological order of entry creation doesn't matter.
-4. Only entries marked as **full tank** anchor consumption segments. Partial fills are stored for totals and cost history but excluded from average consumption calculations.
+4. Only entries marked as **full tank** anchor consumption segments. Partial fills (`full_tank=false`) are stored for totals and cost history but excluded from average consumption calculations (D-048).
 
-**Trade-off:** Partial fills do not directly improve average consumption until a later full-tank reading closes the interval. This keeps calculations conservative and avoids presenting misleading L/100km or L/h values.
+**Trade-off:** Partial fills do not directly improve average consumption until a later full-tank reading closes the interval. Users must mark partial fills correctly; incorrect defaults skew averages.
 
 ---
 
@@ -94,6 +96,9 @@ This document records architectural and design decisions made during planning, a
 | `member.remove`     | user_group  | User removed from group by admin |
 | `vehicle.create`    | vehicle     | New vehicle added                |
 | `vehicle.delete`    | vehicle     | Vehicle soft-deleted             |
+| `maintenance.create` | maintenance | Maintenance log created (Phase 17) |
+| `maintenance.update` | maintenance | Maintenance log updated          |
+| `maintenance.delete` | maintenance | Maintenance log soft-deleted     |
 
 **Not logged:** `fuel_entry.*`, `vehicle.edit`, `user.login`, `user.logout`
 
@@ -323,6 +328,8 @@ This document records architectural and design decisions made during planning, a
 
 **Decision:** Implement a `_deliver_reset_token` helper in `app/routes/auth.py` that logs the reset link in development mode. Production email delivery via `fastapi-mail` is deferred (function body is a no-op for production).
 
+**Update (superseded):** `app/mail.py` + `send_password_reset_email()` now send via `fastapi-mail` when `settings.mail_configured` is true; otherwise reset still works in dev via logging. Service reminder cron uses the same mail stack. See BETA_DEPLOY.md § Brevo.
+
 **Context:** The plan calls for configuring `fastapi-mail`, but actual SMTP credentials and a mail server are not available during local development. The tests mock `_deliver_reset_token` to capture and verify the generated token.
 
 **Rationale:**
@@ -330,9 +337,17 @@ This document records architectural and design decisions made during planning, a
 - The helper is easily testable via `unittest.mock.patch`.
 - When production email is needed, only `_deliver_reset_token` needs updating — no route logic changes.
 
-**Trade-off:** `fastapi-mail` is listed in `requirements.txt` but not yet imported or configured. This is acceptable — it will be integrated when production deployment is set up.
+**Trade-off:** When mail is not configured, operators must read reset links from logs (local) or configure Brevo for production.
 
 ---
+
+## D-053: Password reset & reminder email — `app/mail.py`
+
+**Decision:** Centralize SMTP in `app/mail.py` using `fastapi-mail`. Password reset and maintenance reminder cron send email only when `settings.mail_configured`; otherwise skip or log.
+
+**Rationale:** Supersedes the production no-op described in D-022; one mail module for all transactional email.
+
+**Trade-off:** Requires `BASE_URL` and Brevo (or other SMTP) in production for user-facing email.
 
 ## D-023: Refactor — Extract `set_session_cookie` into `app/auth.py`
 
@@ -649,4 +664,78 @@ This document records architectural and design decisions made during planning, a
 
 **Rationale:** HTML5 constraints give immediate browser feedback while existing Pydantic and route validation remain the source of truth. Disabling submit buttons prevents duplicate submissions in common slow-network cases. The in-memory limiter is enough for the local MVP and keeps the dependency set stable; keys include client host and action-specific identifiers so ordinary test and user flows are not throttled globally.
 
-**Trade-off:** In-memory rate limits reset when the process restarts and are not shared across workers. A production deployment should replace this with a shared store such as Redis or an edge/proxy rate limit.
+**Trade-off:** In-memory rate limits reset when the process restarts and are not shared across workers. Production uses **Redis** when `REDIS_URL` is set (see D-051); `SINGLE_WORKER_MODE=true` allows in-memory limits on single-worker beta deploys only.
+
+---
+
+## D-046: Server-side sessions — `UserSession` table for revocation
+
+**Decision:** Store sessions in `user_sessions` (`id`, `user_id`, `expires_at`, `revoked_at`). Signed cookie contains `session_id`, `user_id`, and `active_group_id`. Every authenticated request validates the session row is active and unexpired.
+
+**Context:** D-001 accepted non-revocable cookies. Profile “log out other devices” and password-change invalidation require server-side control.
+
+**Rationale:** Keeps cookie payload small; revocation is immediate; aligns with production security expectations.
+
+**Trade-off:** DB read on each request; session cleanup can be added later. Supersedes the D-001 “cannot revoke sessions” trade-off.
+
+---
+
+## D-047: Maintenance logs & service reminder cron
+
+**Decision:** Add `MaintenanceLog` CRUD under `/maintenance` and a Bearer-protected `POST /cron/service-reminders` that emails farm admins when `next_service_date` or `next_service_usage` thresholds are due.
+
+**Rationale:** Farms track machinery service intervals separately from fuel; email reminders need a scheduled job outside user traffic.
+
+**Trade-off:** Cron must be configured in hosting (Northflank job + `CRON_SECRET`); reminders skipped when mail is not configured.
+
+---
+
+## D-048: Partial fill & fuel cost on entries
+
+**Decision:** Add `FuelEntry.full_tank` (default true) and `FuelEntry.total_cost_eur` (optional). Exclude partial-fill segments from consumption averages in `app/services/consumption.py`.
+
+**Rationale:** Real fueling includes partial fills and receipt costs; consumption math must not treat partial fills as full-tank intervals.
+
+**Trade-off:** Users must mark partial fills correctly; defaults to full tank for backward compatibility.
+
+---
+
+## D-049: Analytics page & CSV export
+
+**Decision:** Add `GET /analytics` (group-scoped charts/context) and `GET /export/fuel-entries.csv` / `GET /export/vehicles.csv` for farm data export.
+
+**Rationale:** Reporting beyond summary tables; CSV for Steuerberater / Excel workflows without a separate BI tool.
+
+**Trade-off:** Export routes are GET — platform support view must block them when operator impersonation is added (see PLATFORM_ADMIN.md §8.3).
+
+---
+
+## D-050: Audit log admin UI
+
+**Decision:** Add `GET /settings/audit` (farm admin) with link from group settings. Supersedes D-042 note “do not display audit events for MVP.”
+
+**Rationale:** Admins need visibility into membership/structural changes without DB access.
+
+**Trade-off:** Does not expose platform-operator actions until platform admin ships (future `platform.*` events).
+
+---
+
+## D-051: Redis rate limiting in production
+
+**Decision:** Use `RedisRateLimiter` when `REDIS_URL` is set; fall back to `InMemoryRateLimiter` in development or `SINGLE_WORKER_MODE` beta. Production validator requires Redis unless single-worker beta flag is set.
+
+**Rationale:** D-045 in-memory limits are insufficient for multi-worker production.
+
+**Trade-off:** Beta can run without Redis at cost of non-shared limits across replicas.
+
+---
+
+## D-052: Platform admin — env allowlist (planned)
+
+**Decision:** Grant internal operator access via `PLATFORM_ADMIN_EMAILS` and `/platform/*` routes — **not** via farm `admin` role. Phase 1 read-only; Phase 2 read-only “view farm” session.
+
+**Status:** Documented in [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md); **not implemented** (Development Plan Phase 22).
+
+**Rationale:** Selling/supporting SaaS requires cross-farm visibility without joining every group as a member.
+
+**Trade-off:** Requires deploy to change operator list until a DB flag is added later.

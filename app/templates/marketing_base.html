@@ -1,5 +1,6 @@
+{% from "_macros.html" import brand_logo with context %}
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -10,12 +11,35 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
     <meta name="theme-color" content="#047857">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
     <script src="/static/vendor/tailwindcss.js"></script>
     <script defer src="/static/vendor/alpine.min.js"></script>
+    <style>
+        body { font-family: "DM Sans", system-ui, sans-serif; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes fade-up {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-fade-up { animation: fade-up 0.7s ease-out both; }
+        .hero-grid {
+            background-image:
+                radial-gradient(circle at 20% 20%, rgba(21, 128, 61, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 80% 0%, rgba(34, 197, 94, 0.1) 0%, transparent 40%),
+                linear-gradient(to bottom, #f0fdf4 0%, #ffffff 55%);
+        }
+        .feature-card:hover { transform: translateY(-2px); }
+    </style>
 </head>
-<body class="bg-white min-h-screen flex flex-col text-gray-900">
+<body class="bg-white min-h-screen flex flex-col text-gray-900 antialiased">
 
-    <header class="border-b border-gray-100 bg-white/90 backdrop-blur sticky top-0 z-10" x-data="{ open: false }">
+    <header class="border-b border-green-100/80 bg-white/80 backdrop-blur-md sticky top-0 z-50" x-data="{ open: false }">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <a href="/" class="flex items-center gap-2 font-bold text-xl text-green-800 tracking-tight">
@@ -23,16 +47,16 @@
                     <span>{{ product_name() }}</span>
                 </a>
 
-                <nav class="hidden md:flex items-center gap-8 text-sm font-medium">
-                    <a href="/#features" class="text-gray-600 hover:text-green-700 transition">Funktionen</a>
-                    <a href="/#pricing" class="text-gray-600 hover:text-green-700 transition">Preise</a>
-                    <a href="/login" class="text-gray-600 hover:text-green-700 transition">Anmelden</a>
-                    <a href="/register" class="inline-flex items-center min-h-[44px] px-4 py-2 rounded-md bg-green-700 text-white hover:bg-green-800 transition">
+                <nav class="hidden md:flex items-center gap-1 text-sm font-medium">
+                    <a href="/#features" class="px-3 py-2 rounded-lg text-gray-600 hover:text-green-800 hover:bg-green-50 transition">Funktionen</a>
+                    <a href="/#pricing" class="px-3 py-2 rounded-lg text-gray-600 hover:text-green-800 hover:bg-green-50 transition">Preise</a>
+                    <a href="/login" class="px-3 py-2 rounded-lg text-gray-600 hover:text-green-800 hover:bg-green-50 transition">Anmelden</a>
+                    <a href="/register" class="ml-2 inline-flex items-center min-h-[44px] px-5 py-2 rounded-xl bg-green-700 text-white font-semibold hover:bg-green-800 shadow-sm shadow-green-700/20 transition">
                         Kostenlos starten
                     </a>
                 </nav>
 
-                <button @click="open = !open" class="md:hidden min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-gray-700" aria-label="Menü">
+                <button @click="open = !open" class="md:hidden min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-gray-700 hover:bg-gray-100 transition" aria-label="Menü">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path x-show="!open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         <path x-show="open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -40,11 +64,11 @@
                 </button>
             </div>
 
-            <div x-show="open" x-transition class="md:hidden pb-4 space-y-2 border-t border-gray-100 pt-3">
-                <a href="/#features" class="block py-2 text-gray-700">Funktionen</a>
-                <a href="/#pricing" class="block py-2 text-gray-700">Preise</a>
-                <a href="/login" class="block py-2 text-gray-700">Anmelden</a>
-                <a href="/register" class="block py-3 text-center rounded-md bg-green-700 text-white font-medium">Kostenlos starten</a>
+            <div x-show="open" x-transition class="md:hidden pb-4 space-y-1 border-t border-gray-100 pt-3">
+                <a href="/#features" class="block py-2.5 px-2 rounded-lg text-gray-700 hover:bg-green-50">Funktionen</a>
+                <a href="/#pricing" class="block py-2.5 px-2 rounded-lg text-gray-700 hover:bg-green-50">Preise</a>
+                <a href="/login" class="block py-2.5 px-2 rounded-lg text-gray-700 hover:bg-green-50">Anmelden</a>
+                <a href="/register" class="block py-3 mt-2 text-center rounded-xl bg-green-700 text-white font-semibold">Kostenlos starten</a>
             </div>
         </div>
     </header>
@@ -53,24 +77,27 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-gray-50 border-t border-gray-200 mt-auto">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            <div class="flex flex-col sm:flex-row justify-between gap-6 text-sm text-gray-600">
+    <footer class="bg-gray-950 text-gray-400 mt-auto">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="flex flex-col sm:flex-row justify-between gap-8">
                 <div>
-                    <div class="flex items-center gap-2 mb-1">
+                    <div class="flex items-center gap-2.5 mb-3">
                         <img src="{{ product_logo_url() }}" alt="" class="h-8 w-8 shrink-0 rounded-lg object-contain" width="32" height="32" decoding="async">
-                        <p class="font-semibold text-gray-900">{{ product_name() }}</p>
+                        <p class="font-semibold text-white text-lg">{{ product_name() }}</p>
                     </div>
-                    <p>Kraftstoff- und Flottenverwaltung für Betriebe.</p>
+                    <p class="text-sm max-w-xs leading-relaxed">Kraftstoff- und Flottenverwaltung für landwirtschaftliche Betriebe in Österreich.</p>
                 </div>
-                <div class="flex flex-wrap gap-x-6 gap-y-2">
-                    <a href="/impressum" class="hover:text-green-700 transition">Impressum</a>
-                    <a href="/datenschutz" class="hover:text-green-700 transition">Datenschutz</a>
-                    <a href="/agb" class="hover:text-green-700 transition">AGB</a>
-                    <a href="/login" class="hover:text-green-700 transition">Anmelden</a>
+                <div class="flex flex-wrap gap-x-8 gap-y-3 text-sm">
+                    <a href="/impressum" class="hover:text-green-400 transition">Impressum</a>
+                    <a href="/datenschutz" class="hover:text-green-400 transition">Datenschutz</a>
+                    <a href="/agb" class="hover:text-green-400 transition">AGB</a>
+                    <a href="/login" class="hover:text-green-400 transition">Anmelden</a>
                 </div>
             </div>
-            <p class="text-center text-xs text-gray-400 mt-8">&copy; 2026 {{ product_name() }}</p>
+            <div class="border-t border-gray-800 mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs">
+                <p>&copy; 2026 {{ product_name() }}</p>
+                <p>Made for Austrian farms</p>
+            </div>
         </div>
     </footer>
 </body>

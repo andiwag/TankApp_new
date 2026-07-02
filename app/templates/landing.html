@@ -4,73 +4,176 @@
 
 {% block content %}
 <!-- Hero -->
-<section class="relative overflow-hidden bg-gradient-to-b from-green-50 to-white">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-        <div class="max-w-3xl">
-            <p class="text-sm font-semibold text-green-700 uppercase tracking-wide mb-3">Für österreichische Betriebe</p>
-            <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 leading-tight mb-6">
-                Kraftstoff, Fahrzeuge und Wartung – alles an einem Ort
-            </h1>
-            <p class="text-lg text-gray-600 mb-8 leading-relaxed">
-                Tankly hilft Landwirten und Betriebsleitern, Tankvorgänge zu erfassen, Verbrauch zu verstehen und Serviceintervalle nicht zu verpassen. Einfach, mobil und für Teams mit mehreren Mitarbeitern.
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4">
-                <a href="/register" class="inline-flex justify-center items-center min-h-[48px] px-6 py-3 rounded-lg bg-green-700 text-white font-semibold hover:bg-green-800 transition shadow-sm">
-                    Kostenlos registrieren
-                </a>
-                <a href="/#features" class="inline-flex justify-center items-center min-h-[48px] px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition">
-                    Funktionen ansehen
-                </a>
+<section class="relative overflow-hidden hero-grid">
+    <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div class="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-green-200/30 blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 h-48 w-48 rounded-full bg-emerald-100/40 blur-2xl"></div>
+    </div>
+
+    <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28">
+        <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <div class="animate-fade-up">
+                <div class="inline-flex items-center gap-2 rounded-full bg-white/80 border border-green-200/60 px-4 py-1.5 text-sm font-medium text-green-800 shadow-sm mb-6">
+                    <span class="flex h-2 w-2 rounded-full bg-green-500"></span>
+                    Für österreichische Betriebe
+                </div>
+                <h1 class="text-4xl sm:text-5xl lg:text-[3.25rem] font-bold text-gray-900 leading-[1.1] tracking-tight mb-6">
+                    Kraftstoff, Fahrzeuge und Wartung –
+                    <span class="text-green-700">alles an einem Ort</span>
+                </h1>
+                <p class="text-lg sm:text-xl text-gray-600 mb-8 leading-relaxed max-w-xl">
+                    Tankly hilft Landwirten und Betriebsleitern, Tankvorgänge zu erfassen, Verbrauch zu verstehen und Serviceintervalle nicht zu verpassen. Einfach, mobil und für Teams mit mehreren Mitarbeitern.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                    <a href="/register" class="inline-flex justify-center items-center min-h-[52px] px-7 py-3 rounded-xl bg-green-700 text-white font-semibold hover:bg-green-800 transition shadow-lg shadow-green-700/25 hover:shadow-green-800/30">
+                        Kostenlos registrieren
+                        <svg class="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                    </a>
+                    <a href="/#features" class="inline-flex justify-center items-center min-h-[52px] px-7 py-3 rounded-xl bg-white border border-gray-200 text-gray-700 font-semibold hover:border-green-300 hover:bg-green-50/50 transition shadow-sm">
+                        Funktionen ansehen
+                    </a>
+                </div>
+                <p class="mt-5 text-sm text-gray-500 flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <span class="inline-flex items-center gap-1.5">
+                        <svg class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        Keine Kreditkarte
+                    </span>
+                    <span class="inline-flex items-center gap-1.5">
+                        <svg class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        Free-Tarif verfügbar
+                    </span>
+                </p>
             </div>
-            <p class="mt-4 text-sm text-gray-500">Keine Kreditkarte erforderlich · Free-Tarif verfügbar</p>
+
+            <!-- App preview mock -->
+            <div class="relative animate-float lg:justify-self-end w-full max-w-md mx-auto lg:max-w-none">
+                <div class="rounded-2xl bg-white border border-gray-200/80 shadow-2xl shadow-green-900/10 overflow-hidden">
+                    <div class="flex items-center gap-2 px-4 py-3 bg-gray-50 border-b border-gray-100">
+                        <span class="h-2.5 w-2.5 rounded-full bg-red-300"></span>
+                        <span class="h-2.5 w-2.5 rounded-full bg-amber-300"></span>
+                        <span class="h-2.5 w-2.5 rounded-full bg-green-300"></span>
+                        <img src="/static/icon-192.png" alt="" class="ml-2 h-5 w-5 rounded-md">
+                        <span class="text-xs text-gray-600 font-semibold">{{ product_name() }}</span>
+                    </div>
+                    <div class="p-5 sm:p-6 space-y-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Verbrauch diesen Monat</p>
+                                <p class="text-2xl font-bold text-gray-900 mt-0.5">1.847 <span class="text-base font-semibold text-gray-500">Liter</span></p>
+                            </div>
+                            <div class="h-10 w-10 rounded-xl bg-green-100 flex items-center justify-center">
+                                <svg class="h-5 w-5 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                            </div>
+                        </div>
+                        <div class="flex items-end gap-2 h-24 px-1">
+                            {% for h in [40, 65, 55, 80, 70, 95, 75] %}
+                            <div class="flex-1 rounded-t-md bg-gradient-to-t from-green-600 to-green-400 opacity-90" style="height: {{ h }}%"></div>
+                            {% endfor %}
+                        </div>
+                        <div class="space-y-2.5">
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Letzte Tankvorgänge</p>
+                            {% for vehicle, liters, cost in [("Fendt 724", "142 L", "€198"), ("New Holland T7", "89 L", "€124"), ("Steyr PKW", "45 L", "€68")] %}
+                            <div class="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2.5">
+                                <div class="flex items-center gap-3">
+                                    <div class="h-8 w-8 rounded-lg bg-green-700/10 flex items-center justify-center">
+                                        <svg class="h-4 w-4 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-800">{{ vehicle }}</span>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-semibold text-gray-900">{{ liters }}</p>
+                                    <p class="text-xs text-gray-500">{{ cost }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute -bottom-4 -left-4 sm:-left-8 rounded-xl bg-white border border-gray-100 shadow-lg px-4 py-3 hidden sm:block">
+                    <p class="text-xs text-gray-500">Nächste Wartung</p>
+                    <p class="text-sm font-semibold text-amber-700">Fendt 724 · in 42 h</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Trust strip -->
+<section class="border-y border-gray-100 bg-white">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            {% for label, detail, icon in [
+                ("Mobil first", "Große Touch-Targets", "M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"),
+                ("Team-ready", "Rollen & Invite-Code", "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"),
+                ("Österreich", "Liter, € & Betriebsstunden", "M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"),
+                ("Sofort starten", "Free-Tarif ohne Karte", "M13 10V3L4 14h7v7l9-11h-7z"),
+            ] %}
+            <div class="flex items-start gap-3">
+                <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-green-50 text-green-700 flex items-center justify-center">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="{{ icon }}"/></svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-900 text-sm">{{ label }}</p>
+                    <p class="text-xs text-gray-500 mt-0.5">{{ detail }}</p>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </section>
 
 <!-- Problem / value -->
-<section class="py-16 bg-white border-y border-gray-100">
+<section class="py-20 sm:py-24 bg-white">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-2xl sm:text-3xl font-bold text-center mb-12">Schluss mit Zettelwirtschaft an der Tankstelle</h2>
-        <div class="grid md:grid-cols-3 gap-8">
-            <div class="text-center p-6">
-                <div class="w-12 h-12 rounded-full bg-green-100 text-green-700 flex items-center justify-center mx-auto mb-4 text-xl font-bold">1</div>
-                <h3 class="font-semibold text-lg mb-2">Erfassen statt schätzen</h3>
-                <p class="text-gray-600 text-sm">Liter, Kosten und Betriebsstunden direkt am Handy – auch bei Teiltankungen.</p>
+        <div class="text-center max-w-2xl mx-auto mb-14">
+            <p class="text-sm font-semibold text-green-700 uppercase tracking-wide mb-3">So funktioniert's</p>
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">Schluss mit Zettelwirtschaft an der Tankstelle</h2>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6 lg:gap-8">
+            {% for step, title, desc, icon in [
+                ("01", "Erfassen statt schätzen", "Liter, Kosten und Betriebsstunden direkt am Handy – auch bei Teiltankungen.", "M12 6v6m0 0v6m0-6h6m-6 0H6"),
+                ("02", "Verbrauch im Blick", "Dashboard, Auswertungen und CSV-Export für Ihre Betriebsführung.", "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"),
+                ("03", "Team & Betrieb", "Gruppen mit Rollen: Admin, Mitarbeiter, Nur-Lesen. Ein Betrieb, ein Invite-Code.", "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"),
+            ] %}
+            <div class="relative rounded-2xl border border-gray-100 bg-gradient-to-b from-gray-50/80 to-white p-8 hover:border-green-200 hover:shadow-lg hover:shadow-green-900/5 transition duration-300">
+                <span class="text-4xl font-bold text-green-100 absolute top-6 right-6 select-none">{{ step }}</span>
+                <div class="h-12 w-12 rounded-2xl bg-green-700 text-white flex items-center justify-center mb-5 shadow-md shadow-green-700/20">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="{{ icon }}"/></svg>
+                </div>
+                <h3 class="font-bold text-xl text-gray-900 mb-2">{{ title }}</h3>
+                <p class="text-gray-600 leading-relaxed">{{ desc }}</p>
             </div>
-            <div class="text-center p-6">
-                <div class="w-12 h-12 rounded-full bg-green-100 text-green-700 flex items-center justify-center mx-auto mb-4 text-xl font-bold">2</div>
-                <h3 class="font-semibold text-lg mb-2">Verbrauch im Blick</h3>
-                <p class="text-gray-600 text-sm">Dashboard, Auswertungen und CSV-Export für Ihre Betriebsführung.</p>
-            </div>
-            <div class="text-center p-6">
-                <div class="w-12 h-12 rounded-full bg-green-100 text-green-700 flex items-center justify-center mx-auto mb-4 text-xl font-bold">3</div>
-                <h3 class="font-semibold text-lg mb-2">Team & Betrieb</h3>
-                <p class="text-gray-600 text-sm">Gruppen mit Rollen: Admin, Mitarbeiter, Nur-Lesen. Ein Betrieb, ein Invite-Code.</p>
-            </div>
+            {% endfor %}
         </div>
     </div>
 </section>
 
 <!-- Features -->
-<section id="features" class="py-16 bg-gray-50">
+<section id="features" class="py-20 sm:py-24 bg-gray-50/80">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-2xl sm:text-3xl font-bold text-center mb-4">Was Tankly kann</h2>
-        <p class="text-center text-gray-600 mb-12 max-w-2xl mx-auto">Entwickelt für Traktoren, Transporter und Maschinen – mit den Einheiten, die im Betrieb zählen.</p>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for title, desc in [
-                ("Tankbuch", "Tankvorgänge mit Datum, Liter, Kosten und Voll-/Teiltankung."),
-                ("Fahrzeugverwaltung", "Traktoren, PKW und Maschinen mit Betriebsstunden oder Kilometern."),
-                ("Verbrauchsanalyse", "Trends und Kennzahlen der letzten Monate im Dashboard."),
-                ("Wartungsprotokoll", "Service, Kosten und nächste fällige Intervalle."),
-                ("Service-Erinnerungen", "Benachrichtigung bei fälliger Wartung nach Datum oder Betriebsstunden."),
-                ("CSV-Export", "Daten für Buchhaltung und Auswertung herunterladen."),
-                ("Team & Rollen", "Mitarbeiter einladen mit Admin-, Schreib- oder Lese-Rechten."),
-                ("Audit-Log", "Nachvollziehen, wer was im Betrieb geändert hat."),
-                ("Mobil optimiert", "Große Touch-Targets – auch mit Handschuhen nutzbar."),
+        <div class="text-center max-w-2xl mx-auto mb-14">
+            <p class="text-sm font-semibold text-green-700 uppercase tracking-wide mb-3">Funktionen</p>
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight mb-4">Was Tankly kann</h2>
+            <p class="text-lg text-gray-600">Entwickelt für Traktoren, Transporter und Maschinen – mit den Einheiten, die im Betrieb zählen.</p>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {% for title, desc, icon in [
+                ("Tankbuch", "Tankvorgänge mit Datum, Liter, Kosten und Voll-/Teiltankung.", "M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"),
+                ("Fahrzeugverwaltung", "Traktoren, PKW und Maschinen mit Betriebsstunden oder Kilometern.", "M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"),
+                ("Verbrauchsanalyse", "Trends und Kennzahlen der letzten Monate im Dashboard.", "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"),
+                ("Wartungsprotokoll", "Service, Kosten und nächste fällige Intervalle.", "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z"),
+                ("Service-Erinnerungen", "Benachrichtigung bei fälliger Wartung nach Datum oder Betriebsstunden.", "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"),
+                ("CSV-Export", "Daten für Buchhaltung und Auswertung herunterladen.", "M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"),
+                ("Team & Rollen", "Mitarbeiter einladen mit Admin-, Schreib- oder Lese-Rechten.", "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"),
+                ("Audit-Log", "Nachvollziehen, wer was im Betrieb geändert hat.", "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"),
+                ("Mobil optimiert", "Große Touch-Targets – auch mit Handschuhen nutzbar.", "M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"),
             ] %}
-            <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-5">
-                <h3 class="font-semibold text-green-800 mb-2">{{ title }}</h3>
-                <p class="text-sm text-gray-600">{{ desc }}</p>
+            <div class="feature-card group rounded-2xl bg-white border border-gray-100 p-6 shadow-sm hover:shadow-md hover:border-green-200/80 transition duration-300">
+                <div class="h-11 w-11 rounded-xl bg-green-50 text-green-700 flex items-center justify-center mb-4 group-hover:bg-green-700 group-hover:text-white transition duration-300">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="{{ icon }}"/></svg>
+                </div>
+                <h3 class="font-bold text-gray-900 mb-2">{{ title }}</h3>
+                <p class="text-sm text-gray-600 leading-relaxed">{{ desc }}</p>
             </div>
             {% endfor %}
         </div>
@@ -78,69 +181,88 @@
 </section>
 
 <!-- Pricing -->
-<section id="pricing" class="py-16 bg-white">
+<section id="pricing" class="py-20 sm:py-24 bg-white">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-2xl sm:text-3xl font-bold text-center mb-4">Einfache Preise pro Betrieb</h2>
-        <p class="text-center text-gray-600 mb-12">Ein Abo gilt für Ihre gesamte Betriebsgruppe – alle eingeladenen Nutzer inklusive.<br><span class="text-sm">Preise zzgl. USt.; bei Unternehmen mit UID gilt die Reverse-Charge-Regelung.</span></p>
-        <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div class="text-center max-w-2xl mx-auto mb-14">
+            <p class="text-sm font-semibold text-green-700 uppercase tracking-wide mb-3">Preise</p>
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight mb-4">Einfache Preise pro Betrieb</h2>
+            <p class="text-lg text-gray-600">Ein Abo gilt für Ihre gesamte Betriebsgruppe – alle eingeladenen Nutzer inklusive.</p>
+            <p class="text-sm text-gray-500 mt-2">Preise zzgl. USt.; bei Unternehmen mit UID gilt die Reverse-Charge-Regelung.</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto items-stretch">
             <!-- Free -->
-            <div class="rounded-xl border border-gray-200 p-6 flex flex-col">
-                <h3 class="text-lg font-semibold text-gray-900">Free</h3>
-                <p class="mt-2 text-3xl font-bold">€0<span class="text-base font-normal text-gray-500">/Monat</span></p>
+            <div class="rounded-2xl border border-gray-200 bg-white p-7 flex flex-col hover:border-gray-300 transition">
+                <h3 class="text-lg font-bold text-gray-900">Free</h3>
+                <p class="mt-3 flex items-baseline gap-1">
+                    <span class="text-4xl font-bold tracking-tight">€0</span>
+                    <span class="text-gray-500 font-medium">/Monat</span>
+                </p>
                 <p class="text-sm text-gray-500 mt-1">Zum Ausprobieren</p>
-                <ul class="mt-6 space-y-3 text-sm text-gray-600 flex-1">
-                    <li>✓ Bis zu 2 Fahrzeuge</li>
-                    <li>✓ Unbegrenzte Tankvorgänge</li>
-                    <li>✓ 1 Admin, Team per Invite</li>
-                    <li>✓ Dashboard & Zusammenfassung</li>
+                <ul class="mt-8 space-y-3.5 text-sm text-gray-600 flex-1">
+                    <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Bis zu 2 Fahrzeuge</li>
+                    <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Unbegrenzte Tankvorgänge</li>
+                    <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>1 Admin, Team per Invite</li>
+                    <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Dashboard & Zusammenfassung</li>
                 </ul>
-                <a href="/register" class="mt-8 block text-center min-h-[44px] leading-[44px] rounded-lg border border-green-700 text-green-700 font-medium hover:bg-green-50 transition">
+                <a href="/register" class="mt-8 block text-center min-h-[48px] leading-[48px] rounded-xl border-2 border-green-700 text-green-700 font-semibold hover:bg-green-50 transition">
                     Kostenlos starten
                 </a>
             </div>
+
             <!-- Pro -->
-            <div class="rounded-xl border-2 border-green-700 p-6 flex flex-col relative shadow-md">
-                <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-700 text-white text-xs font-semibold px-3 py-1 rounded-full">Beliebt</span>
-                <h3 class="text-lg font-semibold text-gray-900">Pro</h3>
-                <p class="mt-2 text-3xl font-bold">€19<span class="text-base font-normal text-gray-500">/Monat</span></p>
+            <div class="rounded-2xl border-2 border-green-700 bg-gradient-to-b from-green-50/50 to-white p-7 flex flex-col relative shadow-xl shadow-green-900/10 md:-mt-2 md:mb-2">
+                <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-green-700 text-white text-xs font-bold uppercase tracking-wide px-4 py-1.5 rounded-full shadow-md">Beliebt</span>
+                <h3 class="text-lg font-bold text-gray-900">Pro</h3>
+                <p class="mt-3 flex items-baseline gap-1">
+                    <span class="text-4xl font-bold tracking-tight">€19</span>
+                    <span class="text-gray-500 font-medium">/Monat</span>
+                </p>
                 <p class="text-sm text-gray-500 mt-1">Kleine Betriebe</p>
-                <ul class="mt-6 space-y-3 text-sm text-gray-600 flex-1">
-                    <li>✓ Bis zu 10 Fahrzeuge</li>
-                    <li>✓ Analytics & CSV-Export</li>
-                    <li>✓ Wartungsprotokoll & Erinnerungen</li>
-                    <li>✓ Audit-Log</li>
+                <ul class="mt-8 space-y-3.5 text-sm text-gray-600 flex-1">
+                    <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Bis zu 10 Fahrzeuge</li>
+                    <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Analytics & CSV-Export</li>
+                    <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Wartungsprotokoll & Erinnerungen</li>
+                    <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Audit-Log</li>
                 </ul>
-                <a href="/register" class="mt-8 block text-center min-h-[44px] leading-[44px] rounded-lg bg-green-700 text-white font-medium hover:bg-green-800 transition">
+                <a href="/register" class="mt-8 block text-center min-h-[48px] leading-[48px] rounded-xl bg-green-700 text-white font-semibold hover:bg-green-800 shadow-lg shadow-green-700/25 transition">
                     Pro testen
                 </a>
             </div>
+
             <!-- Farm -->
-            <div class="rounded-xl border border-gray-200 p-6 flex flex-col">
-                <h3 class="text-lg font-semibold text-gray-900">Farm</h3>
-                <p class="mt-2 text-3xl font-bold">€49<span class="text-base font-normal text-gray-500">/Monat</span></p>
+            <div class="rounded-2xl border border-gray-200 bg-white p-7 flex flex-col hover:border-gray-300 transition">
+                <h3 class="text-lg font-bold text-gray-900">Farm</h3>
+                <p class="mt-3 flex items-baseline gap-1">
+                    <span class="text-4xl font-bold tracking-tight">€49</span>
+                    <span class="text-gray-500 font-medium">/Monat</span>
+                </p>
                 <p class="text-sm text-gray-500 mt-1">Größere Flotten</p>
-                <ul class="mt-6 space-y-3 text-sm text-gray-600 flex-1">
-                    <li>✓ Unbegrenzte Fahrzeuge</li>
-                    <li>✓ Alle Pro-Funktionen</li>
-                    <li>✓ Prioritäts-Support</li>
-                    <li>✓ Für wachsende Betriebe</li>
+                <ul class="mt-8 space-y-3.5 text-sm text-gray-600 flex-1">
+                    <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Unbegrenzte Fahrzeuge</li>
+                    <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Alle Pro-Funktionen</li>
+                    <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Prioritäts-Support</li>
+                    <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Für wachsende Betriebe</li>
                 </ul>
-                <a href="/register" class="mt-8 block text-center min-h-[44px] leading-[44px] rounded-lg border border-green-700 text-green-700 font-medium hover:bg-green-50 transition">
+                <a href="/register" class="mt-8 block text-center min-h-[48px] leading-[48px] rounded-xl border-2 border-green-700 text-green-700 font-semibold hover:bg-green-50 transition">
                     Farm wählen
                 </a>
             </div>
         </div>
-        <p class="text-center text-xs text-gray-400 mt-8">Online-Zahlung und Abo-Verwaltung folgen in Kürze (Stripe). Bis dahin ist der Free-Tarif voll nutzbar.</p>
+        <p class="text-center text-xs text-gray-400 mt-10 max-w-lg mx-auto">Online-Zahlung und Abo-Verwaltung folgen in Kürze (Stripe). Bis dahin ist der Free-Tarif voll nutzbar.</p>
     </div>
 </section>
 
 <!-- CTA -->
-<section class="py-16 bg-green-800 text-white">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 class="text-2xl sm:text-3xl font-bold mb-4">Bereit für mehr Übersicht im Betrieb?</h2>
-        <p class="text-green-100 mb-8 max-w-xl mx-auto">Erstellen Sie in zwei Minuten einen Betrieb, laden Sie Ihr Team ein und erfassen Sie den ersten Tankvorgang.</p>
-        <a href="/register" class="inline-flex justify-center items-center min-h-[48px] px-8 py-3 rounded-lg bg-white text-green-800 font-semibold hover:bg-green-50 transition">
+<section class="relative overflow-hidden py-20 sm:py-24">
+    <div class="absolute inset-0 bg-gradient-to-br from-green-800 via-green-700 to-emerald-800"></div>
+    <div class="absolute inset-0 opacity-10" aria-hidden="true" style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%23ffffff&quot; fill-opacity=&quot;1&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+    <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4">Bereit für mehr Übersicht im Betrieb?</h2>
+        <p class="text-green-100 text-lg mb-10 max-w-xl mx-auto leading-relaxed">Erstellen Sie in zwei Minuten einen Betrieb, laden Sie Ihr Team ein und erfassen Sie den ersten Tankvorgang.</p>
+        <a href="/register" class="inline-flex justify-center items-center min-h-[52px] px-10 py-3 rounded-xl bg-white text-green-800 font-bold hover:bg-green-50 transition shadow-xl shadow-black/10">
             Jetzt kostenlos registrieren
+            <svg class="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
         </a>
     </div>
 </section>

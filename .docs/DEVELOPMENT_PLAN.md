@@ -1,4 +1,18 @@
-# TankApp – Test-Driven Development Plan
+# Tankly – Test-Driven Development Plan
+
+Phased plan for **Tankly** (product name; GitHub folder may still be `TankApp_new`). Phases **0–16** = original MVP (complete). **17–21** = post-MVP delivery (complete). **22–23** = planned — see linked guides.
+
+## Documentation index
+
+| Document | Purpose |
+|----------|---------|
+| [TECHNICAL_DOCUMENTATION.md](./TECHNICAL_DOCUMENTATION.md) | Product spec, models, routes, auth |
+| [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) | This file — phases, tests, acceptance criteria |
+| [DECISION_LOG.md](./DECISION_LOG.md) | Architectural decisions (`D-XXX`) |
+| [BETA_DEPLOY.md](./BETA_DEPLOY.md) | Private beta on Northflank ($0) |
+| [PRODUCTION.md](./PRODUCTION.md) | Production hardening & deploy details |
+| [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) | **Planned** operator dashboard (`/platform`) |
+| [STRIPE_BILLING.md](./STRIPE_BILLING.md) | **Planned** Stripe billing per group |
 
 All development follows a strict **Red → Green → Refactor** TDD cycle:
 1. **Red:** Write a failing test that defines expected behavior.
@@ -791,7 +805,7 @@ test_remove_member_not_in_group_404
 - [x] Create `app/audit.py`:
   - `log_event(db, group_id, user_id, action, entity_type, entity_id)` helper function
 - [x] Integrate audit logging into relevant route handlers (see D-006 for event list)
-- [x] Optional audit display intentionally skipped for MVP; audit records remain backend-only
+- [x] Optional audit display skipped at Phase 13 — **UI added in Phase 19** (`GET /settings/audit`)
 
 ### Tests (write FIRST)
 ```
@@ -902,6 +916,133 @@ test_no_n_plus_1_queries_on_fuel_entry_list
 
 ---
 
+## Phase 17: Maintenance Logs & Service Reminders
+
+**Status:** ✅ Complete (post–Phase 16 delivery)
+
+### Tasks
+- [x] `MaintenanceLog` model (service date, usage, cost, next service date/usage, reminders)
+- [x] `app/routes/maintenance.py` — CRUD (contributor create/edit, admin delete)
+- [x] `app/services/reminders.py` — due reminders for dashboard + email
+- [x] `POST /cron/service-reminders` — Bearer `CRON_SECRET`, Brevo email to farm admins
+- [x] Audit: `maintenance.create`, `maintenance.update`, `maintenance.delete`
+- [x] Tests in `tests/test_l_features.py`
+
+### Acceptance criteria
+- [x] Contributors can log maintenance; readers cannot mutate
+- [x] Cron sends due service reminders when mail is configured
+- [x] Maintenance appears in nav (`/maintenance`)
+
+---
+
+## Phase 18: Analytics, Export, Cost & Partial Fill
+
+**Status:** ✅ Complete
+
+### Tasks
+- [x] `FuelEntry.full_tank` and `FuelEntry.total_cost_eur`
+- [x] Consumption excludes partial-fill segments (`app/services/consumption.py`)
+- [x] Summary/dashboard cost totals
+- [x] `GET /analytics` — group analytics page
+- [x] `GET /export/fuel-entries.csv`, `GET /export/vehicles.csv`
+- [x] Tests in `tests/test_sm_features.py`
+
+### Acceptance criteria
+- [x] Partial fills do not skew consumption averages
+- [x] CSV export includes cost and full-tank columns
+- [x] Analytics page requires auth + active group
+
+---
+
+## Phase 19: Audit Log UI
+
+**Status:** ✅ Complete (extends Phase 13 backend)
+
+### Tasks
+- [x] `GET /settings/audit` — farm admin only
+- [x] `app/services/audit_ui.py` — list recent events for group
+- [x] Link from group settings page
+- [x] Tests in `tests/test_sm_features.py`, `tests/test_audit_log.py`
+
+### Acceptance criteria
+- [x] Farm admins can view audit history for their group
+- [x] Non-admins receive 403
+
+---
+
+## Phase 20: Session Revocation & Production Hardening
+
+**Status:** ✅ Complete
+
+### Tasks
+- [x] `UserSession` table — server-side sessions with revoke support (see D-046)
+- [x] Signed cookie carries `session_id` + `user_id` + `active_group_id`
+- [x] Profile: list/revoke sessions; password change revokes other sessions
+- [x] `GET /health`, `GET /health/ready` — liveness/readiness probes
+- [x] Security headers middleware, CSP (self-hosted assets only)
+- [x] Production config validation (`SECRET_KEY`, `CRON_SECRET`, `REDIS_URL` / `SINGLE_WORKER_MODE`)
+- [x] Redis-backed rate limits when `REDIS_URL` set; in-memory fallback for beta
+- [x] Error pages for 404/500
+- [x] Tests: `tests/test_l_features.py`, `tests/test_production_hardening.py`, `tests/test_error_pages.py`
+
+### Acceptance criteria
+- [x] Revoked sessions cannot access protected routes
+- [x] Production env rejects default `SECRET_KEY` and missing `CRON_SECRET`
+- [x] Readiness probe fails when DB unreachable
+
+---
+
+## Phase 21: Marketing Site & Private Beta Gating
+
+**Status:** ✅ Complete
+
+### Tasks
+- [x] `app/routes/marketing.py` — landing (`/`), `/impressum`, `/datenschutz`, `/agb`, `/robots.txt`
+- [x] `REGISTRATION_INVITE_CODE` — optional registration gate for private beta
+- [x] `noindex` + robots blocking when invite gate enabled
+- [x] Self-hosted Tailwind/Alpine in `app/static/vendor/` (no CDN in production CSP)
+- [x] Tests: `tests/test_marketing.py`, `tests/test_private_beta.py`, `tests/test_vendor_assets.py`
+
+### Acceptance criteria
+- [x] Anonymous users see landing page; authenticated users redirect to app
+- [x] Invalid/missing invite code blocks registration when configured
+- [x] Login page loads without external CDN scripts
+
+---
+
+## Phase 22: Platform Admin (Operator Dashboard)
+
+**Status:** ⬜ Planned — **not implemented**
+
+Full specification: [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md)
+
+### Summary
+- [ ] `PLATFORM_ADMIN_EMAILS` env allowlist
+- [ ] Read-only `/platform/farms`, `/platform/users`
+- [ ] Phase 2: support “view farm” session (read-only)
+- [ ] `tests/test_platform_admin.py`
+
+### Acceptance criteria
+- [ ] Operator can list all farms and search users cross-tenant
+- [ ] Non-operators cannot access `/platform/*`
+- [ ] Platform actions audit-logged
+
+---
+
+## Phase 23: Stripe Billing
+
+**Status:** ⬜ Planned — **not implemented**
+
+Full specification: [STRIPE_BILLING.md](./STRIPE_BILLING.md)
+
+### Summary
+- [ ] `group_subscriptions` table + webhooks
+- [ ] Checkout + customer portal
+- [ ] Entitlements / tier limits per group
+- [ ] Sync `groups.subscription_tier`
+
+---
+
 ## Cross-Cutting Test Requirements
 
 ### Security Tests (run across all phases)
@@ -949,35 +1090,34 @@ test_soft_deleted_records_excluded_from_statistics
 | Validation/Polish | ~7                 |
 | Security (cross)  | ~8                 |
 | Soft Delete (cross)| ~5                |
-| **Total**         | **~251**           |
+| Maintenance & cron (Phase 17) | ~15      |
+| Analytics/export/cost (Phase 18–19) | ~20 |
+| Production & beta (Phase 20–21) | ~25   |
+| Platform admin (Phase 22) | 0 (planned)  |
+| **Total (current)** | **~371**         |
 
 ---
 
 ## Dependency Installation Order
 
-```
-# Core
-fastapi
-uvicorn[standard]
-sqlalchemy
-alembic
-pydantic[email]
-pydantic-settings
-python-dotenv
-jinja2
-python-multipart
-itsdangerous
-bcrypt
-aiofiles
+See `requirements-prod.txt` (deploy) and `requirements-dev.txt` (local/CI). Summary:
 
-# Email (password reset)
+```
+# Core (prod)
+fastapi, uvicorn[standard], sqlalchemy, alembic, psycopg2-binary
+pydantic[email], pydantic-settings, python-dotenv, jinja2
+python-multipart, itsdangerous, bcrypt, aiofiles
+
+# Email
 fastapi-mail
 
-# Security
+# Security & ops
 fastapi-csrf-protect
+redis                    # production rate limits (optional in beta with SINGLE_WORKER_MODE)
+sentry-sdk[fastapi]      # optional
 
-# Testing
-pytest
-pytest-asyncio
-httpx
+# Dev / CI only (requirements-dev.txt)
+pytest, pytest-asyncio, pytest-cov, httpx, ruff
 ```
+
+Planned Phase 23: add `stripe` — see [STRIPE_BILLING.md](./STRIPE_BILLING.md).

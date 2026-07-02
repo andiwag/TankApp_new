@@ -1,28 +1,41 @@
-# TankApp SaaS – Full Technical Documentation
+# Tankly – Full Technical Documentation
+
+## Documentation index
+
+| Document | Purpose |
+|----------|---------|
+| **This file** | Product spec, architecture, models, routes |
+| [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) | Phased build plan (Phases 0–23) |
+| [DECISION_LOG.md](./DECISION_LOG.md) | Architectural decisions |
+| [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) | Planned operator dashboard |
+| [STRIPE_BILLING.md](./STRIPE_BILLING.md) | Planned billing integration |
+| [BETA_DEPLOY.md](./BETA_DEPLOY.md) / [PRODUCTION.md](./PRODUCTION.md) | Deployment |
+
+---
 
 ## 1. Product Overview
 
-**TankApp** is a SaaS web application designed primarily for **farmers** to collaboratively track:
+**Tankly** (`app/branding.py`: `PRODUCT_NAME`, domain `tankly.at`) is a SaaS web application for **farmers** to collaboratively track:
 
-* fuel usage
-* vehicles
-* operating hours (tractors & machinery)
-* mileage (cars & motorcycles)
+* fuel usage and consumption
+* vehicles and machinery
+* operating hours (tractors & machinery) and mileage (cars & motorcycles)
+* maintenance logs and service reminders
+* fuel costs and CSV export
+* group analytics
 
-The system allows **multiple users** to work within a **shared group environment** (e.g. a farm business), ensuring accurate and consistent fuel tracking.
+The system allows **multiple users** in a **shared group** (farm/business) with role-based access.
 
-Implemented product areas include:
+**Implemented (Phases 0–21):** auth, groups, vehicles, fuel entries, summary, dashboard, profile, group settings, audit log UI, maintenance, analytics, export, cost tracking, marketing/landing, private-beta registration gate, PWA, production hardening, German UI across authenticated app.
 
-* cost tracking
-* maintenance tracking
-* reporting & export
-* installable mobile PWA support
+**Planned:** platform operator dashboard ([PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md)), Stripe billing ([STRIPE_BILLING.md](./STRIPE_BILLING.md)).
 
-Future expansion paths include:
+**Future expansion paths:**
 
 * OCR entry from receipts
 * richer offline entry workflows
-* subscription billing
+* deeper fleet analytics
+* customer-initiated temporary support access (GDPR-friendly)
 
 ---
 
@@ -106,8 +119,7 @@ This enables consumption analytics (see Section 14 for calculation logic).
 ## Frontend
 
 * Jinja2 templates
-* Tailwind CSS (CDN)
-* Alpine.js (light interactivity)
+* Tailwind CSS + Alpine.js — **self-hosted** under `app/static/vendor/` (no CDN in production CSP)
 
 ## PWA
 
@@ -117,10 +129,12 @@ This enables consumption analytics (see Section 14 for calculation logic).
 
 ## Supporting libraries
 
-* fastapi-mail (password reset emails)
+* fastapi-mail (password reset and service reminder emails when `MAIL_*` configured)
 * fastapi-csrf-protect (CSRF protection)
 * itsdangerous (signed session cookies, password reset tokens)
 * pydantic-settings (environment configuration)
+* redis (optional — shared rate limits in production)
+* sentry-sdk (optional error tracking)
 * python-dotenv
 * python-multipart (form handling)
 * aiofiles (static file serving)
@@ -158,7 +172,9 @@ Benefits:
 
 ### Authentication architecture
 
-Session identity is stored in **signed cookies** using `itsdangerous`. The cookie contains minimal claims (`user_id`, `active_group_id`, `session_id`), while `UserSession` rows provide expiry and revocation. This keeps SSR form auth simple while allowing logout/password-change flows to invalidate sessions. See DECISION_LOG.md D-001 and the later session decisions.
+Session identity is stored in **signed cookies** using `itsdangerous`. The cookie contains minimal claims (`user_id`, `active_group_id`, `session_id`), while `UserSession` rows provide expiry and revocation. This keeps SSR form auth simple while allowing logout/password-change flows to invalidate sessions. See DECISION_LOG.md D-001 and D-046.
+
+**Redis** (`REDIS_URL`) is optional in development; **required in multi-worker production** unless `SINGLE_WORKER_MODE=true` (beta only) for shared rate limits.
 
 ### Application layering
 
@@ -173,135 +189,41 @@ Templates own presentation only. Shared Jinja setup lives in `app/templating.py`
 # 5. Project Structure
 
 ```
-TankApp/
+Tankly/   (repo folder may be TankApp_new)
 
 app/
-
-    __init__.py
-
-    main.py
-        FastAPI app initialization
-        middleware
-        router registration
-
-    config.py
-        environment settings
-        database URL
-        secret keys
-
+    main.py              # FastAPI app, middleware, routers
+    config.py            # Settings (see .env.example)
     database.py
-        SQLAlchemy engine
-        session factory
-
     models.py
-        SQLAlchemy ORM models
-
     schemas.py
-        Pydantic schemas
-
-    auth.py
-        password hashing
-        session cookie creation/decoding
-
+    auth.py              # Password hashing, session cookie encode/decode
     audit.py
-        audit log helper function
-
-    dependencies.py
-        auth dependencies
-        role guards
-
+    dependencies.py      # Auth, active group, require_role
+    branding.py          # PRODUCT_NAME, cookie defaults
+    csrf.py
+    rate_limit.py        # In-memory or Redis limiters
+    services/            # Business logic (groups, vehicles, fuel, …)
     routes/
-
         auth.py
-            login
-            register
-            logout
-            password reset
-
-        dashboard.py
-            main dashboard
-            statistics overview
-
-        vehicles.py
-            CRUD operations
-
-        fuel_entries.py
-            CRUD operations
-
+        marketing.py     # Landing, legal pages, robots.txt
         groups.py
-            group management
-
         group_settings.py
-            invite code management
-            member management
-            role changes
-
+        dashboard.py
         summary.py
-            fuel per vehicle
-            monthly totals
-            consumption averages
-
+        analytics.py
+        vehicles.py
+        fuel_entries.py
+        maintenance.py
+        export.py
         profile.py
-            view/edit profile
-            change password
-
+        audit_log.py
+        cron.py          # Bearer CRON_SECRET
     templates/
+    static/              # PWA, vendor JS/CSS, icons
 
-        base.html
-        login.html
-        register.html
-        forgot_password.html
-        reset_password.html
-        groups.html
-        dashboard.html
-
-        vehicles.html
-        vehicle_form.html
-
-        fuel_entries.html
-        fuel_entry_form.html
-
-        summary.html
-
-        group_settings.html
-
-        profile.html
-
-    static/
-
-        manifest.json
-        sw.js
-
-        icon-192.png
-        icon-512.png
-
-tests/
-
-    __init__.py
-    conftest.py
-    test_config.py
-    test_models.py
-    test_schemas.py
-    test_auth.py
-    test_groups.py
-    test_vehicles.py
-    test_fuel_entries.py
-    test_dashboard.py
-    test_summary.py
-    test_profile.py
-    test_group_settings.py
-    test_audit_log.py
-
-requirements.txt
-.env.example
-
-.docs/
-    TECHNICAL_DOCUMENTATION.md
-    DEVELOPMENT_PLAN.md
-    DECISION_LOG.md
-
-.prompts/
-    AGENT_PROMPT.md
+tests/                   # ~371 tests — see DEVELOPMENT_PLAN.md
+.docs/                   # All project documentation
 ```
 
 ---
@@ -317,8 +239,10 @@ Group
 Vehicle
 ↓ one-to-many
 FuelEntry
+MaintenanceLog
 
-AuditLog references User and Group.
+UserSession → User (server-side auth sessions)
+AuditLog → User, Group (nullable group_id)
 
 `group_id` on FuelEntry is an **intentional denormalization** for query performance — see DECISION_LOG.md D-003.
 
@@ -444,6 +368,9 @@ fuel_amount_l   float
 usage_reading   float
                 km or hours reading at fueling time
 
+full_tank       bool (default true — partial fills excluded from consumption)
+total_cost_eur  float nullable
+
 notes           string nullable (max 500 chars)
 
 entry_date      date
@@ -452,6 +379,45 @@ created_at      datetime
 updated_at      datetime
 
 deleted_at      datetime nullable
+```
+
+---
+
+## MaintenanceLog
+
+Service/maintenance records per vehicle (Phase 17).
+
+```
+MaintenanceLog
+
+id                  int PK
+vehicle_id          FK -> Vehicle.id
+group_id            FK -> Group.id
+user_id             FK -> User.id
+service_date        date
+usage_reading       float nullable
+description         string (max 500)
+cost_eur            float nullable
+next_service_date   date nullable
+next_service_usage  float nullable
+reminder_sent_at    datetime nullable
+created_at / updated_at / deleted_at
+```
+
+---
+
+## UserSession
+
+Server-side session for revocation (D-046).
+
+```
+UserSession
+
+id          string PK (UUID)
+user_id     FK -> User.id
+created_at  datetime
+expires_at  datetime
+revoked_at  datetime nullable
 ```
 
 ---
@@ -475,11 +441,11 @@ entity_id   int
 created_at  datetime
 ```
 
-Logged events: `user.register`, `group.create`, `group.delete`, `group.join`, `group.leave`, `member.role_change`, `member.remove`, `vehicle.create`, `vehicle.delete`
+Logged events: `user.register`, `group.create`, `group.delete`, `group.join`, `group.leave`, `member.role_change`, `member.remove`, `vehicle.create`, `vehicle.delete`, `maintenance.create`, `maintenance.update`, `maintenance.delete`
 
 Not logged: `fuel_entry.*`, `vehicle.edit`, `user.login`, `user.logout`
 
-See DECISION_LOG.md D-006 and D-042 for rationale.
+Farm admins view history at `GET /settings/audit`. Planned: `platform.*` events for operator access (Phase 22).
 
 ---
 
@@ -634,14 +600,14 @@ redirect to dashboard (or group selection if no groups)
 
 ---
 
-Session structure (stored in signed cookie):
+Session structure (signed cookie payload):
 
 ```
-session
-
+session_id          UUID → user_sessions.id
 user_id
-active_group_id
-session_id
+active_group_id     nullable
+platform_view       optional (Phase 22 — planned)
+platform_view_group_id  optional (Phase 22 — planned)
 ```
 
 ---
@@ -650,11 +616,7 @@ Logout:
 
 POST /logout
 
-revoke the current `UserSession`
-
-clear session cookie
-
-redirect to login
+revoke the current `UserSession`, clear session cookie, redirect to login
 
 ---
 
@@ -667,6 +629,8 @@ GET /reset-password/{token} → render reset form
 POST /reset-password/{token} → validate token, update password
 
 Tokens expire after 1 hour. Non-existent emails return success silently (prevent email enumeration).
+
+When `settings.mail_configured`, reset links are sent via SMTP (`app/mail.py`). Otherwise development may log the link; production should configure Brevo — see [BETA_DEPLOY.md](./BETA_DEPLOY.md).
 
 ---
 
@@ -731,14 +695,18 @@ Codes are:
 # 12. Application Flow
 
 ```
-Login / Register
+Landing / Login / Register
         ↓
 Select or Create Group (if no groups)
         ↓
 Dashboard
-    ↓      ↓       ↓       ↓       ↓
-Vehicles  Entries  Stats  Settings  Profile
+    ↓      ↓        ↓         ↓          ↓         ↓
+Vehicles  Fuel  Maintenance  Summary  Analytics  Settings  Profile
+                                              ↓
+                                         Export CSV
 ```
+
+Operators (planned): `/platform/farms` → optional “view farm” → same app UI read-only.
 
 ---
 
@@ -855,6 +823,7 @@ Displays:
 * member list with roles
 * role change controls (admin only)
 * remove member controls (admin only)
+* link to audit log (`/settings/audit`, admin only)
 * danger zone (delete group)
 
 ---
@@ -867,10 +836,61 @@ POST /profile
 
 POST /profile/change-password
 
-Displays:
+POST /profile/sessions/{id}/revoke
 
-* name and email (editable)
-* password change form
+---
+
+## Maintenance
+
+GET /maintenance — list
+
+GET/POST /maintenance/new, edit, delete — contributor+ / admin delete
+
+---
+
+## Analytics
+
+GET /analytics — group charts and context
+
+---
+
+## Export
+
+GET /export/fuel-entries.csv
+
+GET /export/vehicles.csv
+
+---
+
+## Audit log
+
+GET /settings/audit — farm admin only
+
+---
+
+## Marketing & legal
+
+GET / — landing (redirect if logged in)
+
+GET /impressum, /datenschutz, /agb
+
+GET /robots.txt
+
+---
+
+## Health & cron
+
+GET /health — liveness
+
+GET /health/ready — DB readiness
+
+POST /cron/service-reminders — `Authorization: Bearer <CRON_SECRET>`
+
+---
+
+## Platform admin (planned)
+
+GET /platform/farms, /platform/users, … — see [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md)
 
 ---
 
@@ -899,11 +919,11 @@ Rules:
 1. "Previous reading" = the most recent fuel entry for the same vehicle with a **lower** `usage_reading`, sorted by `usage_reading` (not by `entry_date`).
 2. **First entry** for a vehicle: no consumption value (needs at least 2 data points).
 3. **Out-of-order entries:** Sorting by `usage_reading` handles this correctly.
-4. Only entries marked as full-tank fills participate in consumption segments. Partial fills are stored for volume and cost history but excluded from average consumption calculations.
+4. Only entries marked as full-tank fills participate in consumption segments. Partial fills (`full_tank=false`) are stored for volume and cost history but excluded from average consumption calculations.
 
 Partial fills remain useful for total liters, costs, exports, and auditability even when they do not produce reliable consumption segments.
 
-See DECISION_LOG.md D-004 for full rationale.
+See DECISION_LOG.md D-004 and D-048.
 
 ---
 
@@ -971,19 +991,37 @@ DATABASE_URL=sqlite:///./dev.db
 
 SECRET_KEY=supersecretkey
 
-SESSION_COOKIE_NAME=tankapp_session
+SESSION_COOKIE_NAME=tankly_session
 
 ENV=development
 
+BASE_URL=
+
+REDIS_URL=
+SINGLE_WORKER_MODE=false
+
+CRON_SECRET=
+
+REGISTRATION_INVITE_CODE=
+
+ALLOWED_HOSTS=*
+
+SENTRY_DSN=
+
+RUN_MIGRATIONS_ON_START=true
+
 MAIL_USERNAME=
 MAIL_PASSWORD=
-MAIL_FROM=noreply@tankapp.example.com
+MAIL_FROM=noreply@tankly.at
 MAIL_SERVER=smtp.example.com
 MAIL_PORT=587
 MAIL_STARTTLS=true
+
+# Planned (Phase 22) — see PLATFORM_ADMIN.md
+# PLATFORM_ADMIN_EMAILS=
 ```
 
-In development mode, password reset emails are logged to console instead of sent.
+See `.env.example` and `.env.beta.example` for the canonical list. Production requires unique `SECRET_KEY`, `CRON_SECRET`, and Redis or `SINGLE_WORKER_MODE=true`.
 
 ---
 
@@ -1008,34 +1046,34 @@ Denormalized `group_id` on FuelEntry optimizes the most common query pattern.
 # 19. Future Features
 
 * OCR fuel receipt scanning
+* Platform operator dashboard (Phase 22 — [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md))
+* Stripe subscription billing (Phase 23 — [STRIPE_BILLING.md](./STRIPE_BILLING.md))
 * richer offline entry workflows
-* subscription billing
 * deeper fleet analytics
-* localization polish across marketing and authenticated app UI
+* customer-initiated temporary support access (GDPR-friendly)
 
 ---
 
 # 20. Implementation Order
 
+**Completed:** Phases 0–21 (see [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md))
+
 1. project setup & test infrastructure
-2. database setup
-3. models
-4. pydantic schemas
-5. migrations
-6. authentication (register, login, logout)
-7. password reset
-8. groups
-9. base template & layout
-10. dashboard
-11. vehicles CRUD
-12. fuel entries CRUD
-13. user profile management
-14. summary & statistics
-15. group settings
-16. audit logging
-17. CSRF protection
-18. PWA support
-19. validation & polish
+2. database, models, schemas, migrations
+3. authentication & password reset
+4. groups & roles
+5. base template & layout
+6. dashboard, vehicles, fuel entries
+7. profile, summary, group settings
+8. audit logging (+ admin UI in Phase 19)
+9. CSRF, PWA, validation polish
+10. maintenance, analytics, export, cost/partial fill
+11. session revocation, production hardening, marketing/beta gate
+
+**Planned next:**
+
+12. platform admin (Phase 22)
+13. Stripe billing (Phase 23)
 
 Development follows a strict **test-driven** approach (Red → Green → Refactor).
 See `DEVELOPMENT_PLAN.md` for detailed phase breakdowns, test lists, and acceptance criteria.
