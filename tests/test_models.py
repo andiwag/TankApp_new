@@ -1,7 +1,8 @@
-from datetime import UTC, date, datetime
+from datetime import date
 
 import pytest
 from app.models import AuditLog, FuelEntry, Group, User, UserGroup, Vehicle
+from app.time_utils import utc_now
 from sqlalchemy.exc import IntegrityError
 
 # ── User ─────────────────────────────────────────────────────────────────────
@@ -44,7 +45,7 @@ class TestUser:
         db.add(user)
         db.commit()
 
-        user.deleted_at = datetime.now(UTC)
+        user.deleted_at = utc_now()
         db.commit()
         db.refresh(user)
 
@@ -85,7 +86,7 @@ class TestGroup:
         db.add(group)
         db.commit()
 
-        group.deleted_at = datetime.now(UTC)
+        group.deleted_at = utc_now()
         db.commit()
         db.refresh(group)
 
@@ -228,7 +229,7 @@ class TestVehicle:
         db.add(v)
         db.commit()
 
-        v.deleted_at = datetime.now(UTC)
+        v.deleted_at = utc_now()
         db.commit()
         db.refresh(v)
         assert v.deleted_at is not None
@@ -336,7 +337,7 @@ class TestFuelEntry:
         db.add(entry)
         db.commit()
 
-        entry.deleted_at = datetime.now(UTC)
+        entry.deleted_at = utc_now()
         db.commit()
         db.refresh(entry)
         assert entry.deleted_at is not None

@@ -57,7 +57,9 @@ def _validate_password_match(password: str, confirm: str) -> None:
 
 def _validate_password_length(password: str) -> None:
     if len(password) < MIN_PASSWORD_LENGTH:
-        raise ValueError(f"Passwort muss mindestens {MIN_PASSWORD_LENGTH} Zeichen haben")
+        raise ValueError(
+            f"Passwort muss mindestens {MIN_PASSWORD_LENGTH} Zeichen haben"
+        )
 
 
 # ── User schemas ─────────────────────────────────────────────────────────────

@@ -1,10 +1,12 @@
 """Tests for Phase 7: Dashboard."""
 
 import re
-from datetime import UTC, date
+from datetime import date
 
 import pytest
 from app.models import FuelEntry, Vehicle
+from app.time_utils import utc_now
+
 from tests.helpers import parse_display_number
 
 
@@ -225,10 +227,9 @@ class TestDashboardStats:
         create_test_user_group(user.id, group.id, role="admin")
         create_test_vehicle(group_id=group.id, name="Active")
         v_del = create_test_vehicle(group_id=group.id, name="Gone")
-        from datetime import datetime
 
         db.query(Vehicle).filter(Vehicle.id == v_del.id).update(
-            {"deleted_at": datetime.now(UTC)}
+            {"deleted_at": utc_now()}
         )
         db.commit()
         auth_cookie(client, user.id, group.id)
@@ -248,8 +249,6 @@ class TestDashboardStats:
         auth_cookie,
         db,
     ):
-        from datetime import datetime
-
         user = create_test_user()
         group = create_test_group(created_by=user.id)
         create_test_user_group(user.id, group.id, role="admin")
@@ -261,7 +260,7 @@ class TestDashboardStats:
             vehicle_id=v.id, group_id=group.id, user_id=user.id, fuel_amount_l=50.0
         )
         db.query(FuelEntry).filter(FuelEntry.id == e_del.id).update(
-            {"deleted_at": datetime.now(UTC)}
+            {"deleted_at": utc_now()}
         )
         db.commit()
         auth_cookie(client, user.id, group.id)

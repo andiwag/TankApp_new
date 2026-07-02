@@ -3,7 +3,10 @@ const STATIC_ASSETS = [
   '/static/manifest.json',
   '/static/logo.png',
   '/static/icon-192.png',
-  '/static/icon-512.png'
+  '/static/icon-512.png',
+  '/static/vendor/alpine.min.js',
+  '/static/vendor/tailwindcss.js',
+  '/static/vendor/chart.umd.min.js',
 ];
 
 self.addEventListener('install', (event) => {

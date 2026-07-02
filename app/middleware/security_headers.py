@@ -8,11 +8,10 @@ from starlette.responses import Response
 
 from app.config import settings
 
-# Tailwind browser CDN uses eval(); Alpine and Chart.js load from jsDelivr.
+# Self-hosted Alpine, Chart.js, and Tailwind browser bundle (Tailwind still uses eval).
 _CSP = (
     "default-src 'self'; "
-    "script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net "
-    "'unsafe-inline' 'unsafe-eval'; "
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
     "style-src 'self' 'unsafe-inline'; "
     "img-src 'self' data:; "
     "font-src 'self'; "

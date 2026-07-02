@@ -1,8 +1,7 @@
 """Tests for Phase 8: Vehicles CRUD."""
 
-from datetime import UTC, datetime
-
 from app.models import Vehicle
+from app.time_utils import utc_now
 
 from tests.conftest import create_authenticated_group
 
@@ -77,7 +76,7 @@ class TestListVehicles:
         create_test_vehicle(group_id=group.id, name="Visible")
         v_del = create_test_vehicle(group_id=group.id, name="Hidden")
         db.query(Vehicle).filter(Vehicle.id == v_del.id).update(
-            {"deleted_at": datetime.now(UTC)}
+            {"deleted_at": utc_now()}
         )
         db.commit()
 
@@ -608,9 +607,7 @@ class TestEditVehicle:
             role="contributor",
         )
         v = create_test_vehicle(group_id=group.id)
-        db.query(Vehicle).filter(Vehicle.id == v.id).update(
-            {"deleted_at": datetime.now(UTC)}
-        )
+        db.query(Vehicle).filter(Vehicle.id == v.id).update({"deleted_at": utc_now()})
         db.commit()
         response = await client.post(
             f"/vehicles/{v.id}/edit",

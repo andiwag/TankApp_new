@@ -31,11 +31,14 @@ Set `REGISTRATION_INVITE_CODE` to gate registration — only people with the cod
 
 Ensure these files are on `main`:
 
-- `Dockerfile`
+- `Dockerfile` (installs `requirements-prod.txt`)
 - `scripts/start.sh`, `scripts/migrate.sh`
-- `requirements.txt` (includes `psycopg2-binary`)
+- `requirements-prod.txt`, `requirements-dev.txt`
+- Self-hosted frontend assets in `app/static/vendor/`
 
-CI runs lint + full pytest on Postgres on every push.
+**Local dev:** Python **3.12** required. Install deps with `pip install -r requirements-dev.txt`.
+
+CI runs lint, full pytest on Postgres (with coverage), and a Docker build on every push.
 
 ---
 
@@ -118,6 +121,7 @@ Run on the live URL:
 - [ ] Register **with** invite code → success → create group
 - [ ] Add vehicle + fuel entry → dashboard updates
 - [ ] Forgot password (if mail configured)
+- [ ] Profile → download personal data (JSON)
 - [ ] Second browser: join group via invite code
 
 ---

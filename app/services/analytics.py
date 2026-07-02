@@ -56,9 +56,7 @@ def get_analytics_context(
     ]
     has_cost_data = any(row["cost_eur"] for row in summary["monthly_rows"])
     total_12_month_liters = round(sum(row["liters"] for row in monthly_chart), 2)
-    total_12_month_cost = round(
-        sum(row["cost_eur"] or 0.0 for row in monthly_chart), 2
-    )
+    total_12_month_cost = round(sum(row["cost_eur"] or 0.0 for row in monthly_chart), 2)
     top_vehicle = max(vehicle_chart, key=lambda row: row["liters"], default=None)
     peak_month = max(monthly_chart, key=lambda row: row["liters"], default=None)
 

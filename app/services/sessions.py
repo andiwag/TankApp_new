@@ -1,16 +1,17 @@
 """Server-side session storage for revocation support."""
 
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
 from app.auth import SESSION_MAX_AGE
 from app.models import UserSession
+from app.time_utils import UTC, utc_now
 
 
 def _utcnow() -> datetime:
-    return datetime.now(UTC)
+    return utc_now()
 
 
 def _as_utc(value: datetime) -> datetime:

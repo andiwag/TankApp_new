@@ -1,7 +1,5 @@
 """Group listing and membership mutations."""
 
-from datetime import UTC, datetime
-
 from sqlalchemy.orm import Session
 
 from app.enums import Role
@@ -9,6 +7,7 @@ from app.models import Group, User, UserGroup
 from app.schemas import GroupCreate
 from app.services.invite_codes import generate_unique_invite_code
 from app.services.membership import count_group_admins, get_membership
+from app.time_utils import utc_now
 
 
 class GroupActionError(Exception):
@@ -115,6 +114,6 @@ def soft_delete_group_as_admin(db: Session, user: User, group_id: int) -> Group 
     if not group:
         return None
 
-    group.deleted_at = datetime.now(UTC)
+    group.deleted_at = utc_now()
     db.flush()
     return group

@@ -180,7 +180,9 @@ async def edit_fuel_entry_post(
     form = await request.form()
     try:
         update_fields: dict = {
-            "fuel_amount_l": parse_float(form.get("fuel_amount_l", ""), "Kraftstoffmenge"),
+            "fuel_amount_l": parse_float(
+                form.get("fuel_amount_l", ""), "Kraftstoffmenge"
+            ),
             "usage_reading": parse_float(
                 form.get("usage_reading", ""), "Betriebsstand"
             ),

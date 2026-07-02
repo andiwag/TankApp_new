@@ -24,6 +24,6 @@ templates.env.globals["role_label"] = role_label
 templates.env.globals["usage_unit_label"] = usage_unit_label
 templates.env.globals["product_domain"] = lambda: PRODUCT_DOMAIN
 templates.env.globals["product_url"] = lambda: PRODUCT_URL
-templates.env.globals["registration_invite_required"] = (
-    lambda: settings.registration_invite_required
+templates.env.globals["registration_invite_required"] = lambda: (
+    settings.registration_invite_required
 )

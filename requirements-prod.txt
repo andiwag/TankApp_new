@@ -1,0 +1,18 @@
+# Production runtime dependencies (Docker / deploy)
+fastapi==0.135.2
+uvicorn[standard]==0.42.0
+sqlalchemy==2.0.48
+psycopg2-binary==2.9.10
+alembic==1.18.4
+pydantic[email]==2.12.5
+pydantic-settings==2.13.1
+python-dotenv==1.2.2
+jinja2==3.1.6
+python-multipart==0.0.22
+itsdangerous==2.2.0
+bcrypt==5.0.0
+aiofiles==25.1.0
+fastapi-mail==1.6.2
+fastapi-csrf-protect==1.0.7
+redis==5.2.1
+sentry-sdk[fastapi]==2.25.1

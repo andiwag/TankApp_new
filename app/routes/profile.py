@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
@@ -21,21 +21,29 @@ from app.templating import templates
 router = APIRouter()
 
 
+def _profile_context(
+    request: Request,
+    db: Session,
+    user: User,
+    **extra,
+) -> dict:
+    return {
+        "sessions": list_active_sessions(db, user.id),
+        "current_session_id": request.state.session_data.get("session_id"),
+        **extra,
+    }
+
+
 @router.get("/profile")
 async def profile_page(
     request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    current_session_id = request.state.session_data.get("session_id")
-    sessions = list_active_sessions(db, user.id)
     return templates.TemplateResponse(
         request,
         "profile.html",
-        context={
-            "sessions": sessions,
-            "current_session_id": current_session_id,
-        },
+        context=_profile_context(request, db, user),
     )
 
 
@@ -53,7 +61,12 @@ async def profile_update(
         return templates.TemplateResponse(
             request,
             "profile.html",
-            context={"profile_error": first_validation_error_message(exc)},
+            context=_profile_context(
+                request,
+                db,
+                user,
+                profile_error=first_validation_error_message(exc),
+            ),
         )
 
     err = profile_service.update_user_profile(db, user, data)
@@ -61,7 +74,7 @@ async def profile_update(
         return templates.TemplateResponse(
             request,
             "profile.html",
-            context={"profile_error": err},
+            context=_profile_context(request, db, user, profile_error=err),
         )
 
     response = RedirectResponse(url="/profile", status_code=303)
@@ -88,7 +101,12 @@ async def profile_change_password(
         return templates.TemplateResponse(
             request,
             "profile.html",
-            context={"password_error": first_validation_error_message(exc)},
+            context=_profile_context(
+                request,
+                db,
+                user,
+                password_error=first_validation_error_message(exc),
+            ),
         )
 
     err = profile_service.change_user_password(db, user, data)
@@ -96,7 +114,7 @@ async def profile_change_password(
         return templates.TemplateResponse(
             request,
             "profile.html",
-            context={"password_error": err},
+            context=_profile_context(request, db, user, password_error=err),
         )
 
     current_session_id = request.state.session_data.get("session_id")
@@ -143,4 +161,39 @@ async def revoke_all_profile_sessions(
     db.commit()
     response = RedirectResponse(url="/profile", status_code=303)
     set_flash(response, "Alle anderen Geräte abgemeldet.", category="success")
+    return response
+
+
+@router.get("/profile/export/data.json")
+async def export_personal_data(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    payload = profile_service.export_user_personal_data(db, user)
+    return JSONResponse(
+        payload,
+        headers={
+            "Content-Disposition": 'attachment; filename="tankly-my-data.json"',
+        },
+    )
+
+
+@router.post("/profile/delete-account")
+async def delete_account(
+    request: Request,
+    password: str = Form(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    err = profile_service.delete_user_account(db, user, password)
+    if err:
+        return templates.TemplateResponse(
+            request,
+            "profile.html",
+            context=_profile_context(request, db, user, delete_error=err),
+        )
+
+    response = RedirectResponse(url="/login", status_code=303)
+    clear_session_cookie(response)
+    set_flash(response, "Dein Konto wurde gelöscht.", category="success")
     return response
