@@ -222,7 +222,7 @@ app/
     templates/
     static/              # PWA, vendor JS/CSS, icons
 
-tests/                   # ~371 tests — see DEVELOPMENT_PLAN.md
+tests/                   # ~374 tests — see DEVELOPMENT_PLAN.md
 .docs/                   # All project documentation
 ```
 

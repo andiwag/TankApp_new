@@ -2,7 +2,7 @@
 
 Implementation guide for **internal operator tooling** — the layer that lets you (as product owner / support) see all deployed farms, inspect users, and troubleshoot customer issues. This is separate from **farm admin**, which customers use to manage their own group.
 
-**Status:** Planned — **Development Plan Phase 22** (not implemented).
+**Status:** Phase 1–2 implemented — **Development Plan Phase 22 complete**. Phase 3 hardening optional.
 
 **Prerequisites:** Phases 0–21 complete in the app. Billing fields in operator UI depend on Phase 23 — see [STRIPE_BILLING.md](./STRIPE_BILLING.md).
 

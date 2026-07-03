@@ -2,7 +2,7 @@
 
 Collaborative fuel and fleet tracking for farms and small businesses. Server-rendered FastAPI app with Jinja2 templates, PostgreSQL (production), and SQLite (local dev).
 
-**Plan status:** Phases 0–21 complete (~371 tests). Next: [Platform admin](.docs/PLATFORM_ADMIN.md) (Phase 22), then [Stripe billing](.docs/STRIPE_BILLING.md) (Phase 23).
+**Plan status:** Phases 0–22 complete (~402 tests). Next: [Stripe billing](.docs/STRIPE_BILLING.md) (Phase 23).
 
 ## Quick start
 
@@ -34,7 +34,7 @@ Copy `.env.example` to `.env` (or `.env.beta.example` for Northflank). Key setti
 | `ALLOWED_HOSTS` | `*` | Comma-separated hostnames in production |
 | `MAIL_*` | — | Brevo/SMTP for password reset and service reminders |
 | `SENTRY_DSN` | — | Optional error tracking |
-| `PLATFORM_ADMIN_EMAILS` | — | **Planned** (Phase 22) — see `.docs/PLATFORM_ADMIN.md` |
+| `PLATFORM_ADMIN_EMAILS` | — | Comma-separated operator emails for `/platform` |
 
 See `.env.example` for the full list.
 
@@ -101,20 +101,22 @@ docker build -t tankly .
 | [.docs/DEVELOPMENT_PLAN.md](.docs/DEVELOPMENT_PLAN.md) | Phases 0–23, tests, acceptance criteria |
 | [.docs/TECHNICAL_DOCUMENTATION.md](.docs/TECHNICAL_DOCUMENTATION.md) | Architecture, schema, routes |
 | [.docs/DECISION_LOG.md](.docs/DECISION_LOG.md) | Design decisions (`D-XXX`) |
-| [.docs/PLATFORM_ADMIN.md](.docs/PLATFORM_ADMIN.md) | Operator dashboard — **planned** (Phase 22) |
+| [.docs/PLATFORM_ADMIN.md](.docs/PLATFORM_ADMIN.md) | Operator dashboard (Phase 22 — complete) |
 | [.docs/STRIPE_BILLING.md](.docs/STRIPE_BILLING.md) | Stripe billing — **planned** (Phase 23) |
 | [.docs/BETA_DEPLOY.md](.docs/BETA_DEPLOY.md) | Quick beta deploy |
 | [.docs/PRODUCTION.md](.docs/PRODUCTION.md) | Production hardening & deploy |
-
-Agent instructions: [.prompts/AGENT_PROMPT.md](.prompts/AGENT_PROMPT.md)
+| [.github/copilot-instructions.md](.github/copilot-instructions.md) | AI workflow — TDD, architecture, testing (canonical) |
+| [.prompts/AGENT_PROMPT.md](.prompts/AGENT_PROMPT.md) | Phase kickoff prompt only (optional) |
 
 ## Project layout
 
 ```
-app/           FastAPI application (routes, services, models, templates)
-alembic/       Database migrations
-tests/         pytest suite (~371 tests)
-scripts/       start.sh, migrate.sh, fetch-vendor.sh, generate-beta-secrets.*
-.docs/         Internal documentation
-.prompts/      Cursor agent prompt
+app/                FastAPI application (routes, services, models, templates)
+alembic/            Database migrations
+tests/              pytest suite (~402 tests)
+scripts/            start.sh, migrate.sh, fetch-vendor.sh, generate-beta-secrets.*
+.docs/              Internal documentation
+.github/            CI workflow + copilot-instructions.md
+.cursor/rules/      Cursor always-on rules (→ copilot-instructions)
+.prompts/           Phase kickoff agent prompt
 ```

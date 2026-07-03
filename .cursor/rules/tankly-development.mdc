@@ -1,0 +1,12 @@
+---
+description: Tankly TDD workflow — points to canonical copilot-instructions
+alwaysApply: true
+---
+
+# Tankly development
+
+Follow **`.github/copilot-instructions.md`** for the full workflow (TDD, architecture, testing, git, reporting).
+
+**Phase kickoff only:** `.prompts/AGENT_PROMPT.md` (current phase status, which spec to read, “start now”).
+
+**Non-negotiable:** failing tests before code → minimum implementation → refactor → `python -m pytest -q` green → `ruff check app tests` → no commits unless the user asks.

@@ -27,14 +27,18 @@ def create_session_cookie(
     active_group_id: int | None = None,
     *,
     session_id: str,
+    platform_view: bool = False,
+    platform_view_group_id: int | None = None,
 ) -> str:
-    return _serializer.dumps(
-        {
-            "session_id": session_id,
-            "user_id": user_id,
-            "active_group_id": active_group_id,
-        }
-    )
+    payload: dict[str, object] = {
+        "session_id": session_id,
+        "user_id": user_id,
+        "active_group_id": active_group_id,
+    }
+    if platform_view:
+        payload["platform_view"] = True
+        payload["platform_view_group_id"] = platform_view_group_id
+    return _serializer.dumps(payload)
 
 
 def decode_session_cookie(cookie_value: str) -> dict | None:
@@ -73,8 +77,16 @@ def set_session_cookie(
     active_group_id: int | None = None,
     *,
     session_id: str,
+    platform_view: bool = False,
+    platform_view_group_id: int | None = None,
 ) -> None:
-    cookie = create_session_cookie(user_id, active_group_id, session_id=session_id)
+    cookie = create_session_cookie(
+        user_id,
+        active_group_id,
+        session_id=session_id,
+        platform_view=platform_view,
+        platform_view_group_id=platform_view_group_id,
+    )
     response.set_cookie(
         settings.SESSION_COOKIE_NAME,
         cookie,

@@ -2,7 +2,7 @@
 
 Step-by-step guide to deploy Tankly for a **private beta** with 1–2 invited farms. For full production (billing, legal, paid hosting), see [PRODUCTION.md](./PRODUCTION.md) and [STRIPE_BILLING.md](./STRIPE_BILLING.md).
 
-**Related:** [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) (Phases 0–21 complete), [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) (operator dashboard — planned before paid support).
+**Related:** [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) (Phases 0–21 complete), [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) (Phase 1 operator dashboard implemented; Phase 2 support view planned).
 
 ---
 
@@ -78,6 +78,7 @@ Set on the `Tankly-web` service (see `.env.beta.example`):
 | `SECRET_KEY` | From generate script |
 | `CRON_SECRET` | From generate script |
 | `REGISTRATION_INVITE_CODE` | From generate script — share with beta farms |
+| `PLATFORM_ADMIN_EMAILS` | Your operator email(s) — enables `/platform` dashboard |
 | `ENV` | `production` |
 | `SINGLE_WORKER_MODE` | `true` |
 | `BASE_URL` | `https://your-app.code.run` |

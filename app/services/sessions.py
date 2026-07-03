@@ -103,7 +103,16 @@ def refresh_session_cookie(
     active_group_id: int | None,
     *,
     session_id: str,
+    platform_view: bool = False,
+    platform_view_group_id: int | None = None,
 ) -> None:
     from app.auth import set_session_cookie
 
-    set_session_cookie(response, user_id, active_group_id, session_id=session_id)
+    set_session_cookie(
+        response,
+        user_id,
+        active_group_id,
+        session_id=session_id,
+        platform_view=platform_view,
+        platform_view_group_id=platform_view_group_id,
+    )

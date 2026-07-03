@@ -1,0 +1,68 @@
+{% extends "platform_base.html" %}
+{% from "_macros.html" import empty_state, status_chip with context %}
+
+{% block title %}Betriebe – Tankly Operator{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-white">Betriebe</h1>
+    <p class="mt-2 text-slate-400">Alle Farmen im System — unabhängig von deiner Mitgliedschaft.</p>
+</div>
+
+<div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <form method="get" action="/platform/farms" class="flex flex-wrap gap-2">
+        <input type="hidden" name="status" value="{{ status_filter }}">
+        <input type="search" name="q" value="{{ search_query }}" placeholder="Name suchen…" class="min-w-[220px] rounded-xl border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-white placeholder:text-slate-500">
+        <button type="submit" class="rounded-xl bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700">Suchen</button>
+    </form>
+    <div class="flex flex-wrap gap-2 text-sm">
+        {% for value, label in [('active', 'Aktiv'), ('deleted', 'Gelöscht'), ('all', 'Alle')] %}
+        <a href="/platform/farms?status={{ value }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}"
+           class="rounded-full px-3 py-1 font-semibold {% if status_filter == value %}bg-sky-500 text-slate-950{% else %}bg-slate-800 text-slate-300 hover:bg-slate-700{% endif %}">{{ label }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+{% if show_empty_state %}
+{{ empty_state("Keine Betriebe gefunden", "Passe Filter oder Suche an.") }}
+{% else %}
+<div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/60">
+    <table class="min-w-full text-left text-sm">
+        <thead class="border-b border-slate-800 text-xs uppercase tracking-wide text-slate-400">
+            <tr>
+                <th class="px-4 py-3">Name</th>
+                <th class="px-4 py-3">Mitglieder</th>
+                <th class="px-4 py-3">Fahrzeuge</th>
+                <th class="px-4 py-3">Tarif</th>
+                <th class="px-4 py-3">Einladung</th>
+                <th class="px-4 py-3">Status</th>
+                <th class="px-4 py-3">Letzte Aktivität</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800">
+            {% for farm in farms %}
+            <tr class="hover:bg-slate-800/40">
+                <td class="px-4 py-3 font-semibold text-white">
+                    <a href="/platform/farms/{{ farm.id }}" class="hover:text-sky-300">{{ farm.name }}</a>
+                </td>
+                <td class="px-4 py-3" data-member-count="{{ farm.member_count }}">{{ farm.member_count }}</td>
+                <td class="px-4 py-3" data-vehicle-count="{{ farm.vehicle_count }}">{{ farm.vehicle_count }}</td>
+                <td class="px-4 py-3">{{ farm.subscription_tier }}</td>
+                <td class="px-4 py-3 font-mono text-slate-400">{{ farm.invite_code_masked }}</td>
+                <td class="px-4 py-3">
+                    {% if farm.status == 'active' %}
+                    {{ status_chip("Aktiv", "success") }}
+                    {% else %}
+                    {{ status_chip("Gelöscht", "danger") }}
+                    {% endif %}
+                </td>
+                <td class="px-4 py-3 text-slate-400">
+                    {% if farm.last_activity %}{{ format_datetime(farm.last_activity) }}{% else %}Keine Aktivität{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

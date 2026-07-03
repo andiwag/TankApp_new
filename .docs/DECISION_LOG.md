@@ -734,7 +734,7 @@ Architectural and design decisions for **Tankly**. Cookie names in older entries
 
 **Decision:** Grant internal operator access via `PLATFORM_ADMIN_EMAILS` and `/platform/*` routes — **not** via farm `admin` role. Phase 1 read-only; Phase 2 read-only “view farm” session.
 
-**Status:** Documented in [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md); **not implemented** (Development Plan Phase 22).
+**Status:** Documented in [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md); **implemented** (Development Plan Phase 22 complete).
 
 **Rationale:** Selling/supporting SaaS requires cross-farm visibility without joining every group as a member.
 

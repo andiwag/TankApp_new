@@ -1,0 +1,92 @@
+{% extends "platform_base.html" %}
+{% from "_macros.html" import csrf_field, empty_state, role_badge, status_chip with context %}
+
+{% block title %}{{ group.name }} – Tankly Operator{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+        <p class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Betrieb #{{ group.id }}</p>
+        <h1 class="mt-2 text-3xl font-bold text-white">{{ group.name }}</h1>
+        <p class="mt-2 text-slate-400">Erstellt von {{ creator_email or 'Unbekannt' }} · {{ format_datetime(group.created_at) }}</p>
+    </div>
+    <a href="/platform/farms" class="text-sm font-semibold text-sky-300 hover:text-sky-200">← Zurück zur Liste</a>
+</div>
+
+{% if support_view_available and status == 'active' %}
+<form method="post" action="/platform/farms/{{ group.id }}/enter" class="mb-8">
+    {{ csrf_field() }}
+    <button type="submit" class="rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400">
+        Support-Ansicht öffnen (schreibgeschützt)
+    </button>
+</form>
+{% endif %}
+
+<div class="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+        <p class="text-xs uppercase tracking-wide text-slate-400">Status</p>
+        <div class="mt-2">{% if status == 'active' %}{{ status_chip("Aktiv", "success") }}{% else %}{{ status_chip("Gelöscht", "danger") }}{% endif %}</div>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+        <p class="text-xs uppercase tracking-wide text-slate-400">Tarif</p>
+        <p class="mt-2 text-lg font-semibold text-white">{{ subscription_tier }}</p>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+        <p class="text-xs uppercase tracking-wide text-slate-400">Einladungscode</p>
+        <p class="mt-2 font-mono text-lg font-semibold text-white">{{ group.invite_code }}</p>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+        <p class="text-xs uppercase tracking-wide text-slate-400">Nutzung</p>
+        <p class="mt-2 text-sm text-slate-300">{{ vehicle_count }} Fahrzeuge · {{ fuel_entry_count }} Tankungen · {{ maintenance_log_count }} Wartungen</p>
+    </div>
+</div>
+
+<section class="mb-8">
+    <h2 class="mb-4 text-xl font-bold text-white">Mitglieder</h2>
+    {% if members %}
+    <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/60">
+        <table class="min-w-full text-left text-sm">
+            <thead class="border-b border-slate-800 text-xs uppercase tracking-wide text-slate-400">
+                <tr>
+                    <th class="px-4 py-3">Name</th>
+                    <th class="px-4 py-3">E-Mail</th>
+                    <th class="px-4 py-3">Rolle</th>
+                    <th class="px-4 py-3">Beigetreten</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+                {% for member in members %}
+                <tr data-member-role="{{ member.role }}">
+                    <td class="px-4 py-3 text-white">{{ member.name }}</td>
+                    <td class="px-4 py-3 text-slate-300">{{ member.email }}</td>
+                    <td class="px-4 py-3">{{ role_badge(member.role) }}</td>
+                    <td class="px-4 py-3 text-slate-400">{{ format_datetime(member.joined_at) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    {{ empty_state("Keine Mitglieder", "Dieser Betrieb hat noch keine Mitglieder.") }}
+    {% endif %}
+</section>
+
+<section>
+    <h2 class="mb-4 text-xl font-bold text-white">Letzte Aktivität</h2>
+    {% if audit_rows %}
+    <div class="space-y-3">
+        {% for row in audit_rows %}
+        <article class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+            <div class="flex flex-wrap items-center gap-2">
+                {{ status_chip(row.action, "info") }}
+                <span class="text-sm text-slate-400">{{ format_datetime(row.created_at) }}</span>
+            </div>
+            <p class="mt-2 text-sm text-slate-300">{{ row.user_name }} · {{ row.entity_type }} #{{ row.entity_id }}</p>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    {{ empty_state("Keine Protokolleinträge", "Für diesen Betrieb liegen noch keine Audit-Einträge vor.") }}
+    {% endif %}
+</section>
+{% endblock %}

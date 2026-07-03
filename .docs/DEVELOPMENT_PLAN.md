@@ -1012,20 +1012,21 @@ test_no_n_plus_1_queries_on_fuel_entry_list
 
 ## Phase 22: Platform Admin (Operator Dashboard)
 
-**Status:** ⬜ Planned — **not implemented**
+**Status:** ✅ Complete (Phase 1 read-only dashboard + Phase 2 support view)
 
 Full specification: [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md)
 
 ### Summary
-- [ ] `PLATFORM_ADMIN_EMAILS` env allowlist
-- [ ] Read-only `/platform/farms`, `/platform/users`
-- [ ] Phase 2: support “view farm” session (read-only)
-- [ ] `tests/test_platform_admin.py`
+- [x] `PLATFORM_ADMIN_EMAILS` env allowlist
+- [x] Read-only `/platform/farms`, `/platform/users`
+- [x] Phase 2: support “view farm” session (read-only)
+- [x] `tests/test_platform_admin.py`
 
 ### Acceptance criteria
-- [ ] Operator can list all farms and search users cross-tenant
-- [ ] Non-operators cannot access `/platform/*`
-- [ ] Platform actions audit-logged
+- [x] Operator can list all farms and search users cross-tenant
+- [x] Non-operators cannot access `/platform/*`
+- [x] Platform actions audit-logged (farm detail, user search, user detail, enter, exit)
+- [x] Support view is read-only (mutations and exports blocked)
 
 ---
 
@@ -1093,8 +1094,8 @@ test_soft_deleted_records_excluded_from_statistics
 | Maintenance & cron (Phase 17) | ~15      |
 | Analytics/export/cost (Phase 18–19) | ~20 |
 | Production & beta (Phase 20–21) | ~25   |
-| Platform admin (Phase 22) | 0 (planned)  |
-| **Total (current)** | **~371**         |
+| Platform admin (Phase 22) | ~28 |
+| **Total (current)** | **~402**         |
 
 ---
 

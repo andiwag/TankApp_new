@@ -22,7 +22,24 @@
     <script defer src="/static/vendor/alpine.min.js"></script>
 </head>
 
-<body class="min-h-screen bg-gradient-to-br from-stone-100 via-emerald-50 to-lime-100 text-slate-900 pb-[calc(env(safe-area-inset-bottom)+5rem)] lg:pb-0">
+<body class="min-h-screen bg-gradient-to-br from-stone-100 via-emerald-50 to-lime-100 text-slate-900 pb-[calc(env(safe-area-inset-bottom)+5rem)] lg:pb-0{% if request.state.platform_view %} pt-16{% endif %}">
+
+    {% if request.state.platform_view %}
+    <div class="fixed inset-x-0 top-0 z-50 border-b border-amber-300 bg-amber-100 px-4 py-3 text-amber-950 shadow-lg">
+        <div class="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p class="text-sm font-semibold">
+                <span class="uppercase tracking-wide text-amber-800">Support view:</span>
+                Du siehst <strong>{{ request.state.platform_view_group.name }}</strong> als Plattform-Operator (schreibgeschützt).
+            </p>
+            <form method="post" action="/platform/exit-view">
+                {{ csrf_field() }}
+                <button type="submit" class="rounded-lg bg-amber-900 px-3 py-1.5 text-sm font-semibold text-amber-50 hover:bg-amber-950">
+                    Support-Ansicht beenden
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
 
     <div class="pointer-events-none fixed inset-0 overflow-hidden">
 

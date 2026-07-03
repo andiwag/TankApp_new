@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     # When set, new accounts must provide this code at registration (private beta).
     REGISTRATION_INVITE_CODE: str = ""
 
+    # Comma-separated operator emails for /platform (Phase 22). Empty = disabled.
+    PLATFORM_ADMIN_EMAILS: str = ""
+
     MAIL_USERNAME: str = ""
 
     MAIL_PASSWORD: str = ""
@@ -59,6 +62,13 @@ class Settings(BaseSettings):
             return ""
         return value.strip()
 
+    @field_validator("PLATFORM_ADMIN_EMAILS", mode="before")
+    @classmethod
+    def normalize_platform_admin_emails(cls, value: object) -> str:
+        if not isinstance(value, str):
+            return ""
+        return value.strip()
+
     @property
     def is_production(self) -> bool:
         return self.ENV == "production"
@@ -66,6 +76,16 @@ class Settings(BaseSettings):
     @property
     def registration_invite_required(self) -> bool:
         return bool(self.REGISTRATION_INVITE_CODE.strip())
+
+    @property
+    def platform_admin_emails(self) -> frozenset[str]:
+        if not self.PLATFORM_ADMIN_EMAILS.strip():
+            return frozenset()
+        return frozenset(
+            email.strip().lower()
+            for email in self.PLATFORM_ADMIN_EMAILS.split(",")
+            if email.strip()
+        )
 
     @property
     def mail_configured(self) -> bool:

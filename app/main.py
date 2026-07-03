@@ -21,6 +21,7 @@ from app.error_pages import (
 )
 from app.flash import FlashMiddleware
 from app.logging_config import configure_logging
+from app.middleware.platform_view import PlatformViewReadOnlyMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.middleware.session_cookie import StaleActiveGroupMiddleware
 from app.responses import forbidden_response
@@ -73,6 +74,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(FlashMiddleware)
 app.add_middleware(CsrfTokenMiddleware)
 app.add_middleware(StaleActiveGroupMiddleware)
+app.add_middleware(PlatformViewReadOnlyMiddleware)
 
 
 # ── Exception handlers ───────────────────────────────────────────────────────
@@ -81,6 +83,7 @@ from app.dependencies import (  # noqa: E402
     InsufficientRoleException,
     NoActiveGroupException,
     NotAuthenticatedException,
+    PlatformAdminRequiredException,
 )
 
 
@@ -96,6 +99,11 @@ async def no_active_group_handler(request, exc):
 
 @app.exception_handler(InsufficientRoleException)
 async def insufficient_role_handler(request, exc):
+    return forbidden_response()
+
+
+@app.exception_handler(PlatformAdminRequiredException)
+async def platform_admin_required_handler(request, exc):
     return forbidden_response()
 
 
@@ -164,12 +172,14 @@ from app.routes.group_settings import router as group_settings_router  # noqa: E
 from app.routes.groups import router as groups_router  # noqa: E402
 from app.routes.maintenance import router as maintenance_router  # noqa: E402
 from app.routes.marketing import router as marketing_router  # noqa: E402
+from app.routes.platform import router as platform_router  # noqa: E402
 from app.routes.profile import router as profile_router  # noqa: E402
 from app.routes.summary import router as summary_router  # noqa: E402
 from app.routes.vehicles import router as vehicles_router  # noqa: E402
 
 app.include_router(marketing_router)
 app.include_router(auth_router)
+app.include_router(platform_router)
 app.include_router(groups_router)
 app.include_router(group_settings_router)
 app.include_router(dashboard_router)

@@ -27,23 +27,50 @@ class InsufficientRoleException(Exception):
     pass
 
 
+class PlatformAdminRequiredException(Exception):
+    pass
+
+
+def is_platform_admin(user: User) -> bool:
+    return user.email.lower() in settings.platform_admin_emails
+
+
+def platform_view_is_valid(user: User, data: dict) -> bool:
+    if not data.get("platform_view"):
+        return False
+    active_group_id = data.get("active_group_id")
+    platform_view_group_id = data.get("platform_view_group_id")
+    if not active_group_id or platform_view_group_id != active_group_id:
+        return False
+    return is_platform_admin(user)
+
+
+def _session_data_without_platform_view(data: dict) -> dict:
+    return {
+        key: value
+        for key, value in data.items()
+        if key not in ("platform_view", "platform_view_group_id")
+    }
+
+
 def _attach_user_to_request(
     request: Request, db: Session, data: dict, user: User
 ) -> User:
-    request.state.session_data = data
     request.state.user = user
+    request.state.platform_view = False
 
     active_group_id = data.get("active_group_id")
+    platform_view_valid = platform_view_is_valid(user, data)
+    session_data = data
+
+    if data.get("platform_view") and not platform_view_valid:
+        session_data = _session_data_without_platform_view(data)
+        request.state.clear_invalid_platform_view = True
+
+    request.state.session_data = session_data
     effective_active_group_id: int | None = None
     if active_group_id:
-        group = (
-            db.query(Group)
-            .filter(
-                Group.id == active_group_id,
-                Group.deleted_at == None,  # noqa: E711
-            )
-            .first()
-        )
+        group = db.query(Group).filter(Group.id == active_group_id).first()
         if group:
             is_member = (
                 db.query(UserGroup)
@@ -54,9 +81,12 @@ def _attach_user_to_request(
                 .first()
                 is not None
             )
-            if is_member:
+            if is_member or platform_view_valid:
                 request.state.active_group = group
                 effective_active_group_id = active_group_id
+                if platform_view_valid:
+                    request.state.platform_view = True
+                    request.state.platform_view_group = group
             else:
                 request.state.clear_stale_active_group = True
         else:
@@ -64,7 +94,7 @@ def _attach_user_to_request(
 
     if effective_active_group_id != active_group_id:
         request.state.session_data = {
-            **data,
+            **session_data,
             "active_group_id": effective_active_group_id,
         }
 
@@ -115,6 +145,14 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     return user
 
 
+def require_platform_admin(
+    user: User = Depends(get_current_user),
+) -> User:
+    if not is_platform_admin(user):
+        raise PlatformAdminRequiredException()
+    return user
+
+
 def get_active_group(
     request: Request,
     user: User = Depends(get_current_user),
@@ -136,19 +174,26 @@ def require_role(min_role: str):
         if not active_group_id:
             raise NoActiveGroupException()
 
-        user_group = (
-            db.query(UserGroup)
-            .filter(
-                UserGroup.user_id == user.id,
-                UserGroup.group_id == active_group_id,
+        if (
+            platform_view_is_valid(user, session_data)
+            and session_data.get("platform_view_group_id") == active_group_id
+        ):
+            user_role_level = ROLE_HIERARCHY[Role.reader.value]
+        else:
+            user_group = (
+                db.query(UserGroup)
+                .filter(
+                    UserGroup.user_id == user.id,
+                    UserGroup.group_id == active_group_id,
+                )
+                .first()
             )
-            .first()
-        )
 
-        if not user_group:
-            raise InsufficientRoleException()
+            if not user_group:
+                raise InsufficientRoleException()
 
-        user_role_level = ROLE_HIERARCHY.get(user_group.role, 0)
+            user_role_level = ROLE_HIERARCHY.get(user_group.role, 0)
+
         min_role_level = ROLE_HIERARCHY.get(min_role, 0)
 
         if user_role_level < min_role_level:
