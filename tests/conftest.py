@@ -36,7 +36,10 @@ def _run_alembic_upgrade() -> None:
         check=False,
     )
     if result.returncode != 0:
-        raise RuntimeError(result.stderr or result.stdout)
+        detail = "\n".join(
+            part for part in (result.stderr, result.stdout) if part
+        ).strip()
+        raise RuntimeError(detail or "alembic upgrade head failed")
 
 
 if _USE_POSTGRES:

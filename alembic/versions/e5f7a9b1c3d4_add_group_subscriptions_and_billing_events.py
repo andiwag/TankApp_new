@@ -44,7 +44,7 @@ def upgrade() -> None:
     op.execute(
         """
         INSERT INTO group_subscriptions (group_id, status, tier, cancel_at_period_end, updated_at)
-        SELECT id, 'active', COALESCE(subscription_tier, 'free'), 0, CURRENT_TIMESTAMP
+        SELECT id, 'active', COALESCE(subscription_tier, 'free'), false, CURRENT_TIMESTAMP
         FROM groups
         WHERE deleted_at IS NULL
         """
@@ -60,6 +60,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_billing_events_stripe_event_id"), table_name="billing_events")
+    op.drop_index(
+        op.f("ix_billing_events_stripe_event_id"), table_name="billing_events"
+    )
     op.drop_table("billing_events")
     op.drop_table("group_subscriptions")
