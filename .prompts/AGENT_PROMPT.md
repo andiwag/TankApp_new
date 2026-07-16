@@ -13,9 +13,9 @@ Authoritative task lists and acceptance criteria: `.docs/DEVELOPMENT_PLAN.md`.
 | **0–16** | Original MVP — complete |
 | **17–21** | Post-MVP (maintenance, analytics/export/cost, audit UI, sessions & production hardening, marketing/beta gate) — complete |
 | **22** | Platform admin (`/platform`) — **complete** |
-| **23** | Stripe billing — **planned**, spec in `.docs/STRIPE_BILLING.md` |
+| **23** | Stripe billing + launch polish — **complete** |
 
-**Next work:** Phase **23** unless the user directs otherwise. Do not re-implement completed phases.
+**Next work:** Production go-live per [STRIPE_GO_LIVE.md](../.docs/STRIPE_GO_LIVE.md) unless the user directs otherwise.
 
 ---
 

@@ -30,3 +30,19 @@ VTYPE_TO_USAGE_UNIT: dict[VehicleType, UsageUnit] = {
     VehicleType.tractor: UsageUnit.hours,
     VehicleType.machine: UsageUnit.hours,
 }
+
+
+class SubscriptionTier(str, Enum):
+    free = "free"
+    pro = "pro"
+    farm = "farm"
+
+
+class SubscriptionStatus(str, Enum):
+    trialing = "trialing"
+    active = "active"
+    past_due = "past_due"
+    canceled = "canceled"
+    incomplete = "incomplete"
+    unpaid = "unpaid"
+    incomplete_expired = "incomplete_expired"

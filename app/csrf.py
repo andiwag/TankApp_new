@@ -53,7 +53,7 @@ async def validate_csrf(
     request: Request,
     csrf_protect: CsrfProtect = Depends(),
 ) -> None:
-    if request.url.path.startswith("/cron/"):
+    if request.url.path.startswith(("/cron/", "/webhooks/")):
         return
     if request.method.upper() not in UNSAFE_METHODS:
         return

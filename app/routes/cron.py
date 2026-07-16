@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.mail import send_service_reminder_email
+from app.services.billing.subscriptions import reconcile_all_stripe_subscriptions
 from app.services.reminders import (
     list_due_email_reminders,
     release_reminder_claim,
@@ -69,3 +70,25 @@ async def send_service_reminders_cron(
             release_reminder_claim(db, log.id)
 
     return {"sent": sent, "logs": processed}
+
+
+@router.post("/cron/billing-reconcile")
+async def billing_reconcile_cron(
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    if not _cron_authorized(authorization):
+        return JSONResponse({"error": "forbidden"}, status_code=403)
+
+    if not settings.stripe_enabled:
+        return {"reconciled": 0, "skipped": "stripe_not_configured"}
+
+    try:
+        count = reconcile_all_stripe_subscriptions(db)
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Billing reconcile cron failed")
+        return JSONResponse({"error": "reconcile_failed"}, status_code=500)
+
+    return {"reconciled": count}

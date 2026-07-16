@@ -1,202 +1,88 @@
 {% extends "base.html" %}
+{% from "_macros.html" import button_class, csrf_field, form_error, form_input_class, glass_panel, mobile_header_bar, page_header, role_badge, section_title, app_icon with context %}
 
-{% from "_macros.html" import button_class, csrf_field, glass_panel, page_header, role_badge with context %}
-
-
+{% block mobile_header %}
+{{ mobile_header_bar(title="Einstellungen", back_href="/profile") }}
+{% endblock %}
 
 {% block title %}Betriebseinstellungen – Tankly{% endblock %}
 
-
-
 {% block content %}
-
-<div class="mx-auto max-w-5xl space-y-8">
-
-    {{ page_header("Betriebseinstellungen", "Verwalten", group.name, "/settings/audit" if is_admin else "", "Änderungsprotokoll ansehen") }}
-
-
-
-    {% if error %}
-
-    <div class="rounded-2xl border border-red-200 bg-red-50/90 p-4 text-red-800">
-
-        <p class="text-sm">{{ error }}</p>
-
+<div class="space-y-5">
+    <div class="hidden lg:block">
+        {{ page_header(group.name, "", "Einladung, Mitglieder und Betrieb verwalten.", "/settings/billing" if is_admin else "", "Abo & Rechnungen", "/settings/audit" if is_admin else "", "Änderungsprotokoll", icon="settings") }}
     </div>
 
-    {% endif %}
+    {% if error %}{{ form_error(error) }}{% endif %}
 
-
-
-    <section class="{{ glass_panel('p-6') }}">
-
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-
+    <section class="{{ glass_panel('p-5') }}">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-
-                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">Einladung</p>
-
-                <h2 class="mt-1 text-xl font-bold text-slate-950">Einladungscode</h2>
-
-                <p class="mt-3 inline-flex rounded-2xl bg-slate-950 px-4 py-3 font-mono text-xl tracking-wide text-white">{{ group.invite_code }}</p>
-
+                {{ section_title("Einladungscode", "link", "text-base font-bold text-slate-950") }}
+                <p class="mt-3 overflow-x-auto"><span class="t-invite-code">{{ group.invite_code }}</span></p>
             </div>
-
             <div class="flex flex-wrap gap-2">
-
-                <button type="button"
-
-                        x-data
-
-                        class="{{ button_class('secondary') }}"
-
-                        @click="navigator.clipboard && navigator.clipboard.writeText('{{ group.invite_code }}')">
-
-                    Kopieren
-
-                </button>
-
+                <button type="button" x-data class="{{ button_class('secondary') }}" @click="navigator.clipboard && navigator.clipboard.writeText('{{ group.invite_code }}')">Kopieren</button>
                 {% if is_admin %}
-
                 <form method="post" action="{{ request.url_for('regenerate_invite_code_post') }}" x-data="{ submitting: false }" @submit="if (!confirm('Einladungscode neu generieren? Der alte Code funktioniert dann nicht mehr.')) { $event.preventDefault(); return; } submitting = true">
-
                     {{ csrf_field() }}
-
-                    <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} disabled:opacity-60">
-
-                        Neu generieren
-
-                    </button>
-
+                    <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} disabled:opacity-60">Neu generieren</button>
                 </form>
-
                 {% endif %}
-
             </div>
-
         </div>
-
     </section>
-
-
 
     <section class="{{ glass_panel('overflow-hidden') }}">
-
-        <div class="border-b border-white/70 px-6 py-4">
-
-            <h2 class="text-xl font-bold text-slate-950">Mitglieder</h2>
-
+        <div class="border-b border-slate-100 px-4 py-3 sm:px-5">
+            {{ section_title("Mitglieder", "users", "text-base font-bold text-slate-950") }}
         </div>
-
-        <ul class="divide-y divide-white/70">
-
+        <ul class="divide-y divide-slate-100">
             {% for membership in members %}
-
-            <li class="px-6 py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between bg-white/30"
-
+            <li class="flex flex-col gap-4 px-4 py-4 sm:px-5 md:flex-row md:items-center md:justify-between"
                 data-testid="member-row"
-
                 data-member-role="{{ membership.role }}">
-
-                <div class="flex items-center gap-4">
-
-                    <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 font-bold text-emerald-800">{{ membership.user.name[:1] }}</div>
-
+                <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] t-kpi-icon-violet">{{ app_icon("user", "h-5 w-5") }}</div>
                     <div>
-
                         <p class="font-semibold text-slate-950">{{ membership.user.name }}</p>
-
                         <p class="text-sm text-slate-500">{{ membership.user.email }}</p>
-
-                        <span class="mt-2 inline-flex">{{ role_badge(membership.role) }}</span>
-
+                        <span class="mt-1.5 inline-flex">{{ role_badge(membership.role) }}</span>
                     </div>
-
                 </div>
-
-
 
                 {% if is_admin and membership.user_id != request.state.user.id %}
-
-                <div class="flex flex-wrap gap-2">
-
-                    <form method="post" action="{{ request.url_for('change_member_role_post', user_id=membership.user_id) }}" class="flex gap-2" data-testid="member-role-form" x-data="{ submitting: false }" @submit="submitting = true">
-
+                <div class="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap">
+                    <form method="post" action="{{ request.url_for('change_member_role_post', user_id=membership.user_id) }}" class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:gap-2" data-testid="member-role-form" x-data="{ submitting: false }" @submit="submitting = true">
                         {{ csrf_field() }}
-
                         <label class="sr-only" for="role-{{ membership.user_id }}">Rolle</label>
-
-                        <select id="role-{{ membership.user_id }}" name="role"
-
-                                class="rounded-xl border border-slate-200 bg-white/90 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
-
+                        <select id="role-{{ membership.user_id }}" name="role" class="{{ form_input_class() }} w-full !min-h-[38px] !py-2 text-sm sm:w-auto">
                             {% for role in roles %}
-
                             <option value="{{ role }}" {% if membership.role == role %}selected{% endif %}>{{ role_label(role) }}</option>
-
                             {% endfor %}
-
                         </select>
-
-                        <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} min-h-0 px-3 py-2 disabled:opacity-60">
-
-                            Speichern
-
-                        </button>
-
+                        <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} w-full min-h-0 px-3 py-2 sm:w-auto disabled:opacity-60">Speichern</button>
                     </form>
-
-                    <form method="post" action="{{ request.url_for('remove_member_post', user_id=membership.user_id) }}" data-testid="member-remove-form" x-data="{ submitting: false }" @submit="if (!confirm('Dieses Mitglied entfernen?')) { $event.preventDefault(); return; } submitting = true">
-
+                    <form method="post" action="{{ request.url_for('remove_member_post', user_id=membership.user_id) }}" class="w-full sm:w-auto" data-testid="member-remove-form" x-data="{ submitting: false }" @submit="if (!confirm('Dieses Mitglied entfernen?')) { $event.preventDefault(); return; } submitting = true">
                         {{ csrf_field() }}
-
-                        <button type="submit" :disabled="submitting" class="{{ button_class('danger') }} min-h-0 px-3 py-2 disabled:opacity-60">
-
-                            Entfernen
-
-                        </button>
-
+                        <button type="submit" :disabled="submitting" class="{{ button_class('danger') }} w-full min-h-0 px-3 py-2 disabled:opacity-60">Entfernen</button>
                     </form>
-
                 </div>
-
                 {% endif %}
-
             </li>
-
             {% endfor %}
-
         </ul>
-
     </section>
-
-
 
     {% if is_admin %}
-
-    <section class="rounded-2xl border border-red-200 bg-red-50/90 p-6 shadow-lg">
-
-        <h2 class="text-lg font-bold text-red-800">Gefahrenzone</h2>
-
+    <section class="rounded-[16px] border border-red-200 bg-red-50 p-5">
+        {{ section_title("Gefahrenzone", "warning", "text-base font-bold text-red-800", "text-red-600") }}
         <p class="mt-1 text-sm text-red-700/80">Beim Löschen wird der Betrieb ausgeblendet und aus der aktiven Sitzung entfernt.</p>
-
         <form method="post" action="{{ request.url_for('delete_group', group_id=group.id) }}" class="mt-4" x-data="{ submitting: false }" @submit="if (!confirm('Diesen Betrieb löschen?')) { $event.preventDefault(); return; } submitting = true">
-
             {{ csrf_field() }}
-
-            <button type="submit" :disabled="submitting" class="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-60">
-
-                Betrieb löschen
-
-            </button>
-
+            <button type="submit" :disabled="submitting" class="{{ button_class('danger') }} disabled:opacity-60">Betrieb löschen</button>
         </form>
-
     </section>
-
     {% endif %}
-
 </div>
-
 {% endblock %}
-

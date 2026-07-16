@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.models import User, Vehicle
 from app.schemas import VehicleCreate, VehicleUpdate
 from app.services.membership import group_page_capabilities
+from app.services.mobile_stats import vehicle_mobile_stats
 from app.time_utils import utc_now
 
 
@@ -38,6 +39,7 @@ def vehicles_page_context(db: Session, user: User, group_id: int) -> dict:
     vehicles = list_vehicles_for_group(db, group_id)
     return {
         "vehicles": vehicles,
+        "vehicle_stats": vehicle_mobile_stats(db, group_id, vehicles),
         **group_page_capabilities(db, user, group_id),
     }
 

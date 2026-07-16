@@ -2,7 +2,7 @@
 
 Step-by-step checklist for integrating **Stripe Checkout + Billing + Tax** into Tankly. Billing is **per Group** (farm/business), not per user. The existing `Group.subscription_tier` column becomes a denormalized cache updated from webhooks.
 
-**Status:** Planned (Development Plan Phase 23) — **not implemented** in the app yet.
+**Status:** Implemented (Phase 23). Go-live steps: [STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md).
 
 **Prerequisites:** Landing page live (`/`), legal pages filled in (`/impressum`, `/datenschutz`, `/agb`), Steuerberater consulted. Operator support tooling: [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) (Phase 22, also planned).
 
@@ -292,11 +292,11 @@ if request.url.path.startswith(("/cron/", "/webhooks/")):
 
 ### Phase 6 – Polish
 
-- [ ] 14-day Pro trial (`trial_period_days=14` on Checkout)
-- [ ] Annual pricing toggle on billing page
-- [ ] Email on payment failure (reuse `fastapi-mail`)
-- [ ] Landing page pricing CTAs → `/settings/billing` when logged in with group
-- [ ] Remove footer note “Stripe folgt in Kürze” on landing page
+- [x] 14-day Pro trial (`trial_period_days=14` on Checkout)
+- [x] Annual pricing toggle on billing page
+- [x] Email on payment failure (reuse `fastapi-mail`)
+- [x] Landing page pricing CTAs → `/register` with trial label when Stripe enabled
+- [x] Remove footer note “Stripe folgt in Kürze” on landing page
 
 ---
 

@@ -1,10 +1,11 @@
 """Tests for Phase 7: Dashboard."""
 
 import re
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from app.models import FuelEntry, Vehicle
+from app.services.dashboard import get_dashboard_context
 from app.time_utils import utc_now
 
 from tests.helpers import parse_display_number
@@ -59,7 +60,7 @@ class TestDashboardStats:
         assert response.status_code == 200
         assert _stat(response.text, "stat-vehicles") == 2
 
-    async def test_dashboard_shows_entry_count(
+    async def test_dashboard_shows_month_entry_count(
         self,
         client,
         create_test_user,
@@ -74,18 +75,26 @@ class TestDashboardStats:
         create_test_user_group(user.id, group.id, role="admin")
         v = create_test_vehicle(group_id=group.id)
         create_test_fuel_entry(
-            vehicle_id=v.id, group_id=group.id, user_id=user.id, fuel_amount_l=40.0
+            vehicle_id=v.id,
+            group_id=group.id,
+            user_id=user.id,
+            fuel_amount_l=40.0,
+            entry_date=date.today(),
         )
         create_test_fuel_entry(
-            vehicle_id=v.id, group_id=group.id, user_id=user.id, fuel_amount_l=30.0
+            vehicle_id=v.id,
+            group_id=group.id,
+            user_id=user.id,
+            fuel_amount_l=30.0,
+            entry_date=date.today() - timedelta(days=40),
         )
         auth_cookie(client, user.id, group.id)
 
         response = await client.get("/dashboard")
         assert response.status_code == 200
-        assert _stat(response.text, "stat-entries") == 2
+        assert _stat(response.text, "stat-month-entries") == 1
 
-    async def test_dashboard_shows_total_liters(
+    async def test_dashboard_shows_month_cost(
         self,
         client,
         create_test_user,
@@ -94,22 +103,27 @@ class TestDashboardStats:
         create_test_vehicle,
         create_test_fuel_entry,
         auth_cookie,
+        db,
     ):
         user = create_test_user()
         group = create_test_group(created_by=user.id)
         create_test_user_group(user.id, group.id, role="admin")
         v = create_test_vehicle(group_id=group.id)
         create_test_fuel_entry(
-            vehicle_id=v.id, group_id=group.id, user_id=user.id, fuel_amount_l=25.5
+            vehicle_id=v.id,
+            group_id=group.id,
+            user_id=user.id,
+            fuel_amount_l=25.5,
+            entry_date=date.today(),
         )
-        create_test_fuel_entry(
-            vehicle_id=v.id, group_id=group.id, user_id=user.id, fuel_amount_l=10.0
-        )
+        entry = db.query(FuelEntry).one()
+        entry.total_cost_eur = 56.4
+        db.commit()
         auth_cookie(client, user.id, group.id)
 
         response = await client.get("/dashboard")
         assert response.status_code == 200
-        assert _stat_float(response.text, "stat-liters") == pytest.approx(35.5)
+        assert _stat_float(response.text, "stat-month-cost") == pytest.approx(56.4)
 
     async def test_dashboard_shows_recent_entries(
         self,
@@ -145,7 +159,6 @@ class TestDashboardStats:
         assert response.status_code == 200
         html = response.text
         assert "Alpha Tractor" in html
-        assert "45" in html and "20" in html
         assert "recent-fuel-entries" in html
 
     async def test_dashboard_promotes_fuel_entry_for_contributors(
@@ -165,7 +178,7 @@ class TestDashboardStats:
 
         assert response.status_code == 200
         assert 'href="/fuel/new"' in response.text
-        assert "Tankvorgang erfassen" in response.text
+        assert "Tankvorgang" in response.text
 
     async def test_dashboard_scoped_to_active_group(
         self,
@@ -202,15 +215,13 @@ class TestDashboardStats:
         r_a = await client.get("/dashboard")
         assert r_a.status_code == 200
         assert _stat(r_a.text, "stat-vehicles") == 2
-        assert _stat(r_a.text, "stat-entries") == 1
-        assert _stat_float(r_a.text, "stat-liters") == pytest.approx(10.0)
+        assert _stat(r_a.text, "stat-month-entries") == 1
 
         await client.post(f"/groups/switch/{g_b.id}", follow_redirects=False)
         r_b = await client.get("/dashboard")
         assert r_b.status_code == 200
         assert _stat(r_b.text, "stat-vehicles") == 1
-        assert _stat(r_b.text, "stat-entries") == 1
-        assert _stat_float(r_b.text, "stat-liters") == pytest.approx(99.0)
+        assert _stat(r_b.text, "stat-month-entries") == 1
 
     async def test_dashboard_excludes_soft_deleted_vehicles(
         self,
@@ -267,8 +278,7 @@ class TestDashboardStats:
 
         response = await client.get("/dashboard")
         assert response.status_code == 200
-        assert _stat(response.text, "stat-entries") == 1
-        assert _stat_float(response.text, "stat-liters") == pytest.approx(10.0)
+        assert _stat(response.text, "stat-month-entries") == 1
 
     async def test_dashboard_empty_group_shows_zeros(
         self,
@@ -286,5 +296,76 @@ class TestDashboardStats:
         response = await client.get("/dashboard")
         assert response.status_code == 200
         assert _stat(response.text, "stat-vehicles") == 0
-        assert _stat(response.text, "stat-entries") == 0
-        assert _stat_float(response.text, "stat-liters") == pytest.approx(0.0)
+        assert _stat(response.text, "stat-month-entries") == 0
+        assert _stat_float(response.text, "stat-month-cost") == pytest.approx(0.0)
+
+
+class TestDashboardContext:
+    def test_dashboard_context_includes_greeting_and_charts(
+        self,
+        db,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_vehicle,
+        create_test_fuel_entry,
+    ):
+        user = create_test_user(name="Andreas Wagner")
+        group = create_test_group(created_by=user.id)
+        create_test_user_group(user.id, group.id, role="admin")
+        vehicle = create_test_vehicle(group_id=group.id, name="Audi A4")
+        create_test_fuel_entry(
+            vehicle_id=vehicle.id,
+            group_id=group.id,
+            user_id=user.id,
+            fuel_amount_l=40.0,
+            entry_date=date.today(),
+        )
+
+        ctx = get_dashboard_context(db, user, group.id)
+
+        assert ctx["greeting"]
+        assert ctx["today_fuel_count"] == 1
+        assert ctx["month_fuel_count"] == 1
+        assert len(ctx["cost_chart"]) == 6
+        assert isinstance(ctx["consumption_chart"], list)
+        assert len(ctx["vehicles_preview"]) == 1
+        assert ctx["vehicles_preview"][0].name == "Audi A4"
+
+    async def test_dashboard_shows_personalized_greeting(
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+    ):
+        user = create_test_user(name="Andreas Wagner")
+        group = create_test_group(created_by=user.id)
+        create_test_user_group(user.id, group.id, role="admin")
+        auth_cookie(client, user.id, group.id)
+
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        assert "Andreas" in response.text
+        assert "dashboard-greeting" in response.text
+
+    async def test_dashboard_includes_chart_canvases(
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_vehicle,
+        auth_cookie,
+    ):
+        user = create_test_user()
+        group = create_test_group(created_by=user.id)
+        create_test_user_group(user.id, group.id, role="admin")
+        create_test_vehicle(group_id=group.id)
+        auth_cookie(client, user.id, group.id)
+
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        assert 'id="consumption-chart"' in response.text
+        assert 'id="cost-bar-chart"' in response.text

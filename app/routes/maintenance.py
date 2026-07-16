@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.audit import log_event
 from app.database import get_db
-from app.dependencies import get_active_group, require_role
+from app.dependencies import require_entitlement, require_role
 from app.enums import Role
 from app.flash import set_flash
 from app.form_parsing import (
@@ -70,7 +70,7 @@ def _maintenance_form_response(
 async def maintenance_list_page(
     request: Request,
     db: Session = Depends(get_db),
-    group: Group = Depends(get_active_group),
+    group: Group = Depends(require_entitlement("maintenance")),
 ):
     user = request.state.user
     ctx = maintenance_service.maintenance_page_context(db, user, group.id)
@@ -81,7 +81,7 @@ async def maintenance_list_page(
 async def new_maintenance_form(
     request: Request,
     db: Session = Depends(get_db),
-    group: Group = Depends(get_active_group),
+    group: Group = Depends(require_entitlement("maintenance")),
     _user=Depends(require_role(Role.contributor.value)),
 ):
     vehicles = vehicle_service.list_vehicles_for_group(db, group.id)
@@ -104,7 +104,7 @@ async def create_maintenance_post(
     next_service_date: str = Form(""),
     next_service_usage: str = Form(""),
     db: Session = Depends(get_db),
-    group: Group = Depends(get_active_group),
+    group: Group = Depends(require_entitlement("maintenance")),
     user=Depends(require_role(Role.contributor.value)),
 ):
     vehicles = vehicle_service.list_vehicles_for_group(db, group.id)
@@ -162,7 +162,7 @@ async def edit_maintenance_form(
     request: Request,
     log_id: int,
     db: Session = Depends(get_db),
-    group: Group = Depends(get_active_group),
+    group: Group = Depends(require_entitlement("maintenance")),
     _user=Depends(require_role(Role.contributor.value)),
 ):
     log = maintenance_service.get_active_maintenance_log_in_group(db, log_id, group.id)
@@ -182,7 +182,7 @@ async def edit_maintenance_post(
     request: Request,
     log_id: int,
     db: Session = Depends(get_db),
-    group: Group = Depends(get_active_group),
+    group: Group = Depends(require_entitlement("maintenance")),
     _user=Depends(require_role(Role.contributor.value)),
 ):
     log = maintenance_service.get_active_maintenance_log_in_group(db, log_id, group.id)
@@ -242,7 +242,7 @@ async def delete_maintenance_post(
     request: Request,
     log_id: int,
     db: Session = Depends(get_db),
-    group: Group = Depends(get_active_group),
+    group: Group = Depends(require_entitlement("maintenance")),
     user=Depends(require_role(Role.admin.value)),
 ):
     log = maintenance_service.get_active_maintenance_log_in_group(db, log_id, group.id)

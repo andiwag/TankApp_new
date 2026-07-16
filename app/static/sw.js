@@ -1,7 +1,8 @@
-const CACHE_NAME = 'tankly-static-v2';
+const CACHE_NAME = 'tankly-static-v6';
 const STATIC_ASSETS = [
   '/static/manifest.json',
-  '/static/logo.png',
+  '/static/logo.png?v=3',
+  '/static/app.css?v=10',
   '/static/icon-192.png',
   '/static/icon-512.png',
   '/static/vendor/alpine.min.js',

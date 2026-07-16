@@ -1032,15 +1032,17 @@ Full specification: [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md)
 
 ## Phase 23: Stripe Billing
 
-**Status:** ⬜ Planned — **not implemented**
+**Status:** ✅ Complete
 
-Full specification: [STRIPE_BILLING.md](./STRIPE_BILLING.md)
+Full specification: [STRIPE_BILLING.md](./STRIPE_BILLING.md) · Go-live: [STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md)
 
 ### Summary
-- [ ] `group_subscriptions` table + webhooks
-- [ ] Checkout + customer portal
-- [ ] Entitlements / tier limits per group
-- [ ] Sync `groups.subscription_tier`
+- [x] `group_subscriptions` table + webhooks
+- [x] Checkout + customer portal
+- [x] Entitlements / tier limits per group
+- [x] Sync `groups.subscription_tier`
+- [x] Phase 6 polish (trial, annual toggle, payment-failure email, landing CTAs)
+- [x] Configurable legal pages (`COMPANY_*` env vars)
 
 ---
 

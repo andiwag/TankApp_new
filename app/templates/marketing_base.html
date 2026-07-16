@@ -1,4 +1,4 @@
-{% from "_macros.html" import brand_logo with context %}
+{% from "_macros.html" import brand_lockup, button_class with context %}
 <!DOCTYPE html>
 <html lang="de" class="scroll-smooth">
 <head>
@@ -10,53 +10,34 @@
     <link rel="manifest" href="/static/manifest.json">
     <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
-    <meta name="theme-color" content="#047857">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#0d6b4f">
     <script src="/static/vendor/tailwindcss.js"></script>
+    <link rel="stylesheet" href="/static/app.css?v=12">
     <script defer src="/static/vendor/alpine.min.js"></script>
     <style>
-        body { font-family: "DM Sans", system-ui, sans-serif; }
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-8px); }
+        .marketing-hero {
+            background:
+                radial-gradient(circle at 20% 20%, rgba(13, 107, 79, 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 80% 0%, rgba(13, 107, 79, 0.06) 0%, transparent 40%),
+                linear-gradient(to bottom, #f4f6f8 0%, #ffffff 55%);
         }
-        @keyframes fade-up {
-            from { opacity: 0; transform: translateY(16px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        .animate-fade-up { animation: fade-up 0.7s ease-out both; }
-        .hero-grid {
-            background-image:
-                radial-gradient(circle at 20% 20%, rgba(21, 128, 61, 0.12) 0%, transparent 45%),
-                radial-gradient(circle at 80% 0%, rgba(34, 197, 94, 0.1) 0%, transparent 40%),
-                linear-gradient(to bottom, #f0fdf4 0%, #ffffff 55%);
-        }
-        .feature-card:hover { transform: translateY(-2px); }
     </style>
 </head>
-<body class="bg-white min-h-screen flex flex-col text-gray-900 antialiased">
+<body class="flex min-h-screen flex-col bg-white text-slate-900 antialiased">
 
-    <header class="border-b border-green-100/80 bg-white/80 backdrop-blur-md sticky top-0 z-50" x-data="{ open: false }">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <a href="/" class="flex items-center gap-2 font-bold text-xl text-green-800 tracking-tight">
-                    <img src="{{ product_logo_url() }}" alt="" class="h-10 w-10 shrink-0 rounded-xl object-contain" width="40" height="40" decoding="async">
-                    <span>{{ product_name() }}</span>
-                </a>
+    <header class="sticky top-0 z-50 border-b border-slate-200/70 bg-white/95 backdrop-blur-sm" x-data="{ open: false }">
+        <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div class="flex h-16 items-center justify-between">
+                {{ brand_lockup("/", size="md") }}
 
-                <nav class="hidden md:flex items-center gap-1 text-sm font-medium">
-                    <a href="/#features" class="px-3 py-2 rounded-lg text-gray-600 hover:text-green-800 hover:bg-green-50 transition">Funktionen</a>
-                    <a href="/#pricing" class="px-3 py-2 rounded-lg text-gray-600 hover:text-green-800 hover:bg-green-50 transition">Preise</a>
-                    <a href="/login" class="px-3 py-2 rounded-lg text-gray-600 hover:text-green-800 hover:bg-green-50 transition">Anmelden</a>
-                    <a href="/register" class="ml-2 inline-flex items-center min-h-[44px] px-5 py-2 rounded-xl bg-green-700 text-white font-semibold hover:bg-green-800 shadow-sm shadow-green-700/20 transition">
-                        Kostenlos starten
-                    </a>
+                <nav class="hidden items-center gap-1 text-sm font-semibold md:flex">
+                    <a href="/#features" class="rounded-[10px] px-3 py-2 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900">Funktionen</a>
+                    <a href="/#pricing" class="rounded-[10px] px-3 py-2 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900">Preise</a>
+                    <a href="/login" class="rounded-[10px] px-3 py-2 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900">Anmelden</a>
+                    <a href="/register" class="{{ button_class('primary') }} ml-1">Kostenlos starten</a>
                 </nav>
 
-                <button @click="open = !open" class="md:hidden min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-gray-700 hover:bg-gray-100 transition" aria-label="Menü">
+                <button @click="open = !open" class="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-[10px] text-slate-700 transition hover:bg-slate-100 md:hidden" aria-label="Menü">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path x-show="!open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         <path x-show="open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -64,11 +45,11 @@
                 </button>
             </div>
 
-            <div x-show="open" x-transition class="md:hidden pb-4 space-y-1 border-t border-gray-100 pt-3">
-                <a href="/#features" class="block py-2.5 px-2 rounded-lg text-gray-700 hover:bg-green-50">Funktionen</a>
-                <a href="/#pricing" class="block py-2.5 px-2 rounded-lg text-gray-700 hover:bg-green-50">Preise</a>
-                <a href="/login" class="block py-2.5 px-2 rounded-lg text-gray-700 hover:bg-green-50">Anmelden</a>
-                <a href="/register" class="block py-3 mt-2 text-center rounded-xl bg-green-700 text-white font-semibold">Kostenlos starten</a>
+            <div x-show="open" x-transition class="space-y-1 border-t border-slate-100 pb-4 pt-3 md:hidden">
+                <a href="/#features" class="block rounded-[10px] px-2 py-2.5 text-slate-700 hover:bg-slate-50">Funktionen</a>
+                <a href="/#pricing" class="block rounded-[10px] px-2 py-2.5 text-slate-700 hover:bg-slate-50">Preise</a>
+                <a href="/login" class="block rounded-[10px] px-2 py-2.5 text-slate-700 hover:bg-slate-50">Anmelden</a>
+                <a href="/register" class="{{ button_class('primary') }} mt-2 block w-full justify-center">Kostenlos starten</a>
             </div>
         </div>
     </header>
@@ -77,24 +58,24 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-gray-950 text-gray-400 mt-auto">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div class="flex flex-col sm:flex-row justify-between gap-8">
+    <footer class="mt-auto bg-slate-950 text-slate-400">
+        <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+            <div class="flex flex-col justify-between gap-8 sm:flex-row">
                 <div>
-                    <div class="flex items-center gap-2.5 mb-3">
-                        <img src="{{ product_logo_url() }}" alt="" class="h-8 w-8 shrink-0 rounded-lg object-contain" width="32" height="32" decoding="async">
-                        <p class="font-semibold text-white text-lg">{{ product_name() }}</p>
+                    <div class="mb-3 flex items-center gap-2.5">
+                        {{ brand_lockup("/", size="md", show_name=false) }}
+                        <p class="text-lg font-semibold text-white">{{ product_name() }}</p>
                     </div>
-                    <p class="text-sm max-w-xs leading-relaxed">Kraftstoff- und Flottenverwaltung für landwirtschaftliche Betriebe in Österreich.</p>
+                    <p class="max-w-xs text-sm leading-relaxed">Kraftstoff- und Flottenverwaltung für landwirtschaftliche Betriebe in Österreich.</p>
                 </div>
                 <div class="flex flex-wrap gap-x-8 gap-y-3 text-sm">
-                    <a href="/impressum" class="hover:text-green-400 transition">Impressum</a>
-                    <a href="/datenschutz" class="hover:text-green-400 transition">Datenschutz</a>
-                    <a href="/agb" class="hover:text-green-400 transition">AGB</a>
-                    <a href="/login" class="hover:text-green-400 transition">Anmelden</a>
+                    <a href="/impressum" class="transition hover:text-[#6ee7b7]">Impressum</a>
+                    <a href="/datenschutz" class="transition hover:text-[#6ee7b7]">Datenschutz</a>
+                    <a href="/agb" class="transition hover:text-[#6ee7b7]">AGB</a>
+                    <a href="/login" class="transition hover:text-[#6ee7b7]">Anmelden</a>
                 </div>
             </div>
-            <div class="border-t border-gray-800 mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs">
+            <div class="mt-10 flex flex-col items-center justify-between gap-2 border-t border-slate-800 pt-6 text-xs sm:flex-row">
                 <p>&copy; 2026 {{ product_name() }}</p>
                 <p>Made for Austrian farms</p>
             </div>

@@ -1,33 +1,41 @@
 {% extends "marketing_base.html" %}
+{% from "_macros.html" import glass_panel with context %}
+{% set c = company_info() %}
 
 {% block title %}Impressum – Tankly{% endblock %}
 
 {% block content %}
-<article class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 prose prose-green">
-    <h1 class="text-3xl font-bold text-gray-900 mb-6">Impressum</h1>
+<article class="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+    <div class="{{ glass_panel('p-6 sm:p-8') }} prose prose-slate max-w-none">
+    <h1 class="text-3xl font-bold text-slate-950 mb-6">Impressum</h1>
+    {% if not legal_pages_ready() %}
     <p class="text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-4 text-sm mb-8">
-        <strong>Hinweis:</strong> Bitte ersetzen Sie die Platzhalter unten mit Ihren echten Unternehmensdaten, bevor Sie kostenpflichtige Tarife anbieten.
+        <strong>Hinweis:</strong> Setze die Umgebungsvariablen <code>COMPANY_*</code> in der Produktion, bevor du kostenpflichtige Tarife anbietest.
     </p>
+    {% endif %}
     <h2 class="text-xl font-semibold mt-8 mb-2">Angaben gemäß § 5 ECG / § 25 MedienG</h2>
     <p>
-        <strong>[Firmenname / Name]</strong><br>
-        [Straße und Hausnummer]<br>
-        [PLZ Ort], Österreich
+        <strong>{{ c.legal_name or company_display_name() }}</strong><br>
+        {% if c.street %}{{ c.street }}<br>{% endif %}
+        {% if c.city %}{{ c.city }}, Österreich{% elif not legal_pages_ready() %}[Straße, PLZ Ort], Österreich{% endif %}
     </p>
     <p class="mt-4">
-        <strong>Unternehmensgegenstand:</strong> Software-as-a-Service (Tankly)<br>
-        <strong>UID-Nummer:</strong> ATU[XXXXXXXX]<br>
-        <strong>Firmenbuchnummer:</strong> [FN XXXXXX x]<br>
-        <strong>Firmenbuchgericht:</strong> [z. B. Landesgericht Wien]
+        <strong>Unternehmensgegenstand:</strong> Software-as-a-Service ({{ product_name() }})<br>
+        {% if c.uid %}<strong>UID-Nummer:</strong> {{ c.uid }}<br>{% elif not legal_pages_ready() %}<strong>UID-Nummer:</strong> ATU[XXXXXXXX]<br>{% endif %}
+        {% if c.company_register %}<strong>Firmenbuchnummer:</strong> {{ c.company_register }}<br>{% endif %}
+        {% if c.register_court %}<strong>Firmenbuchgericht:</strong> {{ c.register_court }}{% endif %}
     </p>
     <h2 class="text-xl font-semibold mt-8 mb-2">Kontakt</h2>
     <p>
-        E-Mail: <a href="mailto:info@example.com" class="text-green-700">info@example.com</a><br>
-        Telefon: [+43 …]
+        E-Mail: <a href="mailto:{{ c.email }}" class="text-green-700">{{ c.email }}</a><br>
+        {% if c.phone %}Telefon: {{ c.phone }}{% endif %}
     </p>
+    {% if c.trade_authority %}
     <h2 class="text-xl font-semibold mt-8 mb-2">Aufsichtsbehörde / Gewerbe</h2>
-    <p>[Zuständige Behörde gemäß Gewerbeordnung]</p>
+    <p>{{ c.trade_authority }}</p>
+    {% endif %}
     <h2 class="text-xl font-semibold mt-8 mb-2">EU-Streitschlichtung</h2>
-    <p>Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: <a href="https://ec.europa.eu/consumers/odr/" class="text-green-700" rel="noopener">https://ec.europa.eu/consumers/odr/</a></p>
+    <p>Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: <a href="https://ec.europa.eu/consumers/odr/" class="text-[#0d6b4f]" rel="noopener">https://ec.europa.eu/consumers/odr/</a></p>
+    </div>
 </article>
 {% endblock %}

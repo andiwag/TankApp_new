@@ -2,21 +2,38 @@
 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
 {%- endmacro %}
 
-{% macro brand_logo(class="h-11 w-11 shrink-0 rounded-2xl object-contain shadow-lg shadow-emerald-900/20") -%}
-<img src="{{ product_logo_url() }}" alt="" class="{{ class }}" width="44" height="44" decoding="async">
+{% macro brand_logo(size="md") -%}
+<img src="{{ product_logo_url() }}" alt="{{ product_name() }}" class="t-brand-img t-brand-img--{{ size }}" decoding="async">
+{%- endmacro %}
+
+{% macro brand_lockup(href="#", show_name=true, size="md", name_class="", centered=false, extra_class="") -%}
+<a href="{{ href }}" class="t-brand-lockup{% if centered %} t-brand-lockup--center{% endif %} {{ extra_class }}">
+    {{ brand_logo(size) }}
+    {% if show_name %}
+    <span class="t-brand-name t-brand-name--{{ size }} {{ name_class }}">{{ product_name() }}</span>
+    {% endif %}
+</a>
 {%- endmacro %}
 
 {% macro glass_panel(class="") -%}
-bg-white/75 backdrop-blur-xl border border-white/70 shadow-xl shadow-emerald-900/5 rounded-2xl {{ class }}
+t-card max-w-full min-w-0 {{ class }}
+{%- endmacro %}
+
+{% macro table_scroll_panel() -%}
+<div class="-mx-4 sm:mx-0">
+<div class="{{ glass_panel('t-table-scroll max-w-full overflow-x-auto') }}">
+{{ caller() }}
+</div>
+</div>
 {%- endmacro %}
 
 {% macro button_class(variant="primary") -%}
-inline-flex min-h-[44px] items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-60
-{% if variant == "primary" %} bg-emerald-700 text-white shadow-lg shadow-emerald-900/10 hover:bg-emerald-800
-{% elif variant == "secondary" %} border border-emerald-200 bg-white/80 text-emerald-900 hover:bg-emerald-50
-{% elif variant == "ghost" %} text-emerald-800 hover:bg-emerald-100/70
+inline-flex min-h-[38px] items-center justify-center gap-2 rounded-[10px] px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#0d6b4f]/30 focus:ring-offset-2 disabled:opacity-60
+{% if variant == "primary" %} t-btn-primary shadow-sm
+{% elif variant == "secondary" %} border border-slate-200 bg-white text-slate-700 hover:bg-slate-50
+{% elif variant == "ghost" %} text-slate-500 hover:bg-slate-100
 {% elif variant == "danger" %} border border-red-200 bg-red-50 text-red-700 hover:bg-red-100
-{% else %} border border-slate-200 bg-white/80 text-slate-700 hover:bg-slate-50{% endif %}
+{% else %} border border-slate-200 bg-white text-slate-700 hover:bg-slate-50{% endif %}
 {%- endmacro %}
 
 {% macro action_button(label, href, variant="primary", class="") -%}
@@ -24,13 +41,13 @@ inline-flex min-h-[44px] items-center justify-center rounded-xl px-4 py-2 text-s
 {%- endmacro %}
 
 {% macro status_chip(label, tone="neutral") -%}
-<span class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold
-    {% if tone == 'success' %}border-emerald-200 bg-emerald-100 text-emerald-800
-    {% elif tone == 'warning' %}border-amber-200 bg-amber-100 text-amber-800
-    {% elif tone == 'danger' %}border-red-200 bg-red-100 text-red-800
-    {% elif tone == 'info' %}border-sky-200 bg-sky-100 text-sky-800
-    {% elif tone == 'purple' %}border-purple-200 bg-purple-100 text-purple-800
-    {% else %}border-slate-200 bg-slate-100 text-slate-700{% endif %}
+<span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide
+    {% if tone == 'success' %}bg-emerald-50 text-emerald-700
+    {% elif tone == 'warning' %}bg-amber-50 text-amber-700
+    {% elif tone == 'danger' %}bg-red-50 text-red-700
+    {% elif tone == 'info' %}bg-sky-50 text-sky-700
+    {% elif tone == 'purple' %}bg-violet-50 text-violet-700
+    {% else %}bg-slate-100 text-slate-600{% endif %}
 ">{{ label }}</span>
 {%- endmacro %}
 
@@ -44,15 +61,14 @@ inline-flex min-h-[44px] items-center justify-center rounded-xl px-4 py-2 text-s
     {% endif %}
 {%- endmacro %}
 
-{% macro page_header(title, eyebrow="", subtitle="", primary_href="", primary_label="", secondary_href="", secondary_label="") -%}
-<div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+{% macro page_header(title, eyebrow="", subtitle="", primary_href="", primary_label="", secondary_href="", secondary_label="", icon="") -%}
+<div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
     <div>
-        {% if eyebrow %}<p class="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">{{ eyebrow }}</p>{% endif %}
-        <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">{{ title }}</h1>
-        {% if subtitle %}<p class="mt-2 max-w-2xl text-sm text-slate-600">{{ subtitle }}</p>{% endif %}
+        <h1 class="flex items-center gap-2.5 text-2xl font-bold tracking-tight text-slate-950 sm:text-[28px]">{% if icon %}<span class="text-[#0d6b4f]">{{ app_icon(icon, "h-7 w-7") }}</span>{% endif %}<span>{{ title }}</span></h1>
+        {% if subtitle %}<p class="mt-1 text-sm text-slate-500">{{ subtitle }}</p>{% endif %}
     </div>
     {% if primary_href or secondary_href %}
-    <div class="flex flex-wrap gap-2">
+    <div class="flex shrink-0 flex-wrap gap-2">
         {% if secondary_href %}{{ action_button(secondary_label, secondary_href, "secondary") }}{% endif %}
         {% if primary_href %}{{ action_button(primary_label, primary_href, "primary") }}{% endif %}
     </div>
@@ -60,23 +76,543 @@ inline-flex min-h-[44px] items-center justify-center rounded-xl px-4 py-2 text-s
 </div>
 {%- endmacro %}
 
-{% macro metric_card(label, value, helper="", tone="emerald") -%}
-<div class="{{ glass_panel('p-5') }}">
-    <p class="text-sm font-medium text-slate-500">{{ label }}</p>
-    <p class="mt-3 text-3xl font-bold tracking-tight
-        {% if tone == 'amber' %}text-amber-700
-        {% elif tone == 'sky' %}text-sky-700
-        {% else %}text-emerald-800{% endif %}
-    ">{{ value }}</p>
-    {% if helper %}<p class="mt-2 text-xs text-slate-500">{{ helper }}</p>{% endif %}
+{% macro form_input_class() -%}t-form-input{%- endmacro %}
+
+{% macro form_error(message) -%}
+<div class="mb-4 rounded-[12px] border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">{{ message }}</div>
+{%- endmacro %}
+
+{% macro form_section(title, icon="") -%}
+<section class="t-form-section">
+    {% if title %}<h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">{% if icon %}<span class="text-[#0d6b4f]">{{ app_icon(icon, "h-4 w-4") }}</span>{% endif %}{{ title }}</h2>{% endif %}
+    {{ caller() }}
+</section>
+{%- endmacro %}
+
+{% macro row_actions(edit_href="", delete_action="", delete_confirm="", can_edit=false, can_delete=false) -%}
+{% if can_edit or can_delete %}
+<div class="t-row-actions flex w-full gap-2 sm:w-auto sm:shrink-0 sm:flex-wrap sm:justify-end">
+    {% if can_edit and edit_href %}<a href="{{ edit_href }}" class="text-[#0d6b4f] hover:bg-[#ecfdf5]">Bearbeiten</a>{% endif %}
+    {% if can_delete and delete_action %}
+    <form method="post" action="{{ delete_action }}" class="inline" x-data="{ submitting: false }" @submit="if (!confirm('{{ delete_confirm }}')) { $event.preventDefault(); return; } submitting = true">
+        {{ csrf_field() }}
+        <button type="submit" :disabled="submitting" class="text-red-600 hover:bg-red-50 disabled:opacity-60">Löschen</button>
+    </form>
+    {% endif %}
+</div>
+{% endif %}
+{%- endmacro %}
+
+{% macro fuel_entry_list_item(entry, can_edit=false, can_delete=false) -%}
+<div class="flex flex-col gap-3 border-b border-slate-100 py-3.5 last:border-b-0 sm:grid sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-start">
+    <div class="flex items-start gap-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] t-kpi-icon-emerald">{{ app_icon("fuel", "h-5 w-5") }}</div>
+        <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+                <p class="text-sm font-semibold text-slate-900">{{ entry.vehicle.name }}</p>
+                {% if entry.full_tank %}{{ status_chip("Voller Tank", "success") }}{% else %}{{ status_chip("Teilbefüllung", "warning") }}{% endif %}
+            </div>
+            <p class="mt-0.5 text-xs text-slate-500">{{ format_date(entry.entry_date) }} · {{ entry.user.name }}</p>
+            <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs font-medium text-slate-600">
+                <span>{{ format_number(entry.fuel_amount_l, 2) }} L</span>
+                <span>Stand {{ format_number(entry.usage_reading, 2) }}</span>
+                {% if entry.total_cost_eur is not none %}<span>{{ format_number(entry.total_cost_eur, 2) }} €</span>{% endif %}
+            </div>
+            {% if entry.notes %}<p class="mt-2 text-xs text-slate-500">{{ entry.notes }}</p>{% endif %}
+        </div>
+    </div>
+    <div class="pl-[52px] sm:col-start-3 sm:pl-0">
+        {{ row_actions("/fuel/" ~ entry.id ~ "/edit", "/fuel/" ~ entry.id ~ "/delete", "Diesen Tankvorgang entfernen?", can_edit, can_delete) }}
+    </div>
 </div>
 {%- endmacro %}
 
-{% macro empty_state(title, message, action_href="", action_label="") -%}
-<div class="{{ glass_panel('p-8 text-center') }}">
-    <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-xl text-emerald-800">+</div>
-    <h2 class="text-lg font-semibold text-slate-950">{{ title }}</h2>
-    <p class="mx-auto mt-2 max-w-md text-sm text-slate-600">{{ message }}</p>
+{% macro maintenance_list_item(log, can_edit=false, can_delete=false) -%}
+<div class="flex flex-col gap-3 border-b border-slate-100 py-3.5 last:border-b-0 sm:grid sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-start">
+    <div class="flex items-start gap-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] t-kpi-icon-amber">{{ app_icon("wrench", "h-5 w-5") }}</div>
+        <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+                <p class="text-sm font-semibold text-slate-900">{{ log.description }}</p>
+            </div>
+            <p class="mt-0.5 text-xs text-slate-500">{{ log.vehicle.name }} · {{ format_date(log.service_date) }}</p>
+            <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs font-medium text-slate-600">
+                {% if log.usage_reading is not none %}<span>Stand {{ format_number(log.usage_reading, 2) }}</span>{% endif %}
+                {% if log.cost_eur is not none %}<span>{{ format_number(log.cost_eur, 2) }} €</span>{% endif %}
+                <span>{{ log.user.name }}</span>
+            </div>
+            {% if log.next_service_date or log.next_service_usage is not none %}
+            <p class="mt-2 text-xs font-semibold text-amber-700">Nächster Termin: {% if log.next_service_date %}{{ format_date(log.next_service_date) }}{% endif %}{% if log.next_service_usage is not none %} · bei {{ format_number(log.next_service_usage, 2) }}{% endif %}</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="pl-[52px] sm:col-start-3 sm:pl-0">
+        {{ row_actions("/maintenance/" ~ log.id ~ "/edit", "/maintenance/" ~ log.id ~ "/delete", "Diesen Wartungseintrag entfernen?", can_edit, can_delete) }}
+    </div>
+</div>
+{%- endmacro %}
+
+{% macro vehicle_card(vehicle, can_edit=false, can_delete=false) -%}
+<article class="{{ glass_panel('p-4') }}">
+    <div class="flex max-sm:flex-col max-sm:gap-3 sm:items-start sm:gap-3">
+        <div class="flex min-w-0 flex-1 items-start gap-3">
+            {{ vehicle_thumb(vehicle.name) }}
+            <div class="min-w-0 flex-1">
+                <h2 class="truncate text-base font-semibold text-slate-950">{{ vehicle.name }}</h2>
+                <div class="mt-2 flex flex-wrap gap-1.5">
+                    {{ status_chip(vehicle_type_label(vehicle.vtype), "info") }}
+                    {{ status_chip(fuel_type_label(vehicle.fuel_type), "success") }}
+                </div>
+            </div>
+        </div>
+        <div class="max-sm:pl-[52px] sm:shrink-0">
+            {{ row_actions("/vehicles/" ~ vehicle.id ~ "/edit", "/vehicles/" ~ vehicle.id ~ "/delete", "Dieses Fahrzeug entfernen?", can_edit, can_delete) }}
+        </div>
+    </div>
+    {% if can_edit %}
+    <div class="mt-4 flex gap-2">
+        <a href="/fuel/new" class="{{ button_class('secondary') }} flex-1 justify-center text-xs"><span class="inline-flex items-center gap-1.5">{{ app_icon("fuel", "h-4 w-4") }} Tanken</span></a>
+        <a href="/maintenance/new" class="{{ button_class('ghost') }} flex-1 justify-center text-xs"><span class="inline-flex items-center gap-1.5">{{ app_icon("wrench", "h-4 w-4") }} Wartung</span></a>
+    </div>
+    {% endif %}
+</article>
+{%- endmacro %}
+{% macro metric_card(label, value, helper="", tone="emerald") -%}
+<div class="{{ glass_panel('p-5') }}">
+    <p class="text-sm font-medium text-slate-500">{{ label }}</p>
+    <p class="mt-3 text-3xl font-bold tracking-tight text-slate-950">{{ value }}</p>
+    {% if helper %}<p class="mt-2 text-xs text-slate-400">{{ helper }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro kpi_card(icon, label, value, helper="", stat_id="", tone="emerald") -%}
+<div class="{{ glass_panel('relative overflow-hidden p-5') }}">
+    <div class="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl
+        {% if tone == 'sky' %}t-kpi-icon-sky
+        {% elif tone == 'amber' %}t-kpi-icon-amber
+        {% elif tone == 'violet' %}t-kpi-icon-violet
+        {% else %}t-kpi-icon-emerald{% endif %}
+    ">{{ app_icon(icon, "h-5 w-5") }}</div>
+    <p class="pr-12 text-2xl font-bold leading-none tracking-tight text-slate-950 sm:text-[32px]">{% if stat_id %}<span id="{{ stat_id }}">{{ value }}</span>{% else %}{{ value }}{% endif %}{% if tone == 'amber' and value != '—' %} <span class="text-xl font-semibold text-slate-400">€</span>{% endif %}</p>
+    <p class="mt-3 text-sm font-semibold text-slate-800">{{ label }}</p>
+    {% if helper %}<p class="mt-1 text-xs text-slate-400">{{ helper }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro nav_emoji_link(href, label, icon, active=false) -%}
+<a href="{{ href }}" class="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium transition
+    {% if active %}bg-[#ecfdf5] text-[#0d6b4f]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}
+"><span class="t-nav-icon" aria-hidden="true">{{ app_icon(icon, "h-[18px] w-[18px]") }}</span><span>{{ label }}</span></a>
+{%- endmacro %}
+
+{% macro fuel_entry_row(entry, consumption=none, consumption_label=none) -%}
+<div class="t-mobile-list-row">
+    {{ icon_slot("fuel", "emerald", "h-5 w-5", "t-mobile-list-row__icon") }}
+    <div class="min-w-0">
+        <p class="t-mobile-list-row__title">{{ format_date(entry.entry_date) }}</p>
+        <p class="t-mobile-list-row__meta">{{ entry.vehicle.name }} · {% if entry.vehicle.fuel_type == 'petrol' %}Super 95{% else %}{{ fuel_type_label(entry.vehicle.fuel_type) }}{% endif %}</p>
+    </div>
+    <div class="shrink-0">
+        {% if entry.total_cost_eur is not none %}
+        <p class="t-mobile-list-row__amount">{{ format_number(entry.total_cost_eur, 2) }} €</p>
+        {% endif %}
+        {% if consumption is not none %}
+        <p class="t-mobile-list-row__sub">{{ format_number(consumption, 1) }} {{ consumption_label }}</p>
+        {% endif %}
+    </div>
+</div>
+{%- endmacro %}
+
+{% macro empty_state(title, message, action_href="", action_label="", icon="fuel") -%}
+<div class="py-8 text-center">
+    <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-[#0d6b4f]">
+        {{ app_icon(icon, "h-6 w-6") }}
+    </div>
+    <h2 class="text-base font-semibold text-slate-950">{{ title }}</h2>
+    <p class="mx-auto mt-2 max-w-md text-sm text-slate-500">{{ message }}</p>
     {% if action_href %}<div class="mt-5">{{ action_button(action_label, action_href, "primary") }}</div>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro section_title(title, icon="", class="mb-4 text-base font-bold text-slate-950", icon_class="text-[#0d6b4f]") -%}
+<h2 class="{{ class }}{% if icon %} flex items-center gap-2{% endif %}">{% if icon %}<span class="{{ icon_class }}">{{ app_icon(icon, "h-5 w-5") }}</span>{% endif %}{{ title }}</h2>
+{%- endmacro %}
+
+{% macro section_heading(title, meta="") -%}
+<div class="mb-3 flex items-baseline justify-between gap-2">
+    <h2 class="text-base font-bold text-slate-950">{{ title }}</h2>
+    {% if meta %}<span class="text-xs text-slate-400">{{ meta }}</span>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro group_card(item, active_group_id) -%}
+<article class="{{ glass_panel('p-4') }}">
+    <div class="flex max-sm:flex-col max-sm:gap-4 sm:items-start sm:justify-between sm:gap-4">
+        <div class="flex min-w-0 items-start gap-3">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] t-kpi-icon-emerald">{{ app_icon("farm", "h-5 w-5") }}</div>
+            <div class="min-w-0">
+                <h2 class="truncate text-base font-semibold text-slate-950">{{ item.group.name }}</h2>
+                <div class="mt-2 flex flex-wrap gap-1.5">
+                    {{ role_badge(item.role) }}
+                    {% if item.group.id == active_group_id %}{{ status_chip("Aktiv", "success") }}{% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="flex w-full max-sm:pl-[52px] sm:w-auto sm:shrink-0 sm:flex-col sm:gap-2">
+            {% if item.group.id != active_group_id %}
+            <form method="post" action="/groups/switch/{{ item.group.id }}" x-data="{ submitting: false }" @submit="submitting = true">
+                {{ csrf_field() }}
+                <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} w-full disabled:opacity-60">Wechseln</button>
+            </form>
+            {% endif %}
+            <form method="post" action="/groups/leave/{{ item.group.id }}" x-data="{ submitting: false }" @submit="submitting = true">
+                {{ csrf_field() }}
+                <button type="submit" :disabled="submitting" class="{{ button_class('danger') }} w-full disabled:opacity-60">Verlassen</button>
+            </form>
+        </div>
+    </div>
+</article>
+{%- endmacro %}
+
+{% macro audit_log_item(row) -%}
+<div class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 border-b border-slate-100 py-3.5 last:border-b-0">
+    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] t-kpi-icon-sky">{{ app_icon("audit", "h-5 w-5") }}</div>
+    <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-2">
+            {{ status_chip(row.action, "info") }}
+            <span class="text-xs text-slate-500">{{ format_datetime(row.created_at) }}</span>
+        </div>
+        <p class="mt-1.5 text-sm text-slate-700"><span class="font-semibold text-slate-950">{{ row.user_name }}</span> hat {{ row.entity_type }} #{{ row.entity_id }} geändert</p>
+    </div>
+</div>
+{%- endmacro %}
+{% macro nav_link(href, label, icon, active=false) -%}
+<a href="{{ href }}" class="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium transition
+    {% if active %}bg-[#ecfdf5] text-[#0d6b4f]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}
+">{{ icon }}<span>{{ label }}</span></a>
+{%- endmacro %}
+
+{% macro icon_bell(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082h-4.714M9.75 17.082V10.5a2.25 2.25 0 114.5 0v6.582M6.75 17.082h10.5c.621 0 1.125-.504 1.125-1.125v-.318a6.001 6.001 0 00-4.5-5.808V9a2.25 2.25 0 10-4.5 0v.831a6.001 6.001 0 00-4.5 5.808v.318c0 .621.504 1.125 1.125 1.125z"/></svg>
+{%- endmacro %}
+
+{% macro icon_chevron(class="h-4 w-4") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+{%- endmacro %}
+
+{% macro icon_home(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9.75L12 3l9 6.75V21a.75.75 0 01-.75.75H15v-6.75h-4.5V21.75H3.75A.75.75 0 013 21V9.75z"/></svg>
+{%- endmacro %}
+
+{% macro icon_vehicle(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16.5V18a1.5 1.5 0 001.5 1.5H6m12-3V18a1.5 1.5 0 01-1.5 1.5H18M6 19.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm12 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM6.75 15h10.5l1.35-4.05A1.5 1.5 0 0017.04 9H6.96a1.5 1.5 0 00-1.41 1.95L6.75 15z"/></svg>
+{%- endmacro %}
+
+{% macro icon_fuel(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 3.75h8.25A1.5 1.5 0 0115.75 5.25v13.5A1.5 1.5 0 0114.25 20.25H6A1.5 1.5 0 014.5 18.75V5.25A1.5 1.5 0 016 3.75z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 8.25h1.125a1.125 1.125 0 011.125 1.125v4.5a1.5 1.5 0 01-1.5 1.5H15.75"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 6.75V5.25"/></svg>
+{%- endmacro %}
+
+{% macro icon_wrench(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M9.879 16.121A3 3 0 1012.015 11L11 9.984a4.5 4.5 0 10-1.06 6.137l.94-.001z"/></svg>
+{%- endmacro %}
+
+{% macro icon_chart(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 19.5h16M7.5 16.5V10.5M12 16.5V6.75M16.5 16.5v-4.5"/></svg>
+{%- endmacro %}
+
+{% macro icon_settings(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+{%- endmacro %}
+
+{% macro icon_user(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 19.125a7.125 7.125 0 0113.5 0"/></svg>
+{%- endmacro %}
+
+{% macro icon_more(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75h15M4.5 12h15M4.5 17.25h15"/></svg>
+{%- endmacro %}
+
+{% macro icon_plus(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+{%- endmacro %}
+
+{% macro icon_coin(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+{%- endmacro %}
+
+{% macro icon_clipboard(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5.25H7.5A2.25 2.25 0 005.25 7.5v12A2.25 2.25 0 007.5 21.75h9a2.25 2.25 0 002.25-2.25v-12A2.25 2.25 0 0016.5 5.25H15m-3-2.25h3a1.5 1.5 0 011.5 1.5v1.5h-6V4.5a1.5 1.5 0 011.5-1.5z"/></svg>
+{%- endmacro %}
+
+{% macro icon_farm(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 4.5l9 6v9.75A1.125 1.125 0 0119.875 21H4.125A1.125 1.125 0 013 19.875V10.5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 21v-6.75h6V21"/></svg>
+{%- endmacro %}
+
+{% macro icon_edit(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 7.125L16.862 4.487"/></svg>
+{%- endmacro %}
+
+{% macro icon_lock(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V7.875a4.5 4.5 0 10-9 0V10.5m-1.125 0h11.25A1.125 1.125 0 0120.625 11.625v7.125A1.125 1.125 0 0119.5 19.875H4.5a1.125 1.125 0 01-1.125-1.125v-7.125A1.125 1.125 0 014.5 10.5z"/></svg>
+{%- endmacro %}
+
+{% macro icon_device(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5A2.25 2.25 0 008.25 22.5h7.5A2.25 2.25 0 0018 20.25V3.75A2.25 2.25 0 0015.75 1.5H13.5m-3 0V3h3V1.5m-3 18.75h3"/></svg>
+{%- endmacro %}
+
+{% macro icon_download(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M7.5 11.25L12 15.75m0 0l4.5-4.5M12 15.75V3.75"/></svg>
+{%- endmacro %}
+
+{% macro icon_warning(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+{%- endmacro %}
+
+{% macro icon_users(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.5a3 3 0 00-6 0"/><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5a7.5 7.5 0 0115 0"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 10.5a3 3 0 100-6 3 3 0 000 6z"/></svg>
+{%- endmacro %}
+{% macro icon_link(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.81 15.312a4.5 4.5 0 01-1.242-7.244l4.5-4.5a4.5 4.5 0 016.364 6.364l-1.757 1.757"/></svg>
+{%- endmacro %}
+
+{% macro icon_motorcycle(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 15.75a2.25 2.25 0 104.5 0 2.25 2.25 0 00-4.5 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 15.75a2.25 2.25 0 104.5 0 2.25 2.25 0 00-4.5 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 15.75h2.25l1.5-4.5 2.25-.75 1.5 2.25H18"/></svg>
+{%- endmacro %}
+
+{% macro icon_tractor(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 15.75a2.25 2.25 0 104.5 0 2.25 2.25 0 00-4.5 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 15.75a2.25 2.25 0 104.5 0 2.25 2.25 0 00-4.5 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75h1.5V9.75h6l2.25 3h3.75v3"/></svg>
+{%- endmacro %}
+
+{% macro app_icon(name, class="h-5 w-5") -%}
+{% if name == "home" %}{{ icon_home(class) }}
+{% elif name == "fuel" %}{{ icon_fuel(class) }}
+{% elif name == "vehicle" %}{{ icon_vehicle(class) }}
+{% elif name == "wrench" %}{{ icon_wrench(class) }}
+{% elif name == "chart" %}{{ icon_chart(class) }}
+{% elif name == "clipboard" %}{{ icon_clipboard(class) }}
+{% elif name == "settings" %}{{ icon_settings(class) }}
+{% elif name == "user" %}{{ icon_user(class) }}
+{% elif name == "farm" %}{{ icon_farm(class) }}
+{% elif name == "coin" %}{{ icon_coin(class) }}
+{% elif name == "edit" %}{{ icon_edit(class) }}
+{% elif name == "lock" %}{{ icon_lock(class) }}
+{% elif name == "device" %}{{ icon_device(class) }}
+{% elif name == "download" %}{{ icon_download(class) }}
+{% elif name == "warning" %}{{ icon_warning(class) }}
+{% elif name == "users" %}{{ icon_users(class) }}
+{% elif name == "link" %}{{ icon_link(class) }}
+{% elif name == "motorcycle" %}{{ icon_motorcycle(class) }}
+{% elif name == "tractor" %}{{ icon_tractor(class) }}
+{% elif name == "plus" %}{{ icon_plus(class) }}
+{% elif name == "audit" %}{{ icon_clipboard(class) }}
+{% else %}{{ icon_plus(class) }}{% endif %}
+{%- endmacro %}
+
+{% macro icon_slot(name, tone="emerald", class="h-5 w-5", box_class="t-icon-slot") -%}
+<div class="{{ box_class }} t-kpi-icon-{{ tone }}" aria-hidden="true">{{ app_icon(name, class) }}</div>
+{%- endmacro %}
+
+{% macro user_initials(name) -%}
+{% set parts = name.split() %}
+{% if parts|length >= 2 %}{{ parts[0][0] }}{{ parts[-1][0] }}{% elif parts %}{{ parts[0][:2]|upper }}{% else %}?{% endif %}
+{%- endmacro %}
+
+{% macro vehicle_thumb(name, class="h-11 w-14 shrink-0 rounded-lg") -%}
+<div class="{{ class }} t-vehicle-thumb flex items-center justify-center overflow-hidden">
+    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">{{ name[:2] }}</span>
+</div>
+{%- endmacro %}
+
+{% macro icon_chevron_left(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+{%- endmacro %}
+
+{% macro mobile_status_row(icon, title, subtitle, href) -%}
+<a href="{{ href }}" class="t-mobile-status-row t-card flex items-center gap-3 p-4 transition active:scale-[0.99]">
+    {{ icon_slot(icon, "emerald", "h-5 w-5", "t-mobile-list-row__icon") }}
+    <div class="min-w-0 flex-1">
+        <p class="t-mobile-list-row__title">{{ title }}</p>
+        {% if subtitle %}<p class="t-mobile-list-row__meta">{{ subtitle }}</p>{% endif %}
+    </div>
+    {{ icon_chevron('h-5 w-5 shrink-0 text-slate-300') }}
+</a>
+{%- endmacro %}
+
+{% macro mobile_header_bar(title="", back_href="", action_href="", show_brand=false, notification_href="") -%}
+<div class="grid min-h-[3.25rem] grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-2">
+    <div class="flex min-w-0 items-center justify-start">
+        {% if back_href %}
+        <a href="{{ back_href }}" class="t-header-icon-btn inline-flex h-10 w-10 shrink-0 items-center justify-center text-slate-600" aria-label="Zurück">
+            {{ icon_chevron_left() }}
+        </a>
+        {% elif show_brand %}
+        {{ brand_lockup("/dashboard" if request.state.active_group else "/groups", size="md", name_class="truncate", extra_class="t-brand-lockup--header") }}
+        {% endif %}
+    </div>
+    {% if title and not show_brand %}
+    <h1 class="truncate text-center text-base font-bold text-slate-950">{{ title }}</h1>
+    {% else %}
+    <span></span>
+    {% endif %}
+    <div class="flex min-w-0 items-center justify-end gap-1">
+        {% if notification_href %}
+        <a href="{{ notification_href }}" class="t-header-icon-btn relative inline-flex h-10 w-10 items-center justify-center text-slate-600" aria-label="Wartungserinnerungen">
+            {{ icon_bell() }}
+            <span class="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500"></span>
+        </a>
+        {% elif action_href %}
+        <a href="{{ action_href }}" class="t-header-icon-btn inline-flex h-10 w-10 items-center justify-center text-[#0d6b4f]" aria-label="Hinzufügen">
+            {{ icon_plus("h-6 w-6") }}
+        </a>
+        {% endif %}
+    </div>
+</div>
+{%- endmacro %}
+
+{% macro kpi_tile(icon, value, label, helper="", tone="emerald", href="") -%}
+{% set tile_classes = glass_panel('t-kpi-tile') %}
+{% if href %}
+<a href="{{ href }}" class="{{ tile_classes }} block transition hover:opacity-90">
+{% else %}
+<div class="{{ tile_classes }}">
+{% endif %}
+    <div class="t-kpi-tile__icon
+        {% if tone == 'sky' %}t-kpi-icon-sky
+        {% elif tone == 'amber' %}t-kpi-icon-amber
+        {% elif tone == 'violet' %}t-kpi-icon-violet
+        {% else %}t-kpi-icon-emerald{% endif %}
+    ">{{ app_icon(icon, "h-5 w-5") }}</div>
+    <p class="t-kpi-tile__value">{{ value }}</p>
+    <p class="t-kpi-tile__label">{{ label }}</p>
+    {% if helper %}<p class="t-kpi-tile__helper">{{ helper }}</p>{% endif %}
+{% if href %}
+</a>
+{% else %}
+</div>
+{% endif %}
+{%- endmacro %}
+
+{% macro profile_hub_section(title) -%}
+<h2 class="px-1 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">{{ title }}</h2>
+{%- endmacro %}
+
+{% macro section_link_header(title, href, link_label="Alle anzeigen") -%}
+<div class="flex items-center justify-between gap-3">
+    <h2 class="text-base font-bold text-slate-950">{{ title }}</h2>
+    <a href="{{ href }}" class="inline-flex items-center gap-1 text-sm font-semibold text-[#0d6b4f] hover:underline">{{ link_label }} <span aria-hidden="true">→</span></a>
+</div>
+{%- endmacro %}
+
+{% macro bottom_sheet_row(icon, title, subtitle, href, tone="emerald") -%}
+<a href="{{ href }}" class="t-bottom-sheet-row flex items-center gap-4 rounded-[14px] px-2 py-3 transition hover:bg-slate-50">
+    <div class="t-bottom-sheet-row__icon t-bottom-sheet-row__icon--{{ tone }}">{{ app_icon(icon, "h-6 w-6") }}</div>
+    <div class="min-w-0 flex-1">
+        <p class="text-sm font-semibold text-slate-900">{{ title }}</p>
+        <p class="text-xs text-slate-500">{{ subtitle }}</p>
+    </div>
+    {{ icon_chevron('h-4 w-4 shrink-0 text-slate-400') }}
+</a>
+{%- endmacro %}
+
+{% macro trend_chip(delta, unit_label="", period_label="vs. letzten 30 Tagen") -%}
+{% if delta is not none %}
+<span class="t-trend-chip inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold {% if delta <= 0 %}bg-emerald-50 text-emerald-700{% else %}bg-red-50 text-red-700{% endif %}">
+    {% if delta <= 0 %}↓{% else %}↑{% endif %}
+    {{ format_number(delta|abs, 1) }}{% if unit_label %} {{ unit_label }}{% endif %}
+    <span class="font-medium opacity-80">{{ period_label }}</span>
+</span>
+{% endif %}
+{%- endmacro %}
+
+{% macro segmented_control(tabs, active) -%}
+<div class="t-segmented-control flex rounded-[12px] bg-slate-100 p-1" role="tablist">
+    {% for tab in tabs %}
+    <button type="button" role="tab"
+        :class="activeTab === '{{ tab.id }}' ? 't-segmented-control__tab--active' : ''"
+        @click="activeTab = '{{ tab.id }}'"
+        class="t-segmented-control__tab flex-1 rounded-[10px] px-3 py-2 text-center text-sm font-semibold text-slate-600 transition">
+        {{ tab.label }}
+    </button>
+    {% endfor %}
+</div>
+{%- endmacro %}
+
+{% macro mobile_nav_tab(href, label, icon_macro, active=false) -%}
+<a href="{{ href }}" class="t-mobile-nav-tab flex flex-1 flex-col items-center gap-1 rounded-[10px] px-1 pb-1 pt-2 text-center text-[10px] font-semibold sm:text-[11px] {% if active %}t-mobile-nav-tab--active{% else %}text-slate-400{% endif %}">
+    <span class="flex h-6 w-6 items-center justify-center" aria-hidden="true">{{ icon_macro('h-[22px] w-[22px]') }}</span>
+    <span class="max-w-full truncate">{{ label }}</span>
+</a>
+{%- endmacro %}
+
+{% macro mobile_nav_button(label, icon_macro, active=false, click_handler="") -%}
+<button type="button" @click="{{ click_handler }}" class="t-mobile-nav-tab flex flex-1 flex-col items-center gap-1 rounded-[10px] px-1 pb-1 pt-2 text-center text-[10px] font-semibold sm:text-[11px] {% if active %}t-mobile-nav-tab--active{% else %}text-slate-400{% endif %}" aria-label="{{ label }}">
+    <span class="flex h-6 w-6 items-center justify-center" aria-hidden="true">{{ icon_macro('h-[22px] w-[22px]') }}</span>
+    <span class="max-w-full truncate">{{ label }}</span>
+</button>
+{%- endmacro %}
+
+{% macro mobile_more_link(href, icon, label, tone="slate") -%}
+<a href="{{ href }}" @click="moreOpen = false" class="t-mobile-more-link t-mobile-more-link--{{ tone }} flex items-center gap-3 rounded-[14px] px-3.5 py-3.5 text-sm font-semibold transition hover:opacity-90">
+    <span class="t-mobile-more-link__icon" aria-hidden="true">{{ app_icon(icon, "h-5 w-5") }}</span>
+    <span>{{ label }}</span>
+</a>
+{%- endmacro %}
+
+{% macro vehicle_hero_visual(vtype) -%}
+{% set icon_name = 'vehicle' if vtype == 'car' else ('motorcycle' if vtype == 'motorcycle' else ('tractor' if vtype == 'tractor' else 'settings')) %}
+<div class="t-vehicle-hero-visual t-vehicle-hero-visual--{{ vtype }}" aria-hidden="true">{{ app_icon(icon_name, "h-14 w-14") }}</div>
+{%- endmacro %}
+
+{% macro profile_hub_link(href, icon, label, subtitle="") -%}
+<a href="{{ href }}" class="t-profile-hub-link flex items-center gap-4 border-b border-slate-100 px-1 py-3.5 last:border-b-0 transition hover:bg-slate-50/80">
+    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-slate-50 text-[#0d6b4f]">{{ app_icon(icon, "h-5 w-5") }}</div>
+    <div class="min-w-0 flex-1">
+        <p class="text-sm font-semibold text-slate-900">{{ label }}</p>
+        {% if subtitle %}<p class="text-xs text-slate-500">{{ subtitle }}</p>{% endif %}
+    </div>
+    {{ icon_chevron('h-4 w-4 shrink-0 text-slate-400') }}
+</a>
+{%- endmacro %}
+
+{% macro vehicle_hero_card(vehicle, stats, can_edit=false, can_delete=false) -%}
+<article class="{{ glass_panel('t-vehicle-hero-card') }}">
+    {{ vehicle_hero_visual(vehicle.vtype) }}
+    <div class="p-4">
+        <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0 flex-1">
+                <h2 class="truncate text-lg font-bold tracking-tight text-slate-950">{{ vehicle.name }}</h2>
+                <p class="mt-0.5 text-sm text-slate-500">{{ vehicle_type_label(vehicle.vtype) }} · {{ fuel_type_label(vehicle.fuel_type) }}</p>
+            </div>
+            {{ status_chip("Aktiv", "success") }}
+        </div>
+        <div class="t-vehicle-hero-stats">
+            <div>
+                <p class="t-vehicle-hero-stats__label"><span class="inline-flex items-center gap-1">{{ app_icon("fuel", "h-3.5 w-3.5") }} Verbrauch</span></p>
+                <p class="t-vehicle-hero-stats__value">{% if stats.avg_consumption is not none %}{{ format_number(stats.avg_consumption, 1) }} {{ stats.consumption_label }}{% else %}—{% endif %}</p>
+            </div>
+            <div>
+                <p class="t-vehicle-hero-stats__label"><span class="inline-flex items-center gap-1">{{ app_icon("wrench", "h-3.5 w-3.5") }} Wartung</span></p>
+                <p class="t-vehicle-hero-stats__value">{% if stats.next_maintenance_days is not none %}{% if stats.next_maintenance_days < 0 %}überfällig{% elif stats.next_maintenance_days == 0 %}heute{% else %}{{ stats.next_maintenance_days }} Tage{% endif %}{% else %}—{% endif %}</p>
+            </div>
+        </div>
+        {% if can_edit or can_delete %}
+        <div class="mt-3 hidden sm:block">
+            {{ row_actions("/vehicles/" ~ vehicle.id ~ "/edit", "/vehicles/" ~ vehicle.id ~ "/delete", "Dieses Fahrzeug entfernen?", can_edit, can_delete) }}
+        </div>
+        {% endif %}
+    </div>
+</article>
+{%- endmacro %}
+
+{% macro maintenance_reminder_compact(reminder) -%}
+<div class="t-maintenance-row">
+    {{ icon_slot("wrench", "violet", "h-5 w-5", "t-mobile-list-row__icon") }}
+    <div class="min-w-0">
+        <p class="t-mobile-list-row__title">{{ reminder.description }}</p>
+        <p class="t-mobile-list-row__meta">{{ reminder.vehicle_name }}</p>
+    </div>
+    {% if reminder.days_until is not none %}
+    <p class="text-xs font-semibold text-amber-700">{% if reminder.days_until < 0 %}überfällig{% elif reminder.days_until == 0 %}heute{% else %}in {{ reminder.days_until }} Tag{% if reminder.days_until != 1 %}en{% endif %}{% endif %}</p>
+    {% endif %}
 </div>
 {%- endmacro %}

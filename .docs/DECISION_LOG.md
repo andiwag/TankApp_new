@@ -739,3 +739,23 @@ Architectural and design decisions for **Tankly**. Cookie names in older entries
 **Rationale:** Selling/supporting SaaS requires cross-farm visibility without joining every group as a member.
 
 **Trade-off:** Requires deploy to change operator list until a DB flag is added later.
+
+---
+
+## D-053: Legal entity via COMPANY_* environment variables
+
+**Decision:** Impressum, Datenschutz, and AGB read company details from `COMPANY_*` settings instead of hard-coded placeholders. `legal_pages_ready()` is true when name, street, city, and email are set.
+
+**Rationale:** Enables production go-live without code changes; keeps dev templates usable with a visible config warning.
+
+**Trade-off:** Still requires lawyer review of template text; env vars alone do not constitute legal compliance.
+
+---
+
+## D-054: Pro-only 14-day Stripe trial at Checkout
+
+**Decision:** Pass `trial_period_days` from `STRIPE_TRIAL_DAYS` (default 14) only when checkout targets the Pro tier. Farm upgrades bill immediately.
+
+**Rationale:** Matches landing “Pro testen” promise without giving unlimited trial on the highest tier.
+
+**Trade-off:** Trial eligibility is enforced in app code, not Stripe Dashboard price config alone.

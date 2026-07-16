@@ -8,6 +8,7 @@ from app.config import settings
 from app.database import get_db
 from app.dependencies import get_optional_current_user
 from app.models import User
+from app.services.marketing import landing_pricing_ctas
 from app.templating import templates
 
 router = APIRouter()
@@ -24,7 +25,13 @@ async def landing_page(
             return RedirectResponse(url="/dashboard", status_code=303)
         return RedirectResponse(url="/groups", status_code=303)
 
-    return templates.TemplateResponse(request, "landing.html")
+    return templates.TemplateResponse(
+        request,
+        "landing.html",
+        {
+            "pricing_ctas": landing_pricing_ctas(),
+        },
+    )
 
 
 @router.get("/impressum")

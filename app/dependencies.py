@@ -6,6 +6,7 @@ from app.config import settings
 from app.database import get_db
 from app.enums import Role
 from app.models import Group, User, UserGroup
+from app.services.entitlements import effective_tier, tier_has_feature
 from app.services.sessions import get_active_session
 
 ROLE_HIERARCHY: dict[str, int] = {
@@ -29,6 +30,11 @@ class InsufficientRoleException(Exception):
 
 class PlatformAdminRequiredException(Exception):
     pass
+
+
+class EntitlementRequiredException(Exception):
+    def __init__(self, feature: str):
+        self.feature = feature
 
 
 def is_platform_admin(user: User) -> bool:
@@ -72,18 +78,24 @@ def _attach_user_to_request(
     if active_group_id:
         group = db.query(Group).filter(Group.id == active_group_id).first()
         if group:
-            is_member = (
+            membership = (
                 db.query(UserGroup)
                 .filter(
                     UserGroup.user_id == user.id,
                     UserGroup.group_id == group.id,
                 )
                 .first()
-                is not None
             )
+            is_member = membership is not None
             if is_member or platform_view_valid:
                 request.state.active_group = group
+                tier = effective_tier(db, group.id)
+                request.state.group_tier = tier
+                request.state.can_maintenance = tier_has_feature(tier, "maintenance")
+                request.state.can_analytics = tier_has_feature(tier, "analytics")
                 effective_active_group_id = active_group_id
+                if membership:
+                    request.state.user_role = membership.role
                 if platform_view_valid:
                     request.state.platform_view = True
                     request.state.platform_view_group = group
@@ -202,3 +214,19 @@ def require_role(min_role: str):
         return user
 
     return _check_role
+
+
+def require_entitlement(feature: str):
+    from app.services.entitlements import effective_tier, tier_has_feature
+
+    def _check(
+        request: Request,
+        db: Session = Depends(get_db),
+        group: Group = Depends(get_active_group),
+    ) -> Group:
+        tier = effective_tier(db, group.id)
+        if not tier_has_feature(tier, feature):
+            raise EntitlementRequiredException(feature)
+        return group
+
+    return _check

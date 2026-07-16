@@ -27,7 +27,7 @@ Do not duplicate workflow rules in `AGENT_PROMPT.md` or Cursor rules.
 | 3 | `.docs/DECISION_LOG.md` | Existing decisions (`D-XXX`) — do not contradict |
 | 4 | Feature specs | e.g. `.docs/PLATFORM_ADMIN.md` (Phase 22), `.docs/STRIPE_BILLING.md` (Phase 23) |
 
-**Plan status:** Phases 0–22 complete. Next: Phase 23 (Stripe billing). Check `.docs/DEVELOPMENT_PLAN.md` for unchecked tasks unless the user directs otherwise.
+**Plan status:** Phases 0–23 complete. Go-live checklist: `.docs/STRIPE_GO_LIVE.md`.
 
 **Do not re-implement completed phases** or add scope outside the current task without user approval.
 

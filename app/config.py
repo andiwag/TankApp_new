@@ -43,6 +43,30 @@ class Settings(BaseSettings):
     # Comma-separated operator emails for /platform (Phase 22). Empty = disabled.
     PLATFORM_ADMIN_EMAILS: str = ""
 
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_PUBLISHABLE_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    # Stripe Price lookup keys (set metadata.tier=pro|farm on each Price in Dashboard)
+    STRIPE_LOOKUP_PRO_MONTHLY: str = "tankly_pro_monthly"
+    STRIPE_LOOKUP_PRO_YEARLY: str = "tankly_pro_yearly"
+    STRIPE_LOOKUP_FARM_MONTHLY: str = "tankly_farm_monthly"
+    STRIPE_LOOKUP_FARM_YEARLY: str = "tankly_farm_yearly"
+    STRIPE_TRIAL_DAYS: int = 14
+
+    # Legal / Impressum (required before paid launch — set in production .env)
+    COMPANY_LEGAL_NAME: str = ""
+    COMPANY_STREET: str = ""
+    COMPANY_CITY: str = ""
+    COMPANY_EMAIL: str = ""
+    COMPANY_PHONE: str = ""
+    COMPANY_UID: str = ""
+    COMPANY_REGISTER: str = ""
+    COMPANY_REGISTER_COURT: str = ""
+    COMPANY_TRADE_AUTHORITY: str = ""
+    COMPANY_JURISDICTION: str = ""
+    HOSTING_PROVIDER: str = "Northflank"
+    MAIL_PROVIDER: str = "Brevo"
+
     MAIL_USERNAME: str = ""
 
     MAIL_PASSWORD: str = ""
@@ -95,6 +119,14 @@ class Settings(BaseSettings):
             and self.MAIL_SERVER
             and self.MAIL_FROM
         )
+
+    @property
+    def stripe_enabled(self) -> bool:
+        return bool(self.STRIPE_SECRET_KEY and self.STRIPE_WEBHOOK_SECRET)
+
+    @property
+    def stripe_checkout_available(self) -> bool:
+        return self.stripe_enabled and bool(self.BASE_URL.strip())
 
     @property
     def allowed_hosts(self) -> list[str]:

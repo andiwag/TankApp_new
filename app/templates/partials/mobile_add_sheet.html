@@ -1,0 +1,17 @@
+{% from "_macros.html" import bottom_sheet_row, csrf_field with context %}
+<div x-show="addSheetOpen" x-transition.opacity class="t-bottom-sheet-backdrop fixed inset-0 z-50 bg-slate-900/40 lg:hidden" @click="addSheetOpen = false" x-cloak>
+    <div class="t-bottom-sheet absolute inset-x-0 bottom-0 rounded-t-[20px] bg-white px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-4 shadow-2xl" @click.stop>
+        <div class="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-200"></div>
+        <h2 class="text-center text-base font-bold text-slate-950">Was möchtest du hinzufügen?</h2>
+        <div class="mt-4 space-y-1">
+            {% if user_can_edit(request) %}
+            {{ bottom_sheet_row("fuel", "Tankvorgang", "Neuen Tankvorgang erfassen", "/fuel/new", "emerald") }}
+            {% if group_feature_enabled(request, "maintenance") %}
+            {{ bottom_sheet_row("wrench", "Wartung", "Wartung oder Service hinzufügen", "/maintenance/new", "violet") }}
+            {% endif %}
+            {{ bottom_sheet_row("vehicle", "Fahrzeug", "Neues Fahrzeug anlegen", "/vehicles/new", "amber") }}
+            {% endif %}
+        </div>
+        <button type="button" @click="addSheetOpen = false" class="mt-4 w-full rounded-[12px] border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">Abbrechen</button>
+    </div>
+</div>

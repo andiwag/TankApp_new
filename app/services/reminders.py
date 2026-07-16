@@ -115,6 +115,7 @@ def list_group_reminders(
         reminders.append(
             {
                 "log_id": log.id,
+                "vehicle_id": log.vehicle_id,
                 "vehicle_name": log.vehicle.name,
                 "description": log.description,
                 "status": status,
