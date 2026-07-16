@@ -69,7 +69,9 @@ class TestLegalPages:
         assert "Musterstraße 1" in response.text
         assert "Platzhalter" not in response.text
 
-    async def test_impressum_warns_when_company_not_configured(self, client, monkeypatch):
+    async def test_impressum_warns_when_company_not_configured(
+        self, client, monkeypatch
+    ):
         monkeypatch.setattr(settings, "COMPANY_LEGAL_NAME", "")
         monkeypatch.setattr(settings, "COMPANY_STREET", "")
         monkeypatch.setattr(settings, "COMPANY_CITY", "")

@@ -210,7 +210,7 @@ Keep `groups.subscription_tier` in sync via webhook handler (denormalized for fa
                                        └──────────────────┘
 ```
 
-### New files (planned)
+### New files (Phase 23)
 
 | File | Purpose |
 |------|---------|
@@ -506,8 +506,9 @@ Stripe is the payment processor; **you** remain the seller (not MoR).
 ## Related docs
 
 - [PRODUCTION.md](./PRODUCTION.md) – deployment, env vars, health checks
-- [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) – Phase 23 (planned)
-- [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) – operator dashboard (Phase 22, planned)
+- [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) – Phase 23 (complete)
+- [STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md) – production go-live checklist
+- [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) – operator dashboard (Phase 22, complete)
 - [Stripe Docs: Checkout subscriptions](https://docs.stripe.com/billing/subscriptions/build-subscriptions?ui=checkout)
 - [Stripe Tax EU](https://docs.stripe.com/tax)
 

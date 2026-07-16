@@ -121,7 +121,9 @@ class TestExportCsv:
 
 
 class TestExportRoutes:
-    async def test_export_fuel_entries_csv_route(self, client, auth_group, set_group_tier):
+    async def test_export_fuel_entries_csv_route(
+        self, client, auth_group, set_group_tier
+    ):
         _, group = auth_group()
         set_group_tier(group.id, "pro")
         response = await client.get("/export/fuel-entries.csv")

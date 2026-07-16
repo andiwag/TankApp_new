@@ -10,7 +10,7 @@ Implementation guide to align the **authenticated mobile experience** (`< lg`) w
 
 **Related docs:** [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) · [TECHNICAL_DOCUMENTATION.md](./TECHNICAL_DOCUMENTATION.md) · `.github/copilot-instructions.md`
 
-**Design reference:** Mobile mockup showing Dashboard, Fahrzeuge, Auswertung, and Add bottom sheet. Keep a copy at repo root or in `.docs/assets/` for designers (e.g. `3d316fed-eb32-4aa2-ad20-590885b32755.png`).
+**Design reference:** Mobile mockup showing Dashboard, Fahrzeuge, Auswertung, and Add bottom sheet. Reference images live in [`.docs/assets/`](./assets/) (e.g. `mobile-mockup.png`, `mobile-mockup-chatgpt-2026-07-09.png`). Logo draft assets: `logo-head.png`, `logo-head-tmp.png`.
 
 ---
 

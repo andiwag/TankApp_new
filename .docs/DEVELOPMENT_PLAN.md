@@ -1,6 +1,6 @@
 # Tankly – Test-Driven Development Plan
 
-Phased plan for **Tankly** (product name; GitHub folder may still be `TankApp_new`). Phases **0–16** = original MVP (complete). **17–21** = post-MVP delivery (complete). **22–23** = planned — see linked guides.
+Phased plan for **Tankly** (product name; GitHub folder may still be `TankApp_new`). Phases **0–16** = original MVP (complete). **17–21** = post-MVP delivery (complete). **22–23** = platform admin + Stripe billing (complete). Go-live ops: [STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md).
 
 ## Documentation index
 
@@ -11,8 +11,9 @@ Phased plan for **Tankly** (product name; GitHub folder may still be `TankApp_ne
 | [DECISION_LOG.md](./DECISION_LOG.md) | Architectural decisions (`D-XXX`) |
 | [BETA_DEPLOY.md](./BETA_DEPLOY.md) | Private beta on Northflank ($0) |
 | [PRODUCTION.md](./PRODUCTION.md) | Production hardening & deploy details |
-| [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) | **Planned** operator dashboard (`/platform`) |
-| [STRIPE_BILLING.md](./STRIPE_BILLING.md) | **Planned** Stripe billing per group |
+| [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) | Operator dashboard (`/platform`) — implemented (Phase 22) |
+| [STRIPE_BILLING.md](./STRIPE_BILLING.md) | Stripe billing per group — implemented (Phase 23) |
+| [STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md) | Production Stripe go-live checklist |
 
 All development follows a strict **Red → Green → Refactor** TDD cycle:
 1. **Red:** Write a failing test that defines expected behavior.
@@ -1119,8 +1120,9 @@ fastapi-csrf-protect
 redis                    # production rate limits (optional in beta with SINGLE_WORKER_MODE)
 sentry-sdk[fastapi]      # optional
 
+# Billing
+stripe                   # Phase 23 — see STRIPE_BILLING.md / STRIPE_GO_LIVE.md
+
 # Dev / CI only (requirements-dev.txt)
 pytest, pytest-asyncio, pytest-cov, httpx, ruff
 ```
-
-Planned Phase 23: add `stripe` — see [STRIPE_BILLING.md](./STRIPE_BILLING.md).

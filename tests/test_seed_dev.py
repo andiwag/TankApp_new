@@ -33,7 +33,8 @@ class TestSeedDev:
         assert len(maintenance) == 3
         assert any(entry.total_cost_eur for entry in entries)
         assert any(
-            log.next_service_date and log.next_service_date <= date.today() + timedelta(days=30)
+            log.next_service_date
+            and log.next_service_date <= date.today() + timedelta(days=30)
             for log in maintenance
         )
 
@@ -56,4 +57,6 @@ class TestSeedDev:
         clear_demo_data(db)
 
         assert demo_exists(db) is False
-        assert db.query(Group).filter(Group.invite_code == DEMO_INVITE_CODE).count() == 0
+        assert (
+            db.query(Group).filter(Group.invite_code == DEMO_INVITE_CODE).count() == 0
+        )

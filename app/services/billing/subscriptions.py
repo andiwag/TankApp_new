@@ -117,7 +117,11 @@ def sync_subscription_from_stripe(
     sub = ensure_group_subscription(db, group_id)
 
     status = getattr(stripe_sub, "status", sub.status)
-    if event_type == "deleted" or status in ("canceled", "unpaid", "incomplete_expired"):
+    if event_type == "deleted" or status in (
+        "canceled",
+        "unpaid",
+        "incomplete_expired",
+    ):
         sub.tier = SubscriptionTier.free.value
         sub.status = status if status else "canceled"
         sub.stripe_subscription_id = None
@@ -139,9 +143,7 @@ def sync_subscription_from_stripe(
     sub.current_period_end = _utc_from_timestamp(
         getattr(stripe_sub, "current_period_end", None)
     )
-    sub.cancel_at_period_end = bool(
-        getattr(stripe_sub, "cancel_at_period_end", False)
-    )
+    sub.cancel_at_period_end = bool(getattr(stripe_sub, "cancel_at_period_end", False))
     sub.trial_ends_at = _utc_from_timestamp(getattr(stripe_sub, "trial_end", None))
     sync_group_tier_column(db, group_id, sub.tier)
     db.flush()

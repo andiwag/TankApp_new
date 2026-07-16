@@ -88,7 +88,9 @@ def consumption_trend_30d(
 
     unit_label = "L/100 km"
     if vehicle_id is not None:
-        vehicle = next((row.vehicle for row in entries if row.vehicle_id == vehicle_id), None)
+        vehicle = next(
+            (row.vehicle for row in entries if row.vehicle_id == vehicle_id), None
+        )
         if vehicle is not None:
             unit_label = consumption_unit_label(vehicle.usage_unit)
     elif entries:
@@ -173,13 +175,12 @@ def vehicle_consumption_breakdown(
         pairs = [
             (row.usage_reading, row.fuel_amount_l, row.full_tank)
             for row in sorted(
-                by_vehicle.get(vehicle.id, []), key=lambda item: (item.entry_date, item.id)
+                by_vehicle.get(vehicle.id, []),
+                key=lambda item: (item.entry_date, item.id),
             )
         ]
         avg = average_consumption_for_vehicle(vehicle.usage_unit, pairs)
-        trend = consumption_trend_30d(
-            db, group_id, today=anchor, vehicle_id=vehicle.id
-        )
+        trend = consumption_trend_30d(db, group_id, today=anchor, vehicle_id=vehicle.id)
         if avg is None and not trend["has_data"]:
             continue
         breakdown.append(

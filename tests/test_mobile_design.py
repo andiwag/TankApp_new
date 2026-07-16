@@ -14,12 +14,16 @@ class TestPhase7Shell:
         assert "Tanken" in response.text
         assert "Fahrzeuge" in response.text
         assert "Mehr" in response.text
-        nav_html = response.text.split("t-mobile-bottom-nav", 1)[1].split("</nav>", 1)[0]
+        nav_html = response.text.split("t-mobile-bottom-nav", 1)[1].split("</nav>", 1)[
+            0
+        ]
         assert 'href="/fuel"' in nav_html
         assert 'href="/analytics"' not in nav_html
         assert 'href="/profile"' not in nav_html
 
-    async def test_mobile_more_menu_has_secondary_links(self, client, auth_group, set_group_tier):
+    async def test_mobile_more_menu_has_secondary_links(
+        self, client, auth_group, set_group_tier
+    ):
         _, group = auth_group(role="admin")
         set_group_tier(group.id, "pro")
         response = await client.get("/dashboard")
@@ -31,12 +35,16 @@ class TestPhase7Shell:
         assert 'href="/profile"' in response.text
         assert 'href="/groups"' in response.text
 
-    async def test_mobile_bottom_nav_links_fuel_not_profile_tab(self, client, auth_group):
+    async def test_mobile_bottom_nav_links_fuel_not_profile_tab(
+        self, client, auth_group
+    ):
         auth_group()
         response = await client.get("/dashboard")
         assert 'href="/fuel"' in response.text
         assert 'href="/vehicles"' in response.text
-        nav_html = response.text.split("t-mobile-bottom-nav", 1)[1].split("</nav>", 1)[0]
+        nav_html = response.text.split("t-mobile-bottom-nav", 1)[1].split("</nav>", 1)[
+            0
+        ]
         assert 'href="/profile"' not in nav_html
 
     async def test_add_sheet_has_title_and_abbrechen(self, client, auth_group):
@@ -88,7 +96,9 @@ class TestPhase8Dashboard:
         assert 'aria-label="Wartungserinnerungen"' in response.text
         assert 'href="/maintenance"' in response.text
 
-    async def test_dashboard_mobile_shows_status_row_with_chevron(self, client, auth_group):
+    async def test_dashboard_mobile_shows_status_row_with_chevron(
+        self, client, auth_group
+    ):
         auth_group()
         response = await client.get("/dashboard")
         assert "t-mobile-status-row" in response.text
@@ -133,7 +143,9 @@ class TestPhase9Vehicles:
         assert "t-vehicle-hero-card" in response.text
         assert "Hero Tractor" in response.text
 
-    async def test_vehicles_mobile_uses_header_plus_not_bottom_button(self, client, auth_group):
+    async def test_vehicles_mobile_uses_header_plus_not_bottom_button(
+        self, client, auth_group
+    ):
         auth_group(role="admin")
         response = await client.get("/vehicles")
         assert 'aria-label="Hinzufügen"' in response.text
@@ -191,10 +203,18 @@ class TestPhase11Secondary:
         assert 'href="/profile"' in response.text
         assert "Einstellungen" in response.text
 
-    async def test_secondary_pages_back_to_profile(self, client, auth_group, set_group_tier):
+    async def test_secondary_pages_back_to_profile(
+        self, client, auth_group, set_group_tier
+    ):
         _, group = auth_group(role="admin")
         set_group_tier(group.id, "pro")
-        for path in ("/analytics", "/summary", "/maintenance", "/groups", "/settings/group"):
+        for path in (
+            "/analytics",
+            "/summary",
+            "/maintenance",
+            "/groups",
+            "/settings/group",
+        ):
             response = await client.get(path)
             assert response.status_code == 200
             assert 'href="/profile"' in response.text
@@ -203,14 +223,24 @@ class TestPhase11Secondary:
 
 class TestConsumptionTrendService:
     def test_consumption_trend_30d_computes_delta(
-        self, db, create_test_group, create_test_user, create_test_vehicle, create_test_fuel_entry
+        self,
+        db,
+        create_test_group,
+        create_test_user,
+        create_test_vehicle,
+        create_test_fuel_entry,
     ):
         user = create_test_user()
         group = create_test_group(created_by=user.id)
         vehicle = create_test_vehicle(group_id=group.id, name="Trend Vehicle")
         today = date.today()
 
-        for day_offset, usage in [(45, 1000.0), (40, 1500.0), (15, 2000.0), (5, 2500.0)]:
+        for day_offset, usage in [
+            (45, 1000.0),
+            (40, 1500.0),
+            (15, 2000.0),
+            (5, 2500.0),
+        ]:
             create_test_fuel_entry(
                 vehicle_id=vehicle.id,
                 group_id=group.id,

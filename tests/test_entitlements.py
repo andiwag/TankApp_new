@@ -1,6 +1,5 @@
 """Tests for subscription tier entitlements."""
 
-
 from app.enums import SubscriptionTier
 from app.models import GroupSubscription
 from app.services.entitlements import (
@@ -29,15 +28,11 @@ class TestTierLimits:
 
 
 class TestGetGroupTier:
-    def test_returns_free_when_no_subscription_row(
-        self, db, create_test_group
-    ):
+    def test_returns_free_when_no_subscription_row(self, db, create_test_group):
         group = create_test_group()
         assert get_group_tier(db, group.id) == SubscriptionTier.free.value
 
-    def test_returns_subscription_tier(
-        self, db, create_test_group
-    ):
+    def test_returns_subscription_tier(self, db, create_test_group):
         group = create_test_group()
         db.add(
             GroupSubscription(
@@ -49,9 +44,7 @@ class TestGetGroupTier:
         db.commit()
         assert get_group_tier(db, group.id) == SubscriptionTier.pro.value
 
-    def test_past_due_keeps_paid_tier(
-        self, db, create_test_group
-    ):
+    def test_past_due_keeps_paid_tier(self, db, create_test_group):
         group = create_test_group()
         db.add(
             GroupSubscription(
@@ -81,9 +74,7 @@ class TestCanAddVehicle:
         create_test_vehicle(group_id=group.id, name="V2")
         assert can_add_vehicle(db, group.id) is False
 
-    def test_free_allows_first_vehicle(
-        self, db, create_test_group
-    ):
+    def test_free_allows_first_vehicle(self, db, create_test_group):
         group = create_test_group()
         db.add(
             GroupSubscription(

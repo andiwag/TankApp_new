@@ -14,7 +14,9 @@ from app.services.fuel_queries import active_fuel_entries_for_group
 from app.services.reminders import list_group_reminders
 
 
-def _fuel_pairs_for_vehicle(entries: list[FuelEntry]) -> list[tuple[float, float, bool]]:
+def _fuel_pairs_for_vehicle(
+    entries: list[FuelEntry],
+) -> list[tuple[float, float, bool]]:
     return [
         (entry.usage_reading, entry.fuel_amount_l, entry.full_tank)
         for entry in sorted(entries, key=lambda row: (row.entry_date, row.id))

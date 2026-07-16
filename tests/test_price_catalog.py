@@ -23,7 +23,9 @@ class TestTierFromStripePrice:
     def test_reads_tier_from_product_metadata_when_price_missing(self):
         product = SimpleNamespace(metadata={"tier": "farm"})
         price = SimpleNamespace(metadata={}, product=product)
-        assert price_catalog.tier_from_stripe_price(price) == SubscriptionTier.farm.value
+        assert (
+            price_catalog.tier_from_stripe_price(price) == SubscriptionTier.farm.value
+        )
 
     def test_rejects_unknown_tier_metadata(self):
         price = SimpleNamespace(metadata={"tier": "enterprise"})

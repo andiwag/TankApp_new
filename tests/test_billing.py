@@ -259,12 +259,15 @@ class TestWebhookHandling:
             ),
         )
 
-        with patch(
-            "app.services.billing.webhooks.construct_event",
-            return_value=event,
-        ), patch(
-            "app.services.billing.webhooks.stripe_client.retrieve_subscription",
-            return_value=_stripe_sub_with_tier(group.id, status="canceled"),
+        with (
+            patch(
+                "app.services.billing.webhooks.construct_event",
+                return_value=event,
+            ),
+            patch(
+                "app.services.billing.webhooks.stripe_client.retrieve_subscription",
+                return_value=_stripe_sub_with_tier(group.id, status="canceled"),
+            ),
         ):
             process_stripe_webhook(db, b"{}", "sig")
             process_stripe_webhook(db, b"{}", "sig")
@@ -330,13 +333,16 @@ class TestWebhookHandling:
             ),
         )
 
-        with patch(
-            "app.services.billing.webhooks.construct_event",
-            return_value=event,
-        ), patch(
-            "app.services.billing.webhooks.stripe_client.retrieve_subscription",
-            return_value=event.data.object,
-        ) as retrieve:
+        with (
+            patch(
+                "app.services.billing.webhooks.construct_event",
+                return_value=event,
+            ),
+            patch(
+                "app.services.billing.webhooks.stripe_client.retrieve_subscription",
+                return_value=event.data.object,
+            ) as retrieve,
+        ):
             process_stripe_webhook(db, b"{}", "sig")
             retrieve.assert_called_once_with("sub_bad")
 
@@ -378,12 +384,15 @@ class TestWebhookHandling:
             type="customer.subscription.deleted",
             data=SimpleNamespace(object=stripe_sub),
         )
-        with patch(
-            "app.services.billing.webhooks.construct_event",
-            return_value=event,
-        ), patch(
-            "app.services.billing.webhooks.stripe_client.retrieve_subscription",
-            return_value=stripe_sub,
+        with (
+            patch(
+                "app.services.billing.webhooks.construct_event",
+                return_value=event,
+            ),
+            patch(
+                "app.services.billing.webhooks.stripe_client.retrieve_subscription",
+                return_value=stripe_sub,
+            ),
         ):
             process_stripe_webhook(db, b"{}", "sig")
 
@@ -473,13 +482,15 @@ class TestEntitlementEnforcement:
             data={"name": "V3", "vtype": "tractor", "fuel_type": "diesel"},
         )
         assert response.status_code == 200
-        assert "Upgrade" in response.text or "Abo" in response.text or "Limit" in response.text
+        assert (
+            "Upgrade" in response.text
+            or "Abo" in response.text
+            or "Limit" in response.text
+        )
 
 
 class TestGroupCreateSubscription:
-    def test_create_group_creates_free_subscription(
-        self, db, create_test_user
-    ):
+    def test_create_group_creates_free_subscription(self, db, create_test_user):
         from app.schemas import GroupCreate
         from app.services.groups import create_group
 

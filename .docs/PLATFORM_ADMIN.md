@@ -4,7 +4,7 @@ Implementation guide for **internal operator tooling** — the layer that lets y
 
 **Status:** Phase 1–2 implemented — **Development Plan Phase 22 complete**. Phase 3 hardening optional.
 
-**Prerequisites:** Phases 0–21 complete in the app. Billing fields in operator UI depend on Phase 23 — see [STRIPE_BILLING.md](./STRIPE_BILLING.md).
+**Prerequisites:** Phases 0–23 complete in the app. Farm list already shows subscription tier; optional Stripe Dashboard deep-links remain Phase 3 hardening — see [STRIPE_BILLING.md](./STRIPE_BILLING.md) and §9.2.
 
 **Related docs:** [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) (Phase 22) · [TECHNICAL_DOCUMENTATION.md](./TECHNICAL_DOCUMENTATION.md) · [BETA_DEPLOY.md](./BETA_DEPLOY.md) · [PRODUCTION.md](./PRODUCTION.md)
 
@@ -489,7 +489,7 @@ Before broad paid rollout:
 
 ### 9.2 Billing integration
 
-Once [STRIPE_BILLING.md](./STRIPE_BILLING.md) is implemented, extend farm list/detail with:
+[STRIPE_BILLING.md](./STRIPE_BILLING.md) is implemented (Phase 23). Optional Phase 3 hardening: extend farm list/detail with:
 
 | Field | Source |
 |-------|--------|

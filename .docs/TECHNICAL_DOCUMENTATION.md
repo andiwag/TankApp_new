@@ -7,8 +7,9 @@
 | **This file** | Product spec, architecture, models, routes |
 | [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) | Phased build plan (Phases 0–23) |
 | [DECISION_LOG.md](./DECISION_LOG.md) | Architectural decisions |
-| [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) | Planned operator dashboard |
-| [STRIPE_BILLING.md](./STRIPE_BILLING.md) | Planned billing integration |
+| [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) | Operator dashboard (`/platform`) |
+| [STRIPE_BILLING.md](./STRIPE_BILLING.md) | Stripe billing per group |
+| [STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md) | Production Stripe go-live checklist |
 | [BETA_DEPLOY.md](./BETA_DEPLOY.md) / [PRODUCTION.md](./PRODUCTION.md) | Deployment |
 
 ---
@@ -26,9 +27,9 @@
 
 The system allows **multiple users** in a **shared group** (farm/business) with role-based access.
 
-**Implemented (Phases 0–21):** auth, groups, vehicles, fuel entries, summary, dashboard, profile, group settings, audit log UI, maintenance, analytics, export, cost tracking, marketing/landing, private-beta registration gate, PWA, production hardening, German UI across authenticated app.
+**Implemented (Phases 0–23):** auth, groups, vehicles, fuel entries, summary, dashboard, profile, group settings, audit log UI, maintenance, analytics, export, cost tracking, marketing/landing, private-beta registration gate, PWA, production hardening, German UI across authenticated app, platform operator dashboard ([PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md)), Stripe billing ([STRIPE_BILLING.md](./STRIPE_BILLING.md)).
 
-**Planned:** platform operator dashboard ([PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md)), Stripe billing ([STRIPE_BILLING.md](./STRIPE_BILLING.md)).
+**Next (ops):** production Stripe go-live ([STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md)).
 
 **Future expansion paths:**
 
@@ -445,7 +446,7 @@ Logged events: `user.register`, `group.create`, `group.delete`, `group.join`, `g
 
 Not logged: `fuel_entry.*`, `vehicle.edit`, `user.login`, `user.logout`
 
-Farm admins view history at `GET /settings/audit`. Planned: `platform.*` events for operator access (Phase 22).
+Farm admins view history at `GET /settings/audit`. Platform operator access logs `platform.*` events (Phase 22).
 
 ---
 
@@ -706,7 +707,7 @@ Vehicles  Fuel  Maintenance  Summary  Analytics  Settings  Profile
                                          Export CSV
 ```
 
-Operators (planned): `/platform/farms` → optional “view farm” → same app UI read-only.
+Operators: `/platform/farms` → optional “view farm” → same app UI (Phase 22).
 
 ---
 
@@ -888,7 +889,7 @@ POST /cron/service-reminders — `Authorization: Bearer <CRON_SECRET>`
 
 ---
 
-## Platform admin (planned)
+## Platform admin
 
 GET /platform/farms, /platform/users, … — see [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md)
 
@@ -1017,8 +1018,8 @@ MAIL_SERVER=smtp.example.com
 MAIL_PORT=587
 MAIL_STARTTLS=true
 
-# Planned (Phase 22) — see PLATFORM_ADMIN.md
-# PLATFORM_ADMIN_EMAILS=
+# Phase 22 — see PLATFORM_ADMIN.md
+PLATFORM_ADMIN_EMAILS=
 ```
 
 See `.env.example` and `.env.beta.example` for the canonical list. Production requires unique `SECRET_KEY`, `CRON_SECRET`, and Redis or `SINGLE_WORKER_MODE=true`.
@@ -1046,17 +1047,16 @@ Denormalized `group_id` on FuelEntry optimizes the most common query pattern.
 # 19. Future Features
 
 * OCR fuel receipt scanning
-* Platform operator dashboard (Phase 22 — [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md))
-* Stripe subscription billing (Phase 23 — [STRIPE_BILLING.md](./STRIPE_BILLING.md))
 * richer offline entry workflows
 * deeper fleet analytics
 * customer-initiated temporary support access (GDPR-friendly)
+* optional platform hardening (MFA, IP allowlist, Stripe Dashboard deep-links) — [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) Phase 3
 
 ---
 
 # 20. Implementation Order
 
-**Completed:** Phases 0–21 (see [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md))
+**Completed:** Phases 0–23 (see [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md))
 
 1. project setup & test infrastructure
 2. database, models, schemas, migrations
@@ -1069,11 +1069,10 @@ Denormalized `group_id` on FuelEntry optimizes the most common query pattern.
 9. CSRF, PWA, validation polish
 10. maintenance, analytics, export, cost/partial fill
 11. session revocation, production hardening, marketing/beta gate
-
-**Planned next:**
-
 12. platform admin (Phase 22)
 13. Stripe billing (Phase 23)
+
+**Next (ops, not a plan phase):** production Stripe go-live — [STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md).
 
 Development follows a strict **test-driven** approach (Red → Green → Refactor).
 See `DEVELOPMENT_PLAN.md` for detailed phase breakdowns, test lists, and acceptance criteria.

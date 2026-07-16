@@ -75,7 +75,10 @@ def _month_label_de(key: tuple[int, int]) -> str:
 
 
 def _cost_chart_from_rows(
-    rows: list[tuple[date, float | None]], *, anchor: date, months: int = COST_CHART_MONTHS
+    rows: list[tuple[date, float | None]],
+    *,
+    anchor: date,
+    months: int = COST_CHART_MONTHS,
 ) -> list[dict]:
     month_keys = _last_n_month_keys(anchor, months)
     totals = {key: 0.0 for key in month_keys}

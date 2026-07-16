@@ -62,5 +62,7 @@ templates.env.globals["company_info"] = company_info
 templates.env.globals["company_display_name"] = company_display_name
 templates.env.globals["legal_pages_ready"] = legal_pages_ready
 templates.env.globals["stripe_enabled"] = lambda: settings.stripe_enabled
-templates.env.globals["stripe_checkout_available"] = lambda: settings.stripe_checkout_available
+templates.env.globals["stripe_checkout_available"] = (
+    lambda: settings.stripe_checkout_available
+)
 templates.env.globals["stripe_trial_days"] = lambda: settings.STRIPE_TRIAL_DAYS

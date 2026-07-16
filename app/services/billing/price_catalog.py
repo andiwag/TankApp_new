@@ -13,7 +13,9 @@ from app.enums import SubscriptionTier
 if TYPE_CHECKING:
     pass
 
-_VALID_TIERS = frozenset(t.value for t in SubscriptionTier if t != SubscriptionTier.free)
+_VALID_TIERS = frozenset(
+    t.value for t in SubscriptionTier if t != SubscriptionTier.free
+)
 
 _catalog_cache: dict[str, CatalogPrice] | None = None
 

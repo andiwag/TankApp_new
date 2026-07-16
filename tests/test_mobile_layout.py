@@ -19,7 +19,10 @@ class TestPhase1Guardrails:
         auth_group()
         response = await client.get("/dashboard")
         assert response.status_code == 200
-        assert 'class="w-full min-w-0' in response.text or "min-w-0 flex-1 flex-col" in response.text
+        assert (
+            'class="w-full min-w-0' in response.text
+            or "min-w-0 flex-1 flex-col" in response.text
+        )
 
 
 class TestPhase2ShellLayout:
@@ -31,7 +34,9 @@ class TestPhase2ShellLayout:
         assert "Dashboard" in response.text
         assert "t-mobile-bottom-nav" in response.text
 
-    async def test_page_header_uses_responsive_heading_classes(self, client, auth_group):
+    async def test_page_header_uses_responsive_heading_classes(
+        self, client, auth_group
+    ):
         auth_group()
         response = await client.get("/fuel")
         assert response.status_code == 200
@@ -92,7 +97,7 @@ class TestPhase3ListAndDashboard:
         auth_group()
         response = await client.get("/dashboard")
         assert response.status_code == 200
-        assert ' flex min-w-[280px]' not in response.text
+        assert " flex min-w-[280px]" not in response.text
         assert "xl:min-w-[280px]" in response.text
 
     async def test_kpi_card_uses_responsive_value_typography(self, client, auth_group):
@@ -173,8 +178,12 @@ class TestPhase5FormsSettings:
         auth_cookie,
     ):
         user = create_test_user()
-        group_a = create_test_group(name="Farm A", invite_code="FARM-MOB02", created_by=user.id)
-        group_b = create_test_group(name="Farm B", invite_code="FARM-MOB03", created_by=user.id)
+        group_a = create_test_group(
+            name="Farm A", invite_code="FARM-MOB02", created_by=user.id
+        )
+        group_b = create_test_group(
+            name="Farm B", invite_code="FARM-MOB03", created_by=user.id
+        )
         create_test_user_group(user.id, group_a.id, role="admin")
         create_test_user_group(user.id, group_b.id, role="admin")
         auth_cookie(client, user.id, group_a.id)
