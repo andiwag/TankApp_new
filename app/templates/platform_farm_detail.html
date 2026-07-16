@@ -13,6 +13,28 @@
 </form>
 {% endif %}
 
+{% if status == 'active' %}
+<section class="mb-5 {{ glass_panel('p-5') }} space-y-3">
+    <h2 class="text-base font-bold text-slate-950">Partner-Tarif</h2>
+    <p class="text-sm text-slate-600">
+        Kostenlose Freischaltung mit Farm-Funktionen (ohne Stripe). Nicht für zahlende Kunden mit aktivem Stripe-Abo verwenden.
+    </p>
+    {% if is_partner_tier %}
+    <form method="post" action="/platform/farms/{{ group.id }}/revoke-partner">
+        {{ csrf_field() }}
+        <button type="submit" class="{{ button_class('secondary') }}">Partner-Tarif entziehen</button>
+    </form>
+    {% elif has_stripe_subscription %}
+    <p class="text-sm text-amber-800">Partner-Tarif nicht verfügbar: Es existiert bereits ein Stripe-Abo. Bitte zuerst im Stripe-Kundenportal kündigen.</p>
+    {% else %}
+    <form method="post" action="/platform/farms/{{ group.id }}/grant-partner">
+        {{ csrf_field() }}
+        <button type="submit" class="{{ button_class('primary') }}">Partner-Tarif vergeben</button>
+    </form>
+    {% endif %}
+</section>
+{% endif %}
+
 <section class="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
     {{ kpi_card("📊", "Status", "Aktiv" if status == 'active' else "Gelöscht", "", "", "emerald" if status == 'active' else "amber") }}
     {{ kpi_card("💳", "Tarif", subscription_tier, "", "", "sky") }}

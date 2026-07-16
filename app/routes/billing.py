@@ -35,6 +35,7 @@ def _tier_label(tier: str) -> str:
         SubscriptionTier.free.value: "Free",
         SubscriptionTier.pro.value: "Pro",
         SubscriptionTier.farm.value: "Farm",
+        SubscriptionTier.partner.value: "Partner",
     }
     return labels.get(tier, tier)
 
@@ -94,6 +95,7 @@ def _billing_context(db: Session, group: Group, *, interval: str = "month") -> d
         "vehicle_limit": vehicle_limit,
         "features": limits,
         "has_active_subscription": has_active_paid_subscription(sub),
+        "is_partner_tier": tier == SubscriptionTier.partner.value,
         "stripe_enabled": settings.stripe_enabled,
         "stripe_catalog_ready": bool(catalog),
         "checkout_plans": _checkout_plans(catalog, interval=interval),
@@ -156,6 +158,15 @@ async def billing_checkout_post(
         raise HTTPException(status_code=400, detail="Invalid price")
 
     sub = ensure_group_subscription(db, group.id)
+    if sub.tier == SubscriptionTier.partner.value:
+        response = RedirectResponse(url="/settings/billing", status_code=303)
+        set_flash(
+            response,
+            "Partner-Tarif ist kein Stripe-Abo. Bitte Tankly, den Partner-Tarif "
+            "zu entziehen, bevor du ein kostenpflichtiges Abo startest.",
+            "info",
+        )
+        return response
     if has_active_paid_subscription(sub):
         response = RedirectResponse(url="/settings/billing", status_code=303)
         set_flash(

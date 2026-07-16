@@ -30,6 +30,11 @@
         </div>
     </header>
     <main class="mx-auto min-w-0 max-w-7xl px-4 py-6 lg:px-6">
+        {% if request.state.flash %}
+        <div class="mb-5 rounded-[12px] border px-4 py-3 text-sm {% if request.state.flash.category == 'error' %}border-red-200 bg-red-50 text-red-800{% elif request.state.flash.category == 'warning' %}border-amber-200 bg-amber-50 text-amber-800{% else %}border-emerald-200 bg-emerald-50 text-emerald-800{% endif %}">
+            {{ request.state.flash.message }}
+        </div>
+        {% endif %}
         {% block content %}{% endblock %}
     </main>
 </body>

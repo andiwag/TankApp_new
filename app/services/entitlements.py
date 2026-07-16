@@ -24,6 +24,13 @@ TIER_LIMITS: dict[str, dict] = {
         "export": True,
         "maintenance": True,
     },
+    # Non-Stripe complimentary tier (platform grant only); same limits as farm.
+    SubscriptionTier.partner.value: {
+        "max_vehicles": None,
+        "analytics": True,
+        "export": True,
+        "maintenance": True,
+    },
 }
 
 

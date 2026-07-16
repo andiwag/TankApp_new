@@ -46,10 +46,13 @@
             </div>
             {% endif %}
         </div>
-        {% if not has_active_subscription and trial_days > 0 and billing_interval == 'month' %}
+        {% if is_partner_tier %}
+        <p class="text-sm text-slate-600">Dieser Betrieb hat einen kostenlosen Partner-Tarif (Freischaltung durch Tankly). Es gibt kein Stripe-Abo und keine Upgrade-Schaltflächen.</p>
+        {% elif not has_active_subscription and trial_days > 0 and billing_interval == 'month' %}
         <p class="text-sm text-slate-600">Pro-Tarif: {{ trial_days }} Tage kostenlos testen, danach monatliche Abrechnung.</p>
         {% endif %}
-        {% if has_active_subscription %}
+        {% if is_partner_tier %}
+        {% elif has_active_subscription %}
         <p class="text-sm text-slate-600">Tarifwechsel und Kündigung erfolgen über das Kundenportal.</p>
         {% elif stripe_catalog_ready %}
             {% for plan in checkout_plans %}
@@ -62,7 +65,7 @@
                 {% endif %}
             {% endfor %}
         {% endif %}
-        {% if subscription.stripe_customer_id %}
+        {% if subscription.stripe_customer_id and not is_partner_tier %}
         <form method="post" action="{{ request.url_for('billing_portal_post') }}" x-data="{ submitting: false }" @submit="submitting = true">
             {{ csrf_field() }}
             <button type="submit" :disabled="submitting" class="{{ button_class('secondary') }} disabled:opacity-60">Zahlungsmethode & Rechnungen verwalten</button>

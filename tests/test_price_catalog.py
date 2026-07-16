@@ -31,6 +31,11 @@ class TestTierFromStripePrice:
         price = SimpleNamespace(metadata={"tier": "enterprise"})
         assert price_catalog.tier_from_stripe_price(price) is None
 
+    def test_rejects_partner_tier_metadata(self):
+        """partner is platform-only; Stripe prices must not map to it."""
+        price = SimpleNamespace(metadata={"tier": "partner"})
+        assert price_catalog.tier_from_stripe_price(price) is None
+
 
 class TestCatalogResolution:
     def test_get_catalog_resolves_lookup_keys_from_stripe(self, monkeypatch):

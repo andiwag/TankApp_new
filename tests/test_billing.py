@@ -132,6 +132,48 @@ class TestBillingPageAccess:
         assert response.status_code == 200
         assert "Abo" in response.text or "Free" in response.text
 
+    async def test_partner_tier_billing_hides_checkout_ctas(
+        self,
+        client,
+        auth_group,
+        db,
+        stripe_settings,
+        stripe_catalog,
+    ):
+        _, group = auth_group(role=Role.admin.value)
+        _ensure_subscription(db, group.id, tier=SubscriptionTier.partner.value)
+
+        response = await client.get("/settings/billing")
+        assert response.status_code == 200
+        assert "Partner" in response.text
+        assert "Upgrade auf Pro" not in response.text
+        assert "Upgrade auf Farm" not in response.text
+        assert "billing/checkout" not in response.text
+
+    async def test_partner_tier_checkout_post_is_blocked(
+        self,
+        client,
+        auth_group,
+        db,
+        stripe_settings,
+        stripe_catalog,
+    ):
+        _, group = auth_group(role=Role.admin.value)
+        _ensure_subscription(db, group.id, tier=SubscriptionTier.partner.value)
+
+        with patch(
+            "app.services.billing.stripe_client.create_checkout_session",
+        ) as create_checkout:
+            response = await client.post(
+                "/settings/billing/checkout",
+                data={"lookup_key": settings.STRIPE_LOOKUP_PRO_MONTHLY},
+                follow_redirects=False,
+            )
+
+        assert response.status_code == 303
+        assert response.headers.get("location") == "/settings/billing"
+        create_checkout.assert_not_called()
+
 
 class TestCheckoutSession:
     async def test_checkout_creates_session_with_group_metadata(

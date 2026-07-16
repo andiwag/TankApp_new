@@ -13,6 +13,7 @@ from app.models import (
     AuditLog,
     FuelEntry,
     Group,
+    GroupSubscription,
     MaintenanceLog,
     User,
     UserGroup,
@@ -211,11 +212,20 @@ def farm_detail_context(db: Session, group_id: int) -> dict | None:
         for log in audit_logs
     ]
 
+    tier = _subscription_tier_label(group.subscription_tier)
+    sub = (
+        db.query(GroupSubscription)
+        .filter(GroupSubscription.group_id == group_id)
+        .first()
+    )
+    has_stripe_subscription = bool(sub and sub.stripe_subscription_id)
     return {
         "group": group,
         "creator_email": creator.email if creator else None,
         "status": _group_status_label(group.deleted_at),
-        "subscription_tier": _subscription_tier_label(group.subscription_tier),
+        "subscription_tier": tier,
+        "is_partner_tier": tier == "partner",
+        "has_stripe_subscription": has_stripe_subscription,
         "members": members,
         "vehicle_count": vehicle_count,
         "fuel_entry_count": fuel_entry_count,

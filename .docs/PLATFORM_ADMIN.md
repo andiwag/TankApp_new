@@ -489,7 +489,20 @@ Before broad paid rollout:
 
 ### 9.2 Billing integration
 
-[STRIPE_BILLING.md](./STRIPE_BILLING.md) is implemented (Phase 23). Optional Phase 3 hardening: extend farm list/detail with:
+[STRIPE_BILLING.md](./STRIPE_BILLING.md) is implemented (Phase 23).
+
+**Partner tier (implemented):** Platform admins can grant/revoke a non-Stripe complimentary tier from farm detail:
+
+| Action | Route | Effect |
+|--------|-------|--------|
+| Grant | `POST /platform/farms/{id}/grant-partner` | `group_subscriptions.tier = partner` (Farm-level features), no Stripe IDs |
+| Revoke | `POST /platform/farms/{id}/revoke-partner` | Back to `free` |
+
+- Audit: `platform.billing.grant_partner` / `platform.billing.revoke_partner`
+- Refused if the farm already has `stripe_subscription_id` (cancel Stripe first)
+- Not available from farm-admin billing UI
+
+Optional Phase 3 hardening: extend farm list/detail with Stripe deep-links:
 
 | Field | Source |
 |-------|--------|

@@ -26,6 +26,16 @@ class TestTierLimits:
     def test_farm_tier_unlimited_vehicles(self):
         assert vehicle_limit_for_tier(SubscriptionTier.farm.value) is None
 
+    def test_partner_tier_mirrors_farm_limits(self):
+        assert (
+            TIER_LIMITS[SubscriptionTier.partner.value]
+            == TIER_LIMITS[SubscriptionTier.farm.value]
+        )
+        assert vehicle_limit_for_tier(SubscriptionTier.partner.value) is None
+        assert tier_has_feature(SubscriptionTier.partner.value, "analytics") is True
+        assert tier_has_feature(SubscriptionTier.partner.value, "export") is True
+        assert tier_has_feature(SubscriptionTier.partner.value, "maintenance") is True
+
 
 class TestGetGroupTier:
     def test_returns_free_when_no_subscription_row(self, db, create_test_group):

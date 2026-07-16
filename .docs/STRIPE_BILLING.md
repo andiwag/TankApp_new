@@ -4,7 +4,9 @@ Step-by-step checklist for integrating **Stripe Checkout + Billing + Tax** into 
 
 **Status:** Implemented (Phase 23). Go-live steps: [STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md).
 
-**Prerequisites:** Landing page live (`/`), legal pages filled in (`/impressum`, `/datenschutz`, `/agb`), Steuerberater consulted. Operator support tooling: [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) (Phase 22, also planned).
+**Prerequisites:** Landing page live (`/`), legal pages filled in (`/impressum`, `/datenschutz`, `/agb`), Steuerberater consulted. Operator support tooling: [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) (Phase 22).
+
+**Partner tier:** `partner` is a **non-Stripe** complimentary tier (same feature limits as `farm`). It is granted/revoked only by platform admins via `/platform/farms/{id}` — never via Checkout. Rows stay without `stripe_subscription_id`, so webhooks/reconcile do not overwrite them. Do not fake a paid `farm`/`pro` tier for gifted farms.
 
 ---
 
@@ -149,7 +151,7 @@ class GroupSubscription(Base):
     stripe_customer_id: Mapped[str | None]
     stripe_subscription_id: Mapped[str | None]
     status: Mapped[str]  # trialing|active|past_due|canceled|incomplete|unpaid
-    tier: Mapped[str]    # free|pro|farm
+    tier: Mapped[str]    # free|pro|farm|partner (partner = platform grant, non-Stripe)
     current_period_end: Mapped[datetime | None]
     cancel_at_period_end: Mapped[bool] = mapped_column(default=False)
     trial_ends_at: Mapped[datetime | None]
