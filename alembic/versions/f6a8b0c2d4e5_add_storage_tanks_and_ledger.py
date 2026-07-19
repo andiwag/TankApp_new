@@ -1,7 +1,7 @@
 """add storage tanks and tank ledger entries
 
 Revision ID: f6a8b0c2d4e5
-Revises: e5f7a9b1c3d4
+Revises: c8d0e2f4a6b8
 Create Date: 2026-07-19
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "f6a8b0c2d4e5"
-down_revision: Union[str, None] = "e5f7a9b1c3d4"
+down_revision: Union[str, None] = "c8d0e2f4a6b8"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
