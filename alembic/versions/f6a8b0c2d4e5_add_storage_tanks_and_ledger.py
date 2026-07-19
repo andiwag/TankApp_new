@@ -22,6 +22,7 @@ tank_movement_type_enum = sa.Enum(
     "external_withdrawal",
     "adjustment",
     name="tank_movement_type_enum",
+    create_type=False,
 )
 
 
