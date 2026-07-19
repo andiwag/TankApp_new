@@ -138,8 +138,8 @@ class TestExternalWithdrawalStatsIsolation:
             ),
         )
         after = get_dashboard_context(db, user, group.id)
-        assert after["total_fuel_liters"] == before["total_fuel_liters"]
-        assert after["fuel_entry_count"] == before["fuel_entry_count"]
+        assert after["month_fuel_count"] == before["month_fuel_count"]
+        assert after["month_cost_eur"] == before["month_cost_eur"]
 
     def test_external_withdrawal_excluded_from_summary_vehicle_totals(
         self,

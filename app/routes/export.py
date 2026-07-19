@@ -43,7 +43,7 @@ async def export_vehicles_csv(
 @router.get("/export/tank-ledger.csv")
 async def export_tank_ledger_csv(
     db: Session = Depends(get_db),
-    group: Group = Depends(get_active_group),
+    group: Group = Depends(require_entitlement("export")),
 ):
     content = export_service.tank_ledger_csv(db, group.id)
     return Response(
