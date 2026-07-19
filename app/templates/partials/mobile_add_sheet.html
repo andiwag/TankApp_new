@@ -10,6 +10,7 @@
             {{ bottom_sheet_row("wrench", "Wartung", "Wartung oder Service hinzufügen", "/maintenance/new", "violet") }}
             {% endif %}
             {{ bottom_sheet_row("vehicle", "Fahrzeug", "Neues Fahrzeug anlegen", "/vehicles/new", "amber") }}
+            {{ bottom_sheet_row("fuel", "Hof-Tank", "Neuen Hof-Tank anlegen", "/tanks/new", "sky") }}
             {% endif %}
         </div>
         <button type="button" @click="addSheetOpen = false" class="mt-4 w-full rounded-[12px] border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">Abbrechen</button>

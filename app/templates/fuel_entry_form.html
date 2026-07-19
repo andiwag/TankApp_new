@@ -15,14 +15,14 @@
 
     {% if error %}{{ form_error(error) }}{% endif %}
 
-    <form method="post" action="{% if mode == 'create' %}/fuel/new{% else %}/fuel/{{ entry.id }}/edit{% endif %}" class="{{ glass_panel('space-y-5 p-5 sm:p-6') }}" x-data="{ submitting: false, selectedVehicleId: '{{ form_vehicle_id or (vehicle.id if vehicle else '') }}', vehicleVtypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.vtype }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode == 'edit' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.vtype }}'{% endif %} }, vehicleFuelTypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.fuel_type }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode == 'edit' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.fuel_type }}'{% endif %} }, fillSource: '{{ form_fill_source or (entry.fill_source if entry else 'external') }}', isTractor() { return this.vehicleVtypes[this.selectedVehicleId] === 'tractor'; }, isFarm() { return this.fillSource === 'farm'; }, currentFuelType() { {% if mode == 'edit' %}return '{{ vehicle.fuel_type }}';{% else %}return this.vehicleFuelTypes[this.selectedVehicleId] || '';{% endif %} }, tankVisible(fuelType) { return this.isFarm() && this.currentFuelType() === fuelType; } }" @submit="submitting = true">
+    <form method="post" action="{% if mode == 'create' %}/fuel/new{% else %}/fuel/{{ entry.id }}/edit{% endif %}" class="{{ glass_panel('space-y-5 p-5 sm:p-6') }}" x-data="{ submitting: false, selectedVehicleId: '{{ form_vehicle_id or (vehicle.id if vehicle else '') }}', vehicleVtypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.vtype }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode == 'edit' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.vtype }}'{% endif %} }, vehicleFuelTypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.fuel_type }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode == 'edit' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.fuel_type }}'{% endif %} }, fillSource: '{{ form_fill_source or (entry.fill_source if entry else 'external') }}', isTractor() { const id = String(this.selectedVehicleId || ''); return id !== '' && this.vehicleVtypes[id] === 'tractor'; }, isFarm() { return this.fillSource === 'farm'; }, currentFuelType() { {% if mode == 'edit' %}return '{{ vehicle.fuel_type }}';{% else %}const id = String(this.selectedVehicleId || ''); return this.vehicleFuelTypes[id] || '';{% endif %} }, tankVisible(fuelType) { return this.isFarm() && this.currentFuelType() === fuelType; } }" @submit="submitting = true">
         {{ csrf_field() }}
 
         <section class="t-form-section">
             <h2 class="mb-3 text-sm font-semibold text-slate-900"><span aria-hidden="true">🚗</span> Fahrzeug</h2>
             {% if mode == 'create' %}
             <label for="vehicle_id" class="block text-sm font-medium text-slate-700">Fahrzeug wählen</label>
-            <select name="vehicle_id" id="vehicle_id" required class="mt-1.5 {{ form_input_class() }}" @change="selectedVehicleId = $event.target.value">
+            <select name="vehicle_id" id="vehicle_id" required class="mt-1.5 {{ form_input_class() }}" x-model="selectedVehicleId" x-ref="vehicleSelect">
                 <option value="">Fahrzeug auswählen</option>
                 {% for v in vehicles %}
                 <option value="{{ v.id }}" data-vtype="{{ v.vtype }}" data-fuel-type="{{ v.fuel_type }}" {% if form_vehicle_id and form_vehicle_id == (v.id ~ '') %}selected{% endif %}>{{ v.name }}</option>
@@ -32,6 +32,24 @@
             <p class="inline-flex">{{ status_chip(vehicle.name, "success") }}</p>
             {% endif %}
         </section>
+
+        {% if mode == 'edit' and vehicle.vtype == 'tractor' %}
+        <section class="t-form-section">
+            <label for="adblue_amount_l" class="block text-sm font-medium text-slate-700">AdBlue (Liter, optional)</label>
+            <input type="number" name="adblue_amount_l" id="adblue_amount_l" inputmode="decimal" min="0.01" step="0.01"
+                   value="{% if entry and entry.adblue_amount_l is not none %}{{ entry.adblue_amount_l }}{% else %}{{ form_adblue_amount_l }}{% endif %}"
+                   class="mt-1.5 {{ form_input_class() }}" />
+            <p class="mt-2 text-xs text-slate-500">AdBlue wird getrennt vom Diesel erfasst und fließt nicht in Verbrauchswerte ein.</p>
+        </section>
+        {% elif mode == 'create' %}
+        <section class="t-form-section" x-show="isTractor()" x-transition>
+            <label for="adblue_amount_l" class="block text-sm font-medium text-slate-700">AdBlue (Liter, optional)</label>
+            <input type="number" name="adblue_amount_l" id="adblue_amount_l" inputmode="decimal" min="0.01" step="0.01"
+                   value="{{ form_adblue_amount_l }}"
+                   class="mt-1.5 {{ form_input_class() }}" />
+            <p class="mt-2 text-xs text-slate-500">AdBlue wird getrennt vom Diesel erfasst und fließt nicht in Verbrauchswerte ein.</p>
+        </section>
+        {% endif %}
 
         <section class="t-form-section space-y-4">
             <h2 class="text-sm font-semibold text-slate-900">Tankquelle</h2>
@@ -45,7 +63,7 @@
                     <span class="text-sm font-medium text-slate-800">Eigene Tankstelle</span>
                 </label>
             </div>
-            <div x-show="isFarm()" x-cloak>
+            <div x-show="isFarm()" x-transition>
                 <label for="fuel_tank_id" class="block text-sm font-medium text-slate-700">Hof-Tank</label>
                 <select name="fuel_tank_id" id="fuel_tank_id" class="mt-1.5 {{ form_input_class() }}">
                     <option value="">Tank auswählen</option>
@@ -75,24 +93,6 @@
             </div>
             <p class="mt-3 text-xs text-slate-500">Bei km-Fahrzeugen den Kilometerstand, bei Traktoren und Maschinen den Betriebsstundenzähler verwenden.</p>
         </section>
-
-        {% if mode == 'edit' and vehicle.vtype == 'tractor' %}
-        <section class="t-form-section">
-            <label for="adblue_amount_l" class="block text-sm font-medium text-slate-700">AdBlue (Liter, optional)</label>
-            <input type="number" name="adblue_amount_l" id="adblue_amount_l" inputmode="decimal" min="0.01" step="0.01"
-                   value="{% if entry and entry.adblue_amount_l is not none %}{{ entry.adblue_amount_l }}{% else %}{{ form_adblue_amount_l }}{% endif %}"
-                   class="mt-1.5 {{ form_input_class() }}" />
-            <p class="mt-2 text-xs text-slate-500">AdBlue wird getrennt vom Diesel erfasst und fließt nicht in Verbrauchswerte ein.</p>
-        </section>
-        {% elif mode == 'create' %}
-        <section class="t-form-section" x-show="isTractor()" x-cloak>
-            <label for="adblue_amount_l" class="block text-sm font-medium text-slate-700">AdBlue (Liter, optional)</label>
-            <input type="number" name="adblue_amount_l" id="adblue_amount_l" inputmode="decimal" min="0.01" step="0.01"
-                   value="{{ form_adblue_amount_l }}"
-                   class="mt-1.5 {{ form_input_class() }}" />
-            <p class="mt-2 text-xs text-slate-500">AdBlue wird getrennt vom Diesel erfasst und fließt nicht in Verbrauchswerte ein.</p>
-        </section>
-        {% endif %}
 
         <section class="rounded-[12px] border border-emerald-100 bg-emerald-50/80 p-4">
             <div class="flex min-h-[44px] items-center gap-3">

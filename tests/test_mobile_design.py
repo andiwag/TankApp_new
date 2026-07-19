@@ -30,6 +30,7 @@ class TestPhase7Shell:
         assert "t-mobile-more-menu" in response.text
         assert 'href="/analytics"' in response.text
         assert 'href="/summary"' in response.text
+        assert 'href="/tanks"' in response.text
         assert 'href="/maintenance"' in response.text
         assert 'href="/settings/group"' in response.text
         assert 'href="/profile"' in response.text
@@ -59,6 +60,7 @@ class TestPhase7Shell:
         response = await client.get("/dashboard")
         assert 'href="/fuel/new"' in response.text
         assert 'href="/vehicles/new"' in response.text
+        assert 'href="/tanks/new"' in response.text
 
     async def test_add_sheet_lists_maintenance_when_entitled(
         self, client, auth_group, set_group_tier

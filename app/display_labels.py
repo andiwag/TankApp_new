@@ -30,6 +30,11 @@ TANK_MOVEMENT_TYPE_LABELS: dict[str, str] = {
     "adjustment": "Bestandskorrektur",
 }
 
+FILL_SOURCE_LABELS: dict[str, str] = {
+    "external": "Externe Tankstelle",
+    "farm": "Eigene Tankstelle",
+}
+
 
 def vehicle_type_label(value: str) -> str:
     return VEHICLE_TYPE_LABELS.get(value, value)
@@ -49,3 +54,7 @@ def usage_unit_label(value: str) -> str:
 
 def tank_movement_type_label(value: str) -> str:
     return TANK_MOVEMENT_TYPE_LABELS.get(value, value)
+
+
+def fill_source_label(value: str) -> str:
+    return FILL_SOURCE_LABELS.get(value, value)

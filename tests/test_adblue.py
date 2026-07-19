@@ -175,6 +175,7 @@ class TestAdBlueRoutes:
         response = await client.get("/fuel/new")
         assert response.status_code == 200
         assert 'data-vtype="car"' in response.text
+        assert 'x-model="selectedVehicleId"' in response.text
         assert 'x-show="isTractor()"' in response.text
 
     async def test_fuel_entry_edit_form_hides_adblue_for_car(
@@ -337,3 +338,39 @@ class TestAdBlueSummaryAndExport:
         assert "adblue_liters" in rows[0]
         adblue_idx = rows[0].index("adblue_liters")
         assert rows[1][adblue_idx] == "6.0"
+
+
+class TestAdBlueFuelList:
+    async def test_fuel_list_shows_adblue_badge(
+        self,
+        client,
+        db,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_vehicle,
+        create_test_fuel_entry,
+        auth_cookie,
+    ):
+        user, group = create_authenticated_group(
+            client,
+            create_test_user,
+            create_test_group,
+            create_test_user_group,
+            auth_cookie,
+        )
+        tractor = create_test_vehicle(
+            group_id=group.id, vtype="tractor", name="AdBlue Tractor"
+        )
+        entry = create_test_fuel_entry(
+            vehicle_id=tractor.id,
+            group_id=group.id,
+            user_id=user.id,
+            fuel_amount_l=50.0,
+            usage_reading=100.0,
+        )
+        entry.adblue_amount_l = 3.5
+        db.commit()
+        response = await client.get("/fuel")
+        assert response.status_code == 200
+        assert "AdBlue 3,50 L" in response.text or "AdBlue 3.50 L" in response.text

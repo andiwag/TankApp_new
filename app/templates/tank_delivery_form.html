@@ -1,12 +1,18 @@
 {% extends "base.html" %}
 
-{% from "_macros.html" import button_class, csrf_field, glass_panel, page_header with context %}
+{% from "_macros.html" import button_class, csrf_field, glass_panel, mobile_header_bar, page_header with context %}
+
+{% block mobile_header %}
+{{ mobile_header_bar(title="Lieferung", back_href="/tanks/" ~ tank.id) }}
+{% endblock %}
 
 {% block title %}Lieferung – {{ tank.name }} – Tankly{% endblock %}
 
 {% block content %}
 <div class="mx-auto max-w-2xl">
-    {{ page_header("Lieferung erfassen", tank.name, "Kraftstoffzufuhr auf den Hof-Tank buchen.") }}
+    <div class="hidden lg:block">
+        {{ page_header("Lieferung erfassen", tank.name, "Kraftstoffzufuhr auf den Hof-Tank buchen.") }}
+    </div>
 
     {% if error %}
     <div class="mb-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">{{ error }}</div>
@@ -32,9 +38,9 @@
                 <textarea name="notes" id="notes" rows="3" maxlength="500" class="mt-1 block w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500">{{ form_notes }}</textarea>
             </div>
         </section>
-        <div class="flex flex-col gap-3 sm:flex-row">
-            <button type="submit" class="{{ button_class('primary') }} min-h-[52px] flex-1">Speichern</button>
-            <a href="/tanks/{{ tank.id }}" class="{{ button_class('secondary') }} min-h-[52px]">Abbrechen</a>
+        <div class="sticky bottom-24 z-10 flex flex-col gap-3 rounded-2xl border border-white/70 bg-white/90 p-3 shadow-xl backdrop-blur-xl sm:static sm:flex-row sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+            <button type="submit" class="{{ button_class('primary') }} min-h-[48px] flex-1">Speichern</button>
+            <a href="/tanks/{{ tank.id }}" class="{{ button_class('secondary') }} min-h-[48px]">Abbrechen</a>
         </div>
     </form>
 </div>

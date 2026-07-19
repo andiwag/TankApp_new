@@ -1,12 +1,18 @@
 {% extends "base.html" %}
 
-{% from "_macros.html" import action_button, csrf_field, empty_state, glass_panel, page_header, status_chip with context %}
+{% from "_macros.html" import empty_state, glass_panel, mobile_header_bar, page_header, status_chip with context %}
+
+{% block mobile_header %}
+{{ mobile_header_bar(title="Tanklager", action_href="/tanks/new" if can_edit else "") }}
+{% endblock %}
 
 {% block title %}Tanklager – Tankly{% endblock %}
 
 {% block content %}
 <div>
-    {{ page_header("Tanklager", "Verwalten", "Hof-Tankstellen und Kraftstoffbestände im Überblick.", "/tanks/new" if can_edit else "", "Tank anlegen") }}
+    <div class="hidden lg:block">
+        {{ page_header("Tanklager", "Verwalten", "Hof-Tankstellen und Kraftstoffbestände im Überblick.", "/tanks/new" if can_edit else "", "Tank anlegen", "/export/tank-ledger.csv" if can_export else "", "CSV exportieren", icon="fuel") }}
+    </div>
 
     {% if tank_rows %}
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
