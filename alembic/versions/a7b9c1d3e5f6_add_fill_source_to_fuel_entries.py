@@ -16,7 +16,9 @@ down_revision: Union[str, None] = "f6a8b0c2d4e5"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-fill_source_enum = sa.Enum("external", "farm", name="fill_source_enum")
+fill_source_enum = sa.Enum(
+    "external", "farm", name="fill_source_enum", create_type=False
+)
 
 
 def upgrade() -> None:

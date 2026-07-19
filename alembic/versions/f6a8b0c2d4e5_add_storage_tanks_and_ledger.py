@@ -22,12 +22,10 @@ tank_movement_type_enum = sa.Enum(
     "external_withdrawal",
     "adjustment",
     name="tank_movement_type_enum",
-    create_type=False,
 )
 
 
 def upgrade() -> None:
-    tank_movement_type_enum.create(op.get_bind(), checkfirst=True)
     op.create_table(
         "storage_tanks",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
