@@ -102,6 +102,9 @@ class TestExportCsv:
             "total_cost_eur",
             "logged_by",
             "notes",
+            "adblue_liters",
+            "fill_source",
+            "fuel_tank_name",
         ]
         assert rows[1][1] == "Tractor 1"
         assert rows[1][4] == "False"

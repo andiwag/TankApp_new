@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% from "_macros.html" import button_class, csrf_field, glass_panel, page_header with context %}
+
+{% block title %}{% if mode == 'create' %}Neuer Tank{% else %}Tank bearbeiten{% endif %} – Tankly{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl">
+    {{ page_header("Neuer Tank" if mode == "create" else "Tank bearbeiten", "Tanklager", "Hof-Tankstelle mit Kraftstofftyp und optionalem Anfangsbestand einrichten.") }}
+
+    {% if error %}
+    <div class="mb-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="{% if mode == 'create' %}/tanks/new{% else %}/tanks/{{ tank.id }}/edit{% endif %}" class="{{ glass_panel('space-y-6 p-5 sm:p-6') }}" x-data="{ submitting: false }" @submit="submitting = true">
+        {{ csrf_field() }}
+
+        <section class="rounded-2xl bg-white/60 p-4 space-y-4">
+            <label for="name" class="block text-sm font-medium text-slate-700">Name</label>
+            <input type="text" name="name" id="name" required value="{% if tank %}{{ tank.name }}{% else %}{{ form_name }}{% endif %}" class="block min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500" />
+
+            {% if mode == 'create' %}
+            <label for="fuel_type" class="block text-sm font-medium text-slate-700">Kraftstoff</label>
+            <select name="fuel_type" id="fuel_type" required class="block min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                <option value="">Kraftstoff wählen</option>
+                <option value="diesel" {% if form_fuel_type == 'diesel' %}selected{% endif %}>{{ fuel_type_label('diesel') }}</option>
+                <option value="petrol" {% if form_fuel_type == 'petrol' %}selected{% endif %}>{{ fuel_type_label('petrol') }}</option>
+            </select>
+
+            <label for="opening_balance_l" class="block text-sm font-medium text-slate-700">Anfangsbestand (Liter)</label>
+            <input type="number" name="opening_balance_l" id="opening_balance_l" min="0" step="0.01" value="{{ form_opening_balance_l or '0' }}" class="block min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500" />
+            {% else %}
+            <p class="text-sm text-slate-600">Kraftstoff: <strong>{{ fuel_type_label(tank.fuel_type) }}</strong> · Anfangsbestand: <strong>{{ format_number(tank.opening_balance_l) }} L</strong></p>
+            {% endif %}
+
+            <label for="capacity_l" class="block text-sm font-medium text-slate-700">Kapazität (Liter, optional)</label>
+            <input type="number" name="capacity_l" id="capacity_l" min="0.01" step="0.01" value="{% if tank and tank.capacity_l is not none %}{{ tank.capacity_l }}{% else %}{{ form_capacity_l }}{% endif %}" class="block min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500" />
+
+            <label for="notes" class="block text-sm font-medium text-slate-700">Notizen (optional)</label>
+            <textarea name="notes" id="notes" rows="3" maxlength="500" class="block w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500">{% if tank %}{{ tank.notes or '' }}{% else %}{{ form_notes }}{% endif %}</textarea>
+        </section>
+
+        <div class="flex flex-col gap-3 sm:flex-row">
+            <button type="submit" class="{{ button_class('primary') }} min-h-[52px] flex-1">{% if mode == 'create' %}Speichern{% else %}Aktualisieren{% endif %}</button>
+            <a href="{% if mode == 'edit' %}/tanks/{{ tank.id }}{% else %}/tanks{% endif %}" class="{{ button_class('secondary') }} min-h-[52px]">Abbrechen</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

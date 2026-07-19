@@ -114,6 +114,32 @@
 
 
 
+    {% if total_group_adblue_l is not none %}
+
+    <section class="mb-10">
+
+        <div class="mb-4 flex items-center justify-between">
+
+            <h2 class="text-xl font-bold text-slate-950">AdBlue</h2>
+
+            {{ status_chip("Traktoren", "info") }}
+
+        </div>
+
+        <div class="{{ glass_panel('p-6') }}">
+
+            <p class="text-sm text-slate-600">Gesamt AdBlue (getrennt von Kraftstoff-Litern)</p>
+
+            <p class="mt-2 text-3xl font-bold text-sky-800"><span id="sum-adblue-total">{{ format_number(total_group_adblue_l) }}</span> L</p>
+
+        </div>
+
+    </section>
+
+    {% endif %}
+
+
+
     <section>
 
         <div class="mb-4 flex items-center justify-between">

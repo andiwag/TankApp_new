@@ -7,6 +7,7 @@ from app.config import settings
 from app.display_labels import (
     fuel_type_label,
     role_label,
+    tank_movement_type_label,
     usage_unit_label,
     vehicle_type_label,
 )
@@ -22,6 +23,7 @@ templates.env.globals["vehicle_type_label"] = vehicle_type_label
 templates.env.globals["fuel_type_label"] = fuel_type_label
 templates.env.globals["role_label"] = role_label
 templates.env.globals["usage_unit_label"] = usage_unit_label
+templates.env.globals["tank_movement_type_label"] = tank_movement_type_label
 templates.env.globals["product_domain"] = lambda: PRODUCT_DOMAIN
 templates.env.globals["product_url"] = lambda: PRODUCT_URL
 templates.env.globals["registration_invite_required"] = lambda: (

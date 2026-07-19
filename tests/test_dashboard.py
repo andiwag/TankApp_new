@@ -288,3 +288,83 @@ class TestDashboardStats:
         assert _stat(response.text, "stat-vehicles") == 0
         assert _stat(response.text, "stat-entries") == 0
         assert _stat_float(response.text, "stat-liters") == pytest.approx(0.0)
+
+
+class TestDashboardTankStock:
+    async def test_dashboard_shows_tank_stock_when_tanks_exist(
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_storage_tank,
+        auth_cookie,
+    ):
+        user = create_test_user()
+        group = create_test_group(created_by=user.id)
+        create_test_user_group(user.id, group.id, role="admin")
+        create_test_storage_tank(
+            group_id=group.id, name="Diesel Hof", opening_balance_l=250.0
+        )
+        auth_cookie(client, user.id, group.id)
+
+        response = await client.get("/dashboard")
+
+        assert response.status_code == 200
+        html = response.text
+        assert 'id="tank-stock"' in html
+        assert "Diesel Hof" in html
+        assert "250" in html
+
+    async def test_dashboard_negative_stock_shows_warning(
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_storage_tank,
+        auth_cookie,
+        db,
+    ):
+        from app.schemas import TankExternalWithdrawalCreate
+        from app.services.tank_ledger import post_external_withdrawal
+
+        user = create_test_user()
+        group = create_test_group(created_by=user.id)
+        create_test_user_group(user.id, group.id, role="admin")
+        tank = create_test_storage_tank(group_id=group.id, opening_balance_l=10.0)
+        post_external_withdrawal(
+            db,
+            user.id,
+            group.id,
+            tank,
+            TankExternalWithdrawalCreate(
+                amount_l=25.0,
+                entry_date=date.today(),
+                recipient_name="Nachbar",
+            ),
+        )
+        auth_cookie(client, user.id, group.id)
+
+        response = await client.get("/dashboard")
+
+        assert response.status_code == 200
+        assert "negative-stock-warning" in response.text
+
+    async def test_dashboard_no_tanks_hides_stock_section(
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+    ):
+        user = create_test_user()
+        group = create_test_group(created_by=user.id)
+        create_test_user_group(user.id, group.id, role="admin")
+        auth_cookie(client, user.id, group.id)
+
+        response = await client.get("/dashboard")
+
+        assert response.status_code == 200
+        assert 'id="tank-stock"' not in response.text

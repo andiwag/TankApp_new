@@ -1,25 +1,25 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class VehicleType(str, Enum):
+class VehicleType(StrEnum):
     car = "car"
     motorcycle = "motorcycle"
     tractor = "tractor"
     machine = "machine"
 
 
-class FuelType(str, Enum):
+class FuelType(StrEnum):
     diesel = "diesel"
     petrol = "petrol"
 
 
-class Role(str, Enum):
+class Role(StrEnum):
     admin = "admin"
     contributor = "contributor"
     reader = "reader"
 
 
-class UsageUnit(str, Enum):
+class UsageUnit(StrEnum):
     km = "km"
     hours = "hours"
 
@@ -30,3 +30,15 @@ VTYPE_TO_USAGE_UNIT: dict[VehicleType, UsageUnit] = {
     VehicleType.tractor: UsageUnit.hours,
     VehicleType.machine: UsageUnit.hours,
 }
+
+
+class FillSource(StrEnum):
+    external = "external"
+    farm = "farm"
+
+
+class TankMovementType(StrEnum):
+    delivery = "delivery"
+    vehicle_withdrawal = "vehicle_withdrawal"
+    external_withdrawal = "external_withdrawal"
+    adjustment = "adjustment"

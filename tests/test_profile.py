@@ -196,6 +196,74 @@ class TestProfileDataExport:
         assert len(data["group_memberships"]) == 1
         assert data["group_memberships"][0]["group_name"] == "Export Farm"
 
+    def test_export_personal_data_includes_fuel_and_tank_ledger_fields(
+        self,
+        db,
+        create_test_user,
+        create_test_group,
+        create_test_vehicle,
+        create_test_storage_tank,
+    ):
+        from datetime import date
+
+        from app.enums import FillSource
+        from app.schemas import FuelEntryCreate, TankExternalWithdrawalCreate
+        from app.services.fuel_entries import create_fuel_entry
+        from app.services.profile import export_user_personal_data
+        from app.services.tank_ledger import post_external_withdrawal
+
+        user = create_test_user()
+        group = create_test_group(created_by=user.id)
+        vehicle = create_test_vehicle(group_id=group.id, vtype="tractor")
+        tank = create_test_storage_tank(
+            group_id=group.id, name="Hof Diesel", opening_balance_l=200.0
+        )
+        create_fuel_entry(
+            db,
+            user.id,
+            group.id,
+            vehicle,
+            FuelEntryCreate(
+                vehicle_id=vehicle.id,
+                fuel_amount_l=30.0,
+                usage_reading=100.0,
+                entry_date=date(2025, 5, 1),
+                fill_source=FillSource.farm,
+                fuel_tank_id=tank.id,
+                adblue_amount_l=5.0,
+            ),
+        )
+        post_external_withdrawal(
+            db,
+            user.id,
+            group.id,
+            tank,
+            TankExternalWithdrawalCreate(
+                amount_l=12.0,
+                entry_date=date(2025, 5, 2),
+                recipient_name="Nachbar",
+            ),
+        )
+
+        data = export_user_personal_data(db, user)
+
+        assert len(data["fuel_entries"]) == 1
+        fuel = data["fuel_entries"][0]
+        assert fuel["fill_source"] == "farm"
+        assert fuel["fuel_tank_name"] == "Hof Diesel"
+        assert fuel["adblue_amount_l"] == 5.0
+
+        assert len(data["tank_ledger_entries"]) == 2
+        types = {row["movement_type"] for row in data["tank_ledger_entries"]}
+        assert types == {"vehicle_withdrawal", "external_withdrawal"}
+        external = next(
+            r
+            for r in data["tank_ledger_entries"]
+            if r["movement_type"] == "external_withdrawal"
+        )
+        assert external["recipient_name"] == "Nachbar"
+        assert external["tank_name"] == "Hof Diesel"
+
     async def test_export_requires_auth(self, client):
         response = await client.get("/profile/export/data.json", follow_redirects=False)
         assert response.status_code == 303

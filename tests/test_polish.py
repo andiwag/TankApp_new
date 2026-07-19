@@ -152,7 +152,7 @@ class TestQueryCounts:
             response = await client.get("/dashboard")
 
         assert response.status_code == 200
-        assert len(statements) <= 10
+        assert len(statements) <= 11
 
     async def test_no_n_plus_1_queries_on_vehicle_list(
         self, client, auth_group, create_test_vehicle

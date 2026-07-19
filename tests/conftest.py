@@ -13,7 +13,7 @@ from app.csrf import (
 )
 from app.database import Base, get_db
 from app.main import app
-from app.models import FuelEntry, Group, User, UserGroup, Vehicle
+from app.models import FuelEntry, Group, StorageTank, User, UserGroup, Vehicle
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
@@ -250,6 +250,32 @@ def create_test_fuel_entry(db):
         db.commit()
         db.refresh(entry)
         return entry
+
+    return _create
+
+
+@pytest.fixture
+def create_test_storage_tank(db):
+    def _create(
+        group_id: int,
+        name: str = "Hof-Tank",
+        fuel_type: str = "diesel",
+        capacity_l: float | None = None,
+        opening_balance_l: float = 0.0,
+        notes: str | None = None,
+    ) -> StorageTank:
+        tank = StorageTank(
+            group_id=group_id,
+            name=name,
+            fuel_type=fuel_type,
+            capacity_l=capacity_l,
+            opening_balance_l=opening_balance_l,
+            notes=notes,
+        )
+        db.add(tank)
+        db.commit()
+        db.refresh(tank)
+        return tank
 
     return _create
 

@@ -7,11 +7,28 @@ def _utcnow() -> datetime:
     return utc_now()
 
 
-from sqlalchemy import Boolean, CheckConstraint, Enum, Float, ForeignKey, String, event
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Enum,
+    Float,
+    ForeignKey,
+    Index,
+    String,
+    event,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.enums import VTYPE_TO_USAGE_UNIT, FuelType, Role, UsageUnit, VehicleType
+from app.enums import (
+    VTYPE_TO_USAGE_UNIT,
+    FillSource,
+    FuelType,
+    Role,
+    TankMovementType,
+    UsageUnit,
+    VehicleType,
+)
 
 
 class User(Base):
@@ -49,6 +66,7 @@ class Group(Base):
         back_populates="group", cascade="all, delete-orphan"
     )
     vehicles: Mapped[list["Vehicle"]] = relationship(back_populates="group")
+    storage_tanks: Mapped[list["StorageTank"]] = relationship(back_populates="group")
 
 
 class UserGroup(Base):
@@ -103,6 +121,10 @@ class FuelEntry(Base):
     __table_args__ = (
         CheckConstraint("fuel_amount_l > 0", name="ck_fuel_amount_positive"),
         CheckConstraint("usage_reading >= 0", name="ck_usage_reading_non_negative"),
+        CheckConstraint(
+            "adblue_amount_l IS NULL OR adblue_amount_l > 0",
+            name="ck_adblue_amount_positive",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -113,6 +135,12 @@ class FuelEntry(Base):
     usage_reading: Mapped[float] = mapped_column(Float)
     full_tank: Mapped[bool] = mapped_column(Boolean, default=True)
     total_cost_eur: Mapped[float | None] = mapped_column(Float)
+    adblue_amount_l: Mapped[float | None] = mapped_column(Float)
+    fill_source: Mapped[str] = mapped_column(
+        Enum(*[e.value for e in FillSource], name="fill_source_enum"),
+        default=FillSource.external.value,
+    )
+    fuel_tank_id: Mapped[int | None] = mapped_column(ForeignKey("storage_tanks.id"))
     notes: Mapped[str | None] = mapped_column(String(500))
     entry_date: Mapped[date] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(default=_utcnow)
@@ -123,6 +151,81 @@ class FuelEntry(Base):
 
     vehicle: Mapped["Vehicle"] = relationship(back_populates="fuel_entries")
     user: Mapped["User"] = relationship(back_populates="fuel_entries")
+    fuel_tank: Mapped["StorageTank | None"] = relationship()
+    tank_ledger_entries: Mapped[list["TankLedgerEntry"]] = relationship(
+        back_populates="fuel_entry"
+    )
+
+
+class StorageTank(Base):
+    __tablename__ = "storage_tanks"
+    __table_args__ = (
+        CheckConstraint("opening_balance_l >= 0", name="ck_tank_opening_non_negative"),
+        CheckConstraint(
+            "capacity_l IS NULL OR capacity_l > 0",
+            name="ck_tank_capacity_positive",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    group_id: Mapped[int] = mapped_column(ForeignKey("groups.id"))
+    name: Mapped[str] = mapped_column()
+    fuel_type: Mapped[str] = mapped_column(
+        Enum(*[e.value for e in FuelType], name="fuel_type_enum", create_type=False)
+    )
+    capacity_l: Mapped[float | None] = mapped_column(Float)
+    opening_balance_l: Mapped[float] = mapped_column(Float, default=0.0)
+    notes: Mapped[str | None] = mapped_column(String(500))
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow)
+    updated_at: Mapped[datetime | None] = mapped_column(
+        default=_utcnow, onupdate=_utcnow
+    )
+    deleted_at: Mapped[datetime | None] = mapped_column()
+
+    group: Mapped["Group"] = relationship(back_populates="storage_tanks")
+    ledger_entries: Mapped[list["TankLedgerEntry"]] = relationship(
+        back_populates="tank"
+    )
+
+
+class TankLedgerEntry(Base):
+    __tablename__ = "tank_ledger_entries"
+    __table_args__ = (
+        CheckConstraint("amount_l != 0", name="ck_ledger_amount_non_zero"),
+        Index(
+            "ix_tank_ledger_entries_fuel_entry_id",
+            "fuel_entry_id",
+            unique=True,
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    tank_id: Mapped[int] = mapped_column(ForeignKey("storage_tanks.id"))
+    group_id: Mapped[int] = mapped_column(ForeignKey("groups.id"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    movement_type: Mapped[str] = mapped_column(
+        Enum(
+            *[e.value for e in TankMovementType],
+            name="tank_movement_type_enum",
+        )
+    )
+    amount_l: Mapped[float] = mapped_column(Float)
+    entry_date: Mapped[date] = mapped_column()
+    fuel_entry_id: Mapped[int | None] = mapped_column(ForeignKey("fuel_entries.id"))
+    recipient_name: Mapped[str | None] = mapped_column(String(200))
+    total_cost_eur: Mapped[float | None] = mapped_column(Float)
+    notes: Mapped[str | None] = mapped_column(String(500))
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow)
+    updated_at: Mapped[datetime | None] = mapped_column(
+        default=_utcnow, onupdate=_utcnow
+    )
+    deleted_at: Mapped[datetime | None] = mapped_column()
+
+    tank: Mapped["StorageTank"] = relationship(back_populates="ledger_entries")
+    fuel_entry: Mapped["FuelEntry | None"] = relationship(
+        back_populates="tank_ledger_entries"
+    )
+    user: Mapped["User"] = relationship()
 
 
 class AuditLog(Base):

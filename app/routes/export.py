@@ -38,3 +38,18 @@ async def export_vehicles_csv(
             "Content-Disposition": 'attachment; filename="vehicles.csv"',
         },
     )
+
+
+@router.get("/export/tank-ledger.csv")
+async def export_tank_ledger_csv(
+    db: Session = Depends(get_db),
+    group: Group = Depends(get_active_group),
+):
+    content = export_service.tank_ledger_csv(db, group.id)
+    return Response(
+        content=content,
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": 'attachment; filename="tank-ledger.csv"',
+        },
+    )

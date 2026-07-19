@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% from "_macros.html" import button_class, csrf_field, glass_panel, page_header, status_chip with context %}
+
+{% block title %}{{ tank.name }} – Tanklager – Tankly{% endblock %}
+
+{% block content %}
+<div>
+    {{ page_header(tank.name, "Tanklager", fuel_type_label(tank.fuel_type) ~ " · Bestand und Bewegungen") }}
+
+    <div class="mb-8 grid gap-4 sm:grid-cols-2">
+        <div class="{{ glass_panel('p-5') }}">
+            <p class="text-sm font-medium text-slate-500">Aktueller Bestand</p>
+            <p class="mt-2 text-3xl font-bold {% if negative_stock %}text-red-800{% else %}text-emerald-800{% endif %}">{{ format_number(current_stock_l) }} L</p>
+            {% if negative_stock %}
+            <p class="mt-2 text-sm font-medium text-red-700">Bestand ist negativ — bitte Lieferung oder Korrektur erfassen.</p>
+            {% endif %}
+        </div>
+        <div class="{{ glass_panel('p-5') }}">
+            <p class="text-sm font-medium text-slate-500">Anfangsbestand</p>
+            <p class="mt-2 text-xl font-semibold text-slate-900">{{ format_number(tank.opening_balance_l) }} L</p>
+            {% if tank.capacity_l is not none %}
+            <p class="mt-2 text-sm text-slate-600">Kapazität: {{ format_number(tank.capacity_l) }} L</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if can_edit %}
+    <div class="mb-6 flex flex-wrap gap-3">
+        <a href="/tanks/{{ tank.id }}/delivery/new" class="{{ button_class('primary') }}">Lieferung erfassen</a>
+        <a href="/tanks/{{ tank.id }}/external/new" class="{{ button_class('secondary') }}">Externe Abgabe</a>
+        {% if can_delete %}
+        <a href="/tanks/{{ tank.id }}/adjustment/new" class="{{ button_class('secondary') }}">Bestandskorrektur</a>
+        {% endif %}
+        <a href="/tanks/{{ tank.id }}/edit" class="{{ button_class('secondary') }}">Tank bearbeiten</a>
+    </div>
+    {% endif %}
+
+    <section class="{{ glass_panel('overflow-x-auto') }}">
+        <h2 class="border-b border-white/70 px-5 py-4 text-lg font-bold text-slate-950">Bewegungen</h2>
+        {% if ledger_entries %}
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-white/60">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">Datum</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">Art</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">Liter</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">Notizen</th>
+                    {% if can_edit or can_delete %}
+                    <th class="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">Aktionen</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-white/70 bg-white/40">
+                {% for e in ledger_entries %}
+                <tr>
+                    <td class="px-4 py-3 text-sm text-slate-800">{{ format_date(e.entry_date) }}</td>
+                    <td class="px-4 py-3 text-sm">{{ status_chip(tank_movement_type_label(e.movement_type), "info") }}</td>
+                    <td class="px-4 py-3 text-right text-sm font-semibold {% if e.amount_l < 0 %}text-amber-800{% else %}text-emerald-800{% endif %}">{{ format_number(e.amount_l) }}</td>
+                    <td class="px-4 py-3 text-sm text-slate-600">{{ e.notes or e.recipient_name or '—' }}</td>
+                    {% if can_edit or can_delete %}
+                    <td class="px-4 py-3 text-right text-sm">
+                        {% if e.movement_type == 'vehicle_withdrawal' %}
+                        <span class="text-slate-500">über Tankvorgang</span>
+                        {% else %}
+                        <div class="flex flex-wrap justify-end gap-2">
+                            {% if can_edit %}
+                            <a href="/tanks/ledger/{{ e.id }}/edit" class="font-semibold text-emerald-800 hover:text-emerald-950">Bearbeiten</a>
+                            {% endif %}
+                            {% if can_delete %}
+                            <form method="post" action="/tanks/ledger/{{ e.id }}/delete" class="inline" @submit="if (!confirm('Diese Bewegung entfernen?')) $event.preventDefault()">
+                                {{ csrf_field() }}
+                                <button type="submit" class="font-semibold text-red-700 hover:text-red-900">Entfernen</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="p-5 text-sm text-slate-600">Noch keine Bewegungen erfasst.</p>
+        {% endif %}
+    </section>
+
+    {% if can_delete %}
+    <form method="post" action="/tanks/{{ tank.id }}/delete" class="mt-8" x-data="{ submitting: false }" @submit="if (!confirm('Diesen Tank entfernen?')) { $event.preventDefault(); return; } submitting = true">
+        {{ csrf_field() }}
+        <button type="submit" class="{{ button_class('secondary') }} text-red-700">Tank entfernen</button>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

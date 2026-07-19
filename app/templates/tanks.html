@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% from "_macros.html" import action_button, csrf_field, empty_state, glass_panel, page_header, status_chip with context %}
+
+{% block title %}Tanklager – Tankly{% endblock %}
+
+{% block content %}
+<div>
+    {{ page_header("Tanklager", "Verwalten", "Hof-Tankstellen und Kraftstoffbestände im Überblick.", "/tanks/new" if can_edit else "", "Tank anlegen") }}
+
+    {% if tank_rows %}
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {% for row in tank_rows %}
+        {% set tank = row.tank %}
+        <article class="{{ glass_panel('p-5') }}">
+            <h2 class="text-lg font-bold text-slate-950">{{ tank.name }}</h2>
+            <div class="mt-3 flex flex-wrap gap-2">
+                {{ status_chip(fuel_type_label(tank.fuel_type), "success") }}
+                {% if row.current_stock_l < 0 %}
+                {{ status_chip("Negativer Bestand", "warning") }}
+                {% endif %}
+            </div>
+            <p class="mt-4 text-2xl font-bold text-emerald-800">{{ format_number(row.current_stock_l) }} L</p>
+            {% if tank.capacity_l is not none %}
+            <p class="mt-1 text-sm text-slate-600">Kapazität: {{ format_number(tank.capacity_l) }} L</p>
+            {% endif %}
+            <div class="mt-4">
+                <a href="/tanks/{{ tank.id }}" class="text-sm font-semibold text-emerald-800 hover:text-emerald-950">Details →</a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    {{ empty_state("Noch keine Tanks angelegt", "Lege Hof-Tanks für Diesel und Benzin an, um Bestände zu verfolgen.", "/tanks/new" if can_edit else "", "Ersten Tank anlegen") }}
+    {% endif %}
+</div>
+{% endblock %}

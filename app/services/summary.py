@@ -58,6 +58,7 @@ def get_summary_context(db: Session, group_id: int, today: date | None = None) -
     for v in vehicles:
         ves = by_vehicle.get(v.id, [])
         total_liters = sum(e.fuel_amount_l for e in ves)
+        total_adblue = sum(e.adblue_amount_l or 0.0 for e in ves)
         entry_count = len(ves)
         pairs = [(e.usage_reading, e.fuel_amount_l, e.full_tank) for e in ves]
         avg = average_consumption_for_vehicle(v.usage_unit, pairs)
@@ -68,6 +69,7 @@ def get_summary_context(db: Session, group_id: int, today: date | None = None) -
                 "vehicle_id": v.id,
                 "name": v.name,
                 "total_liters": total_liters,
+                "total_adblue_l": total_adblue if total_adblue > 0 else None,
                 "total_cost_eur": total_cost if total_cost > 0 else None,
                 "entry_count": entry_count,
                 "avg_consumption": avg,
@@ -103,6 +105,7 @@ def get_summary_context(db: Session, group_id: int, today: date | None = None) -
     ]
 
     total_group_cost = sum(e.total_cost_eur or 0.0 for e in entries)
+    total_group_adblue = sum(e.adblue_amount_l or 0.0 for e in entries)
 
     show_empty_state = len(vehicles) == 0
 
@@ -110,5 +113,6 @@ def get_summary_context(db: Session, group_id: int, today: date | None = None) -
         "vehicle_rows": vehicle_rows,
         "monthly_rows": monthly_rows,
         "total_group_cost_eur": total_group_cost if total_group_cost > 0 else None,
+        "total_group_adblue_l": total_group_adblue if total_group_adblue > 0 else None,
         "show_empty_state": show_empty_state,
     }

@@ -118,6 +118,54 @@
 
 
 
+    {% if tank_stock_rows %}
+
+    <section id="tank-stock" class="{{ glass_panel('p-6') }}">
+
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+            <div>
+
+                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-sky-700">Lager</p>
+
+                <h2 class="text-xl font-bold text-slate-950">Hof-Tank Bestände</h2>
+
+            </div>
+
+            <a href="/tanks" class="text-sm font-semibold text-emerald-800 hover:text-emerald-950">Tanklager öffnen</a>
+
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+
+            {% for row in tank_stock_rows %}
+
+            <div class="rounded-2xl border {% if row.negative_stock %}border-red-200 bg-red-50/80 negative-stock-warning{% else %}border-white/70 bg-white/70{% endif %} p-4">
+
+                <p class="font-semibold text-slate-950">{{ row.tank.name }}</p>
+
+                <p class="mt-1 text-sm text-slate-500">{{ row.tank.fuel_type }}</p>
+
+                <p class="mt-3 text-2xl font-bold {% if row.negative_stock %}text-red-800{% else %}text-sky-800{% endif %}">{{ format_number(row.current_stock_l) }} L</p>
+
+                {% if row.negative_stock %}
+
+                <p class="mt-2 text-sm font-medium text-red-700">Negativer Bestand — Inventur prüfen</p>
+
+                {% endif %}
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </section>
+
+    {% endif %}
+
+
+
     {% if can_edit %}
 
     <section>

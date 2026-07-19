@@ -11,7 +11,7 @@ from pydantic import (
     model_validator,
 )
 
-from app.enums import FuelType, VehicleType
+from app.enums import FillSource, FuelType, VehicleType
 
 MIN_PASSWORD_LENGTH = 8
 
@@ -187,12 +187,21 @@ class FuelEntryCreate(BaseModel):
     entry_date: date
     full_tank: bool = True
     total_cost_eur: float | None = Field(default=None, ge=0)
+    adblue_amount_l: float | None = Field(default=None, gt=0)
+    fill_source: FillSource = FillSource.external
+    fuel_tank_id: int | None = None
     notes: str | None = Field(default=None, max_length=500)
 
     @model_validator(mode="after")
     def validate_date_not_future(self) -> "FuelEntryCreate":
         if self.entry_date > date.today():
             raise ValueError("Datum darf nicht in der Zukunft liegen")
+        return self
+
+    @model_validator(mode="after")
+    def validate_fill_source_tank(self) -> "FuelEntryCreate":
+        if self.fill_source == FillSource.external and self.fuel_tank_id is not None:
+            raise ValueError("Externe Tankstelle erfordert keinen Hof-Tank.")
         return self
 
 
@@ -202,6 +211,9 @@ class FuelEntryUpdate(BaseModel):
     entry_date: date | None = None
     full_tank: bool | None = None
     total_cost_eur: float | None = Field(default=None, ge=0)
+    adblue_amount_l: float | None = Field(default=None, gt=0)
+    fill_source: FillSource | None = None
+    fuel_tank_id: int | None = None
     notes: str | None = Field(default=None, max_length=500)
 
     @model_validator(mode="after")
@@ -212,6 +224,9 @@ class FuelEntryUpdate(BaseModel):
             and self.entry_date is None
             and self.full_tank is None
             and self.total_cost_eur is None
+            and self.adblue_amount_l is None
+            and self.fill_source is None
+            and self.fuel_tank_id is None
             and self.notes is None
         ):
             raise ValueError("Mindestens ein Feld muss angegeben werden")
@@ -220,6 +235,80 @@ class FuelEntryUpdate(BaseModel):
     @model_validator(mode="after")
     def validate_date_not_future(self) -> "FuelEntryUpdate":
         if self.entry_date is not None and self.entry_date > date.today():
+            raise ValueError("Datum darf nicht in der Zukunft liegen")
+        return self
+
+
+# ── Storage tank schemas ─────────────────────────────────────────────────────
+
+
+class StorageTankCreate(BaseModel):
+    name: NonEmptyStr
+    fuel_type: FuelType
+    capacity_l: float | None = Field(default=None, gt=0)
+    opening_balance_l: float = Field(default=0, ge=0)
+    notes: str | None = Field(default=None, max_length=500)
+
+
+class StorageTankUpdate(BaseModel):
+    name: str | None = None
+    capacity_l: float | None = Field(default=None, gt=0)
+    notes: str | None = Field(default=None, max_length=500)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def normalize_optional_name(cls, v: object) -> object:
+        if v is None:
+            return None
+        if isinstance(v, str):
+            s = v.strip()
+            return s if s else None
+        return v
+
+    @model_validator(mode="after")
+    def require_at_least_one_field(self) -> "StorageTankUpdate":
+        if self.name is None and self.capacity_l is None and self.notes is None:
+            raise ValueError("Mindestens ein Feld muss angegeben werden")
+        return self
+
+
+class TankDeliveryCreate(BaseModel):
+    amount_l: float = Field(gt=0)
+    entry_date: date
+    total_cost_eur: float | None = Field(default=None, ge=0)
+    notes: str | None = Field(default=None, max_length=500)
+
+    @model_validator(mode="after")
+    def validate_date_not_future(self) -> "TankDeliveryCreate":
+        if self.entry_date > date.today():
+            raise ValueError("Datum darf nicht in der Zukunft liegen")
+        return self
+
+
+class TankAdjustmentCreate(BaseModel):
+    amount_l: float
+    entry_date: date
+    notes: NonEmptyStr
+
+    @model_validator(mode="after")
+    def validate_amount_and_date(self) -> "TankAdjustmentCreate":
+        if self.amount_l == 0:
+            raise ValueError("Menge darf nicht 0 sein")
+        if self.entry_date > date.today():
+            raise ValueError("Datum darf nicht in der Zukunft liegen")
+        return self
+
+
+class TankExternalWithdrawalCreate(BaseModel):
+    amount_l: float = Field(gt=0)
+    entry_date: date
+    recipient_name: NonEmptyStr
+    total_cost_eur: float | None = Field(default=None, ge=0)
+    notes: str | None = Field(default=None, max_length=500)
+
+    @model_validator(mode="after")
+    def validate_date_not_future(self) -> "TankExternalWithdrawalCreate":
+        if self.entry_date > date.today():
             raise ValueError("Datum darf nicht in der Zukunft liegen")
         return self
 

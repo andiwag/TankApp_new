@@ -1,6 +1,6 @@
 # Tankly – Test-Driven Development Plan
 
-Phased plan for **Tankly** (product name; GitHub folder may still be `TankApp_new`). Phases **0–16** = original MVP (complete). **17–21** = post-MVP delivery (complete). **22–23** = planned — see linked guides.
+Phased plan for **Tankly** (product name; GitHub folder may still be `TankApp_new`). Phases **0–16** = original MVP (complete). **17–21** = post-MVP delivery (complete). **22** = complete. **23–28** = planned — see linked guides.
 
 ## Documentation index
 
@@ -13,6 +13,7 @@ Phased plan for **Tankly** (product name; GitHub folder may still be `TankApp_ne
 | [PRODUCTION.md](./PRODUCTION.md) | Production hardening & deploy details |
 | [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) | **Planned** operator dashboard (`/platform`) |
 | [STRIPE_BILLING.md](./STRIPE_BILLING.md) | **Planned** Stripe billing per group |
+| [TANK_INVENTORY_AND_ADBLUE.md](./TANK_INVENTORY_AND_ADBLUE.md) | **Planned** farm tank inventory, fill sources, AdBlue |
 
 All development follows a strict **Red → Green → Refactor** TDD cycle:
 1. **Red:** Write a failing test that defines expected behavior.
@@ -1044,6 +1045,168 @@ Full specification: [STRIPE_BILLING.md](./STRIPE_BILLING.md)
 
 ---
 
+## Phase 24: AdBlue on Tractor Entries
+
+**Status:** ✅ Complete
+
+Full specification: [TANK_INVENTORY_AND_ADBLUE.md](./TANK_INVENTORY_AND_ADBLUE.md) § Phase 24
+
+### Summary
+- [x] `fuel_entries.adblue_amount_l` optional column
+- [x] Tractor-only validation; separate summary totals
+- [x] `tests/test_adblue.py`
+
+### Tests (write before implementation)
+```
+test_fuel_entry_create_with_adblue_on_tractor
+test_fuel_entry_create_without_adblue_on_tractor_ok
+test_fuel_entry_create_adblue_on_car_rejected
+test_fuel_entry_create_adblue_zero_rejected
+test_fuel_entry_update_clears_adblue
+test_fuel_entry_form_shows_adblue_for_tractor_vehicle
+test_fuel_entry_form_hides_adblue_for_car
+test_summary_includes_adblue_total_separate_from_fuel_liters
+test_consumption_ignores_adblue_amount
+test_export_csv_includes_adblue_column
+```
+
+### Acceptance criteria
+- [x] Tractor entries may record optional AdBlue liters
+- [x] Non-tractors cannot save AdBlue; diesel consumption unchanged
+- [x] AdBlue totals separate from Kraftstoff liters in summary/export
+
+---
+
+## Phase 25: Storage Tanks & Ledger
+
+**Status:** ✅ Complete
+
+Full specification: [TANK_INVENTORY_AND_ADBLUE.md](./TANK_INVENTORY_AND_ADBLUE.md) § Phase 25
+
+### Summary
+- [x] `StorageTank` + `TankLedgerEntry` models and migration
+- [x] Multiple tanks per fuel type per group
+- [x] Deliveries, adjustments, computed `current_stock_l`
+- [x] `/tanks` CRUD UI
+- [x] `tests/test_storage_tanks.py`, `tests/test_tank_ledger.py`
+
+### Tests (write before implementation)
+```
+test_storage_tank_create_diesel
+test_storage_tank_create_second_petrol_tank_same_group_allowed
+test_storage_tank_list_scoped_to_active_group
+test_storage_tank_detail_404_other_group
+test_storage_tank_soft_delete_hidden_from_list
+test_storage_tank_update_name_and_capacity
+test_storage_tank_delete_requires_admin
+test_storage_tank_reader_can_view_not_create
+test_current_stock_opening_balance_only
+test_current_stock_includes_deliveries
+test_current_stock_excludes_soft_deleted_ledger_rows
+test_delivery_creates_positive_ledger_entry
+test_adjustment_requires_notes
+test_adjustment_admin_only
+test_adjustment_allows_negative_amount
+test_negative_stock_computed_allowed
+test_ledger_entry_group_id_must_match_tank_group
+```
+
+### Acceptance criteria
+- [x] Farm can create multiple Benzin/Diesel tanks
+- [x] Stock = opening balance + ledger sum; deliveries increase stock
+
+---
+
+## Phase 26: Fill Source & Tank Selection on Fuel Entries
+
+**Status:** ✅ Complete
+
+Full specification: [TANK_INVENTORY_AND_ADBLUE.md](./TANK_INVENTORY_AND_ADBLUE.md) § Phase 26
+
+### Summary
+- [x] `fill_source` + `fuel_tank_id` on `FuelEntry` (default external)
+- [x] Auto `vehicle_withdrawal` ledger sync
+- [x] Tank dropdown filtered by vehicle fuel type; explicit choice when multiple tanks
+- [x] `tests/test_fuel_fill_source.py`
+
+### Tests (write before implementation)
+```
+test_fuel_entry_default_fill_source_external
+test_fuel_entry_farm_fill_requires_tank_id
+test_fuel_entry_farm_fill_wrong_fuel_type_rejected
+test_fuel_entry_farm_fill_creates_vehicle_withdrawal_ledger
+test_fuel_entry_external_fill_no_ledger_row
+test_fuel_entry_farm_fill_deducts_correct_tank_stock
+test_fuel_entry_multiple_petrol_tanks_must_choose_tank
+test_fuel_entry_single_petrol_tank_preselected
+test_fuel_entry_update_liters_updates_ledger_amount
+test_fuel_entry_change_farm_to_external_removes_ledger
+test_fuel_entry_change_external_to_farm_creates_ledger
+test_fuel_entry_delete_soft_deletes_linked_ledger
+test_fuel_entry_farm_tank_other_group_404
+test_fuel_entry_form_tank_dropdown_lists_only_matching_fuel_type
+test_existing_entries_without_fill_source_treated_as_external
+```
+
+### Acceptance criteria
+- [x] User chooses which tank when tanking at farm; external fills do not affect inventory
+- [x] Legacy entries behave as external
+
+---
+
+## Phase 27: External Withdrawals at Farm Tanks
+
+**Status:** ✅ Complete
+
+Full specification: [TANK_INVENTORY_AND_ADBLUE.md](./TANK_INVENTORY_AND_ADBLUE.md) § Phase 27
+
+### Summary
+- [x] Externe Abgabe flow (recipient name, no vehicle)
+- [x] Excluded from dashboard/summary/analytics
+- [x] `tests/test_tank_external.py`
+
+### Tests (write before implementation)
+```
+test_external_withdrawal_creates_ledger_not_fuel_entry
+test_external_withdrawal_requires_recipient_name
+test_external_withdrawal_reduces_tank_stock
+test_external_withdrawal_excluded_from_dashboard_fuel_liters
+test_external_withdrawal_excluded_from_summary_vehicle_totals
+test_external_withdrawal_excluded_from_analytics
+test_external_withdrawal_other_group_tank_404
+test_external_withdrawal_soft_delete_restores_stock
+```
+
+### Acceptance criteria
+- [x] Third-party fills tracked per tank; fleet statistics unchanged
+
+---
+
+## Phase 28: Tank Dashboard & Exports
+
+**Status:** ✅ Complete
+
+Full specification: [TANK_INVENTORY_AND_ADBLUE.md](./TANK_INVENTORY_AND_ADBLUE.md) § Phase 28
+
+### Summary
+- [x] Dashboard tank stock cards; negative-stock warning
+- [x] Extended fuel CSV + optional tank-ledger CSV
+- [x] Nav link Tanklager
+
+### Tests (write before implementation)
+```
+test_dashboard_shows_tank_stock_when_tanks_exist
+test_dashboard_negative_stock_shows_warning
+test_dashboard_no_tanks_hides_stock_section
+test_export_fuel_entries_includes_fill_source_and_tank_name
+test_export_tank_ledger_csv_scoped_to_group
+```
+
+### Acceptance criteria
+- [x] Users see Hof-Tank levels on dashboard; exports include new fields
+
+---
+
 ## Cross-Cutting Test Requirements
 
 ### Security Tests (run across all phases)
@@ -1095,7 +1258,13 @@ test_soft_deleted_records_excluded_from_statistics
 | Analytics/export/cost (Phase 18–19) | ~20 |
 | Production & beta (Phase 20–21) | ~25   |
 | Platform admin (Phase 22) | ~28 |
-| **Total (current)** | **~402**         |
+| AdBlue (Phase 24) | ~10 |
+| Storage tanks & ledger (Phase 25) | ~17 |
+| Fill source (Phase 26) | ~15 |
+| External withdrawal (Phase 27) | ~8 |
+| Tank dashboard & export (Phase 28) | ~5 |
+| **Total (current)** | **~479**         |
+| **Total (with Phases 24–28)** | **~479**         |
 
 ---
 

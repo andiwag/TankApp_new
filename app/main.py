@@ -174,6 +174,7 @@ from app.routes.maintenance import router as maintenance_router  # noqa: E402
 from app.routes.marketing import router as marketing_router  # noqa: E402
 from app.routes.platform import router as platform_router  # noqa: E402
 from app.routes.profile import router as profile_router  # noqa: E402
+from app.routes.storage_tanks import router as storage_tanks_router  # noqa: E402
 from app.routes.summary import router as summary_router  # noqa: E402
 from app.routes.vehicles import router as vehicles_router  # noqa: E402
 
@@ -186,6 +187,7 @@ app.include_router(dashboard_router)
 app.include_router(summary_router)
 app.include_router(profile_router)
 app.include_router(vehicles_router)
+app.include_router(storage_tanks_router)
 app.include_router(fuel_entries_router)
 app.include_router(maintenance_router)
 app.include_router(analytics_router)

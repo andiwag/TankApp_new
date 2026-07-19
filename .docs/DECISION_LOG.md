@@ -739,3 +739,45 @@ Architectural and design decisions for **Tankly**. Cookie names in older entries
 **Rationale:** Selling/supporting SaaS requires cross-farm visibility without joining every group as a member.
 
 **Trade-off:** Requires deploy to change operator list until a DB flag is added later.
+
+---
+
+## D-058: AdBlue on tractor fuel entries (Phase 24)
+
+**Decision:** Add optional `FuelEntry.adblue_amount_l` for tractors only. AdBlue is tracked separately from `fuel_amount_l` — it does not affect consumption averages or diesel liter totals. No AdBlue tank inventory in v1.
+
+**Rationale:** Tractors commonly tank AdBlue alongside diesel; mixing it into fuel stats would skew consumption.
+
+**Trade-off:** AdBlue totals appear on summary/export only; no per-tank AdBlue stock tracking until a later phase.
+
+---
+
+## D-054: Negative tank stock allowed (Phase 25)
+
+**Decision:** `current_stock_l` may go below zero; tank detail UI shows a warning but does not block saves.
+
+**Rationale:** Farms often reconcile inventory later; hard-blocking causes friction at the pump.
+
+---
+
+## D-056: Multiple storage tanks per fuel type (Phase 25)
+
+**Decision:** No uniqueness constraint on `(group_id, fuel_type)` for `StorageTank`. Multiple Diesel/Benzin tanks per farm are allowed.
+
+**Rationale:** Real farms have several physical tanks of the same fuel type; tank selection on fills is required in Phase 26.
+
+---
+
+## D-055: Fill source defaults to external (Phase 26)
+
+**Decision:** New `FuelEntry` rows default to `fill_source=external`. Farm fills require explicit selection of `fill_source=farm` and a `fuel_tank_id` (auto-resolved only when exactly one matching tank exists).
+
+**Rationale:** Avoid accidental inventory deductions before tanks are configured or when tanking at public stations.
+
+---
+
+## D-057: Vehicle withdrawal ledger synced from fuel entries (Phase 26)
+
+**Decision:** `vehicle_withdrawal` `TankLedgerEntry` rows are created/updated/soft-deleted by `sync_vehicle_withdrawal_for_fuel_entry` when fuel entries change — not edited directly in the tank UI.
+
+**Rationale:** Single source of truth for fleet log vs. inventory; prevents double bookkeeping.

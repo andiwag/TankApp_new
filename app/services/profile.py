@@ -7,7 +7,14 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.auth import hash_password, verify_password
 from app.enums import Role
-from app.models import FuelEntry, Group, MaintenanceLog, User, UserGroup
+from app.models import (
+    FuelEntry,
+    Group,
+    MaintenanceLog,
+    TankLedgerEntry,
+    User,
+    UserGroup,
+)
 from app.schemas import EMAIL_DUPLICATE_MESSAGE, PasswordChange, UserUpdate
 from app.services.membership import count_group_admins
 from app.time_utils import utc_now
@@ -90,12 +97,22 @@ def export_user_personal_data(db: Session, user: User) -> dict:
     )
     fuel_entries = (
         db.query(FuelEntry)
-        .options(joinedload(FuelEntry.vehicle))
+        .options(joinedload(FuelEntry.vehicle), joinedload(FuelEntry.fuel_tank))
         .filter(
             FuelEntry.user_id == user.id,
             FuelEntry.deleted_at == None,  # noqa: E711
         )
         .order_by(FuelEntry.entry_date.desc(), FuelEntry.id.desc())
+        .all()
+    )
+    tank_ledger_entries = (
+        db.query(TankLedgerEntry)
+        .options(joinedload(TankLedgerEntry.tank))
+        .filter(
+            TankLedgerEntry.user_id == user.id,
+            TankLedgerEntry.deleted_at == None,  # noqa: E711
+        )
+        .order_by(TankLedgerEntry.entry_date.desc(), TankLedgerEntry.id.desc())
         .all()
     )
     maintenance_logs = (
@@ -134,10 +151,28 @@ def export_user_personal_data(db: Session, user: User) -> dict:
                 "usage_reading": entry.usage_reading,
                 "full_tank": entry.full_tank,
                 "total_cost_eur": entry.total_cost_eur,
+                "adblue_amount_l": entry.adblue_amount_l,
+                "fill_source": entry.fill_source,
+                "fuel_tank_name": entry.fuel_tank.name if entry.fuel_tank else None,
                 "notes": entry.notes,
                 "created_at": entry.created_at.isoformat(),
             }
             for entry in fuel_entries
+        ],
+        "tank_ledger_entries": [
+            {
+                "id": entry.id,
+                "group_id": entry.group_id,
+                "tank_name": entry.tank.name,
+                "movement_type": entry.movement_type,
+                "amount_l": entry.amount_l,
+                "entry_date": entry.entry_date.isoformat(),
+                "recipient_name": entry.recipient_name,
+                "total_cost_eur": entry.total_cost_eur,
+                "notes": entry.notes,
+                "created_at": entry.created_at.isoformat(),
+            }
+            for entry in tank_ledger_entries
         ],
         "maintenance_logs": [
             {

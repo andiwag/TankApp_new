@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.services import fuel_entries as fuel_entry_service
 from app.services import vehicles as vehicle_service
+from app.services.tank_ledger import list_ledger_entries_for_group
 
 _FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
 
@@ -39,6 +40,9 @@ def fuel_entries_csv(db: Session, group_id: int) -> str:
             "total_cost_eur",
             "logged_by",
             "notes",
+            "adblue_liters",
+            "fill_source",
+            "fuel_tank_name",
         ]
     ]
     for entry in entries:
@@ -52,6 +56,39 @@ def fuel_entries_csv(db: Session, group_id: int) -> str:
                 entry.total_cost_eur if entry.total_cost_eur is not None else "",
                 _safe_csv_cell(entry.user.name),
                 _safe_csv_cell(entry.notes or ""),
+                entry.adblue_amount_l if entry.adblue_amount_l is not None else "",
+                entry.fill_source,
+                _safe_csv_cell(entry.fuel_tank.name if entry.fuel_tank else ""),
+            ]
+        )
+    return _csv_string(rows)
+
+
+def tank_ledger_csv(db: Session, group_id: int) -> str:
+    entries = list_ledger_entries_for_group(db, group_id)
+    rows: list[list[object]] = [
+        [
+            "date",
+            "tank_name",
+            "movement_type",
+            "amount_l",
+            "recipient_name",
+            "total_cost_eur",
+            "notes",
+            "logged_by",
+        ]
+    ]
+    for entry in entries:
+        rows.append(
+            [
+                entry.entry_date.isoformat(),
+                _safe_csv_cell(entry.tank.name),
+                entry.movement_type,
+                entry.amount_l,
+                _safe_csv_cell(entry.recipient_name or ""),
+                entry.total_cost_eur if entry.total_cost_eur is not None else "",
+                _safe_csv_cell(entry.notes or ""),
+                _safe_csv_cell(entry.user.name),
             ]
         )
     return _csv_string(rows)

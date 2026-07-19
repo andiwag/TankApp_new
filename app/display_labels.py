@@ -23,6 +23,13 @@ USAGE_UNIT_LABELS: dict[str, str] = {
     "hours": "h",
 }
 
+TANK_MOVEMENT_TYPE_LABELS: dict[str, str] = {
+    "delivery": "Lieferung",
+    "vehicle_withdrawal": "Fahrzeugentnahme",
+    "external_withdrawal": "Externe Abgabe",
+    "adjustment": "Bestandskorrektur",
+}
+
 
 def vehicle_type_label(value: str) -> str:
     return VEHICLE_TYPE_LABELS.get(value, value)
@@ -38,3 +45,7 @@ def role_label(value: str) -> str:
 
 def usage_unit_label(value: str) -> str:
     return USAGE_UNIT_LABELS.get(value, value)
+
+
+def tank_movement_type_label(value: str) -> str:
+    return TANK_MOVEMENT_TYPE_LABELS.get(value, value)
