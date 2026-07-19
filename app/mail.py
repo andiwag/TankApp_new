@@ -38,6 +38,23 @@ async def send_password_reset_email(to_email: str, reset_url: str) -> None:
         logger.exception("Failed to send password reset email to %s", to_email)
 
 
+async def send_payment_failed_email(to_email: str, *, billing_url: str) -> None:
+    message = MessageSchema(
+        subject=f"{PRODUCT_NAME} – Zahlung fehlgeschlagen",
+        recipients=[to_email],
+        body=(
+            f"Die letzte Zahlung für dein {PRODUCT_NAME}-Abo konnte nicht eingezogen werden.\n\n"
+            "Bitte aktualisiere deine Zahlungsmethode, damit dein Tarif aktiv bleibt:\n"
+            f"{billing_url}\n"
+        ),
+        subtype=MessageType.plain,
+    )
+    try:
+        await FastMail(_mail_connection()).send_message(message)
+    except Exception:
+        logger.exception("Failed to send payment-failed email to %s", to_email)
+
+
 async def send_service_reminder_email(
     to_email: str,
     *,

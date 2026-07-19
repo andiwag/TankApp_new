@@ -13,9 +13,9 @@ Authoritative task lists and acceptance criteria: `.docs/DEVELOPMENT_PLAN.md`.
 | **0–16** | Original MVP — complete |
 | **17–21** | Post-MVP (maintenance, analytics/export/cost, audit UI, sessions & production hardening, marketing/beta gate) — complete |
 | **22** | Platform admin (`/platform`) — **complete** |
-| **23** | Stripe billing — **planned**, spec in `.docs/STRIPE_BILLING.md` |
+| **23** | Stripe billing + launch polish — **complete** |
 
-**Next work:** Phase **23** unless the user directs otherwise. Do not re-implement completed phases.
+**Next work:** Production go-live per [STRIPE_GO_LIVE.md](../.docs/STRIPE_GO_LIVE.md) unless the user directs otherwise.
 
 ---
 
@@ -44,4 +44,6 @@ Follow [copilot-instructions §2–3](../.github/copilot-instructions.md#2-non-n
 
 ## Start now
 
-Read the source-of-truth files above, then begin with the **first phase that has unchecked tasks** in `.docs/DEVELOPMENT_PLAN.md` (currently **Phase 23: Stripe Billing** unless the user says otherwise).
+Phases **0–23** are complete in `.docs/DEVELOPMENT_PLAN.md`. Do **not** start a new development-plan phase unless the user asks.
+
+Default next work: production go-live checklist in [STRIPE_GO_LIVE.md](../.docs/STRIPE_GO_LIVE.md), or follow the user’s explicit direction.

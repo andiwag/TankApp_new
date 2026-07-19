@@ -1,25 +1,30 @@
 {% extends "marketing_base.html" %}
+{% from "_macros.html" import glass_panel with context %}
+{% set c = company_info() %}
 
 {% block title %}AGB – Tankly{% endblock %}
 
 {% block content %}
-<article class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <h1 class="text-3xl font-bold text-gray-900 mb-6">Allgemeine Geschäftsbedingungen</h1>
+<article class="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+    <div class="{{ glass_panel('p-6 sm:p-8') }}">
+    <h1 class="mb-6 text-3xl font-bold text-slate-950">Allgemeine Geschäftsbedingungen</h1>
+    {% if not legal_pages_ready() %}
     <p class="text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-4 text-sm mb-8">
-        <strong>Hinweis:</strong> Rechtlich verbindliche AGB müssen für Ihr Unternehmen und die geplanten Tarife (Free, Pro, Farm) von einem Rechtsanwalt erstellt werden.
+        <strong>Hinweis:</strong> Ergänze die <code>COMPANY_*</code>-Variablen und lasse diese AGB vor kostenpflichtigen Tarifen rechtlich prüfen.
     </p>
+    {% endif %}
     <div class="space-y-6 text-gray-700 text-sm leading-relaxed">
         <section>
             <h2 class="text-lg font-semibold text-gray-900 mb-2">1. Geltungsbereich</h2>
-            <p>Diese AGB gelten für die Nutzung der Software Tankly zwischen [Anbieter] und dem Kunden (Betrieb/Gruppe).</p>
+            <p>Diese AGB gelten für die Nutzung der Software {{ product_name() }} zwischen {{ c.legal_name or company_display_name() }} („Anbieter“) und dem Kunden (Betrieb/Gruppe).</p>
         </section>
         <section>
             <h2 class="text-lg font-semibold text-gray-900 mb-2">2. Leistungsbeschreibung</h2>
-            <p>Tankly ist eine webbasierte Anwendung zur Erfassung von Kraftstoffvorgängen, Fahrzeugen und Wartungsdaten. Der Funktionsumfang richtet sich nach dem gewählten Tarif (Free, Pro, Farm).</p>
+            <p>{{ product_name() }} ist eine webbasierte Anwendung zur Erfassung von Kraftstoffvorgängen, Fahrzeugen und Wartungsdaten. Der Funktionsumfang richtet sich nach dem gewählten Tarif (Free, Pro, Farm).</p>
         </section>
         <section>
             <h2 class="text-lg font-semibold text-gray-900 mb-2">3. Vertragsschluss & Abo</h2>
-            <p>Der Vertrag kommt mit Registrierung und Wahl eines Tarifs zustande. Kostenpflichtige Abos verlängern sich monatlich, sofern nicht gekündigt. Zahlung über Stripe.</p>
+            <p>Der Vertrag kommt mit Registrierung und Wahl eines Tarifs zustande. Kostenpflichtige Abos verlängern sich monatlich oder jährlich, sofern nicht gekündigt. Zahlung über Stripe. Pro-Tarif: {{ stripe_trial_days() }} Tage Testphase, sofern angeboten.</p>
         </section>
         <section>
             <h2 class="text-lg font-semibold text-gray-900 mb-2">4. Preise & Umsatzsteuer</h2>
@@ -27,16 +32,17 @@
         </section>
         <section>
             <h2 class="text-lg font-semibold text-gray-900 mb-2">5. Kündigung</h2>
-            <p>Kostenpflichtige Abos können jederzeit zum Ende der Abrechnungsperiode gekündigt werden (über das Kundenportal oder schriftlich).</p>
+            <p>Kostenpflichtige Abos können jederzeit zum Ende der Abrechnungsperiode gekündigt werden (über das Stripe-Kundenportal unter Einstellungen → Abo & Rechnungen).</p>
         </section>
         <section>
             <h2 class="text-lg font-semibold text-gray-900 mb-2">6. Haftung & Verfügbarkeit</h2>
-            <p>Die Software wird mit branchenüblicher Sorgfalt betrieben. Haftungsbeschränkungen gemäß österreichischem Recht – Details durch Anwalt ausformulieren.</p>
+            <p>Die Software wird mit branchenüblicher Sorgfalt betrieben. Haftungsbeschränkungen gemäß österreichischem Recht.</p>
         </section>
         <section>
             <h2 class="text-lg font-semibold text-gray-900 mb-2">7. Anwendbares Recht</h2>
-            <p>Österreichisches Recht. Gerichtsstand [Ort], soweit zulässig.</p>
+            <p>Österreichisches Recht. Gerichtsstand {{ c.jurisdiction }}, soweit zulässig.</p>
         </section>
+    </div>
     </div>
 </article>
 {% endblock %}

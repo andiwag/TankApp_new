@@ -151,8 +151,9 @@ Run on the live URL:
 
 ## Related docs
 
-- [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) — phase status (0–21 done, 22–23 planned)
+- [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) — phase status (0–23 complete)
 - [TECHNICAL_DOCUMENTATION.md](./TECHNICAL_DOCUMENTATION.md) — architecture reference
-- [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) — operator dashboard (planned)
+- [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) — operator dashboard (Phase 22)
 - [PRODUCTION.md](./PRODUCTION.md) — full deployment reference
-- [STRIPE_BILLING.md](./STRIPE_BILLING.md) — when you're ready to charge
+- [STRIPE_BILLING.md](./STRIPE_BILLING.md) — billing (Phase 23)
+- [STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md) — when you're ready to charge in production

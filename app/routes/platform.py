@@ -5,9 +5,15 @@ from sqlalchemy.orm import Session
 from app.audit import log_event
 from app.database import get_db
 from app.dependencies import require_platform_admin
+from app.flash import set_flash
 from app.models import Group, User
 from app.responses import not_found_response
 from app.services import platform_admin as platform_service
+from app.services.billing.partner import (
+    PartnerGrantError,
+    grant_partner_tier,
+    revoke_partner_tier,
+)
 from app.services.sessions import refresh_session_cookie
 from app.templating import templates
 
@@ -65,6 +71,50 @@ async def platform_farm_detail_page(
         "platform_farm_detail.html",
         context=context,
     )
+
+
+@router.post("/farms/{group_id}/grant-partner")
+async def platform_grant_partner(
+    group_id: int,
+    user: User = Depends(require_platform_admin),
+    db: Session = Depends(get_db),
+):
+    group = db.query(Group).filter(Group.id == group_id).first()
+    if group is None:
+        return not_found_response()
+
+    response = RedirectResponse(url=f"/platform/farms/{group_id}", status_code=303)
+    try:
+        grant_partner_tier(db, group_id, actor_user_id=user.id)
+        db.commit()
+        set_flash(response, "Partner-Tarif vergeben.", "success")
+    except PartnerGrantError as exc:
+        db.rollback()
+        set_flash(response, exc.message, "error")
+    return response
+
+
+@router.post("/farms/{group_id}/revoke-partner")
+async def platform_revoke_partner(
+    group_id: int,
+    user: User = Depends(require_platform_admin),
+    db: Session = Depends(get_db),
+):
+    group = db.query(Group).filter(Group.id == group_id).first()
+    if group is None:
+        return not_found_response()
+
+    response = RedirectResponse(url=f"/platform/farms/{group_id}", status_code=303)
+    try:
+        revoke_partner_tier(db, group_id, actor_user_id=user.id)
+        db.commit()
+        set_flash(
+            response, "Partner-Tarif entzogen. Betrieb ist wieder Free.", "success"
+        )
+    except PartnerGrantError as exc:
+        db.rollback()
+        set_flash(response, exc.message, "error")
+    return response
 
 
 @router.post("/farms/{group_id}/enter")

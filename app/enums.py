@@ -42,3 +42,20 @@ class TankMovementType(StrEnum):
     vehicle_withdrawal = "vehicle_withdrawal"
     external_withdrawal = "external_withdrawal"
     adjustment = "adjustment"
+
+
+class SubscriptionTier(StrEnum):
+    free = "free"
+    pro = "pro"
+    farm = "farm"
+    partner = "partner"
+
+
+class SubscriptionStatus(StrEnum):
+    trialing = "trialing"
+    active = "active"
+    past_due = "past_due"
+    canceled = "canceled"
+    incomplete = "incomplete"
+    unpaid = "unpaid"
+    incomplete_expired = "incomplete_expired"

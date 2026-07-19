@@ -3,7 +3,7 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies import get_active_group
+from app.dependencies import require_entitlement
 from app.models import Group
 from app.services import export as export_service
 
@@ -13,7 +13,7 @@ router = APIRouter()
 @router.get("/export/fuel-entries.csv")
 async def export_fuel_entries_csv(
     db: Session = Depends(get_db),
-    group: Group = Depends(get_active_group),
+    group: Group = Depends(require_entitlement("export")),
 ):
     content = export_service.fuel_entries_csv(db, group.id)
     return Response(
@@ -28,7 +28,7 @@ async def export_fuel_entries_csv(
 @router.get("/export/vehicles.csv")
 async def export_vehicles_csv(
     db: Session = Depends(get_db),
-    group: Group = Depends(get_active_group),
+    group: Group = Depends(require_entitlement("export")),
 ):
     content = export_service.vehicles_csv(db, group.id)
     return Response(

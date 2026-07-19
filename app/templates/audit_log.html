@@ -1,62 +1,20 @@
 {% extends "base.html" %}
-
-{% from "_macros.html" import empty_state, glass_panel, page_header, status_chip with context %}
-
-
+{% from "_macros.html" import audit_log_item, empty_state, glass_panel, page_header with context %}
 
 {% block title %}Änderungsprotokoll – Tankly{% endblock %}
 
-
-
 {% block content %}
-
 <div>
-
-    {{ page_header("Änderungsprotokoll", "Verwalten", "Zeitstrahl wichtiger Betriebsänderungen.", "", "", "/settings/group", "Betriebseinstellungen") }}
-
-
+    {{ page_header("Änderungsprotokoll", "", "Zeitstrahl wichtiger Betriebsänderungen.", "", "", "/settings/group", "Betriebseinstellungen", icon="audit") }}
 
     {% if show_empty_state %}
-
-    {{ empty_state("Noch keine Protokolleinträge", "Wichtige Änderungen an Betrieb, Mitgliedern und Fahrzeugen erscheinen hier.") }}
-
+    {{ empty_state("Noch keine Protokolleinträge", "Wichtige Änderungen an Betrieb, Mitgliedern und Fahrzeugen erscheinen hier.", "", "", "audit") }}
     {% else %}
-
-    <div class="{{ glass_panel('p-5') }}">
-
-        <div class="space-y-4">
-
-            {% for row in audit_rows %}
-
-            <article class="flex gap-4 rounded-2xl bg-white/60 p-4">
-
-                <div class="mt-1 h-3 w-3 shrink-0 rounded-full bg-emerald-600 shadow-lg shadow-emerald-900/20"></div>
-
-                <div class="min-w-0 flex-1">
-
-                    <div class="flex flex-wrap items-center gap-2">
-
-                        {{ status_chip(row.action, "info") }}
-
-                        <span class="text-sm font-medium text-slate-500">{{ format_datetime(row.created_at) }}</span>
-
-                    </div>
-
-                    <p class="mt-2 text-sm text-slate-700"><span class="font-semibold text-slate-950">{{ row.user_name }}</span> hat {{ row.entity_type }} #{{ row.entity_id }} geändert</p>
-
-                </div>
-
-            </article>
-
-            {% endfor %}
-
-        </div>
-
+    <div class="{{ glass_panel('px-4 py-1 sm:px-5') }}">
+        {% for row in audit_rows %}
+        {{ audit_log_item(row) }}
+        {% endfor %}
     </div>
-
     {% endif %}
-
 </div>
-
 {% endblock %}
-

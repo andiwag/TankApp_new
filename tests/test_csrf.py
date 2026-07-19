@@ -39,7 +39,7 @@ def _assert_all_post_forms_have_csrf(response) -> None:
 def test_csrf_field_macro_is_defined():
     from pathlib import Path
 
-    macros = Path("app/templates/_macros.html").read_text()
+    macros = Path("app/templates/_macros.html").read_text(encoding="utf-8")
     assert "macro csrf_field" in macros
 
 
@@ -112,6 +112,8 @@ class TestCsrfTemplateFields:
         create_test_vehicle,
         create_test_fuel_entry,
         auth_cookie,
+        db,
+        set_group_tier,
     ):
         user, group = create_authenticated_group(
             client,
@@ -120,6 +122,7 @@ class TestCsrfTemplateFields:
             create_test_user_group,
             auth_cookie,
         )
+        set_group_tier(group.id, "pro")
         vehicle = create_test_vehicle(group_id=group.id)
         create_test_fuel_entry(
             vehicle_id=vehicle.id,

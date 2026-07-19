@@ -1,168 +1,56 @@
 {% extends "base.html" %}
+{% from "_macros.html" import button_class, csrf_field, empty_state, form_error, form_input_class, glass_panel, group_card, mobile_header_bar, page_header, section_title with context %}
 
-{% from "_macros.html" import button_class, csrf_field, empty_state, glass_panel, page_header, role_badge, status_chip with context %}
-
-
+{% block mobile_header %}
+{{ mobile_header_bar(title="Betriebe", back_href="/profile") }}
+{% endblock %}
 
 {% block title %}Betriebe – Tankly{% endblock %}
 
-
-
 {% block content %}
-
-<div class="mx-auto max-w-5xl">
-
-    {{ page_header("Betriebe", "Gruppen", "Wähle den Betrieb, in dem du arbeiten möchtest.") }}
-
-
-
-    {% if error %}
-
-    <div class="mb-6 rounded-2xl border border-red-200 bg-red-50/90 p-4 text-red-800">
-
-        <p class="text-sm">{{ error }}</p>
-
+<div>
+    <div class="hidden lg:block">
+        {{ page_header("Betriebe", "", "Wähle den Betrieb, in dem du arbeiten möchtest.", icon="farm") }}
     </div>
 
-    {% endif %}
-
-
+    {% if error %}{{ form_error(error) }}{% endif %}
 
     {% if groups %}
-
-    <div class="mb-8 grid gap-4 md:grid-cols-2">
-
+    <div class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {% for item in groups %}
-
-            <article class="{{ glass_panel('p-5') }}">
-
-                <div class="flex items-start justify-between gap-4">
-
-                <div>
-
-                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-700 text-lg font-bold text-white">{{ item.group.name[:1] }}</div>
-
-                        <h2 class="mt-4 text-lg font-bold text-slate-950">{{ item.group.name }}</h2>
-
-                        <div class="mt-3 flex flex-wrap gap-2">{{ role_badge(item.role) }}
-
-                    {% if item.group.id == active_group_id %}
-
-                            {{ status_chip("Aktiv", "success") }}
-
-                    {% endif %}
-
-                        </div>
-
-                </div>
-
-                    <div class="flex flex-col gap-2">
-
-                    {% if item.group.id != active_group_id %}
-
-                    <form method="post" action="/groups/switch/{{ item.group.id }}" x-data="{ submitting: false }" @submit="submitting = true">
-
-                        {{ csrf_field() }}
-
-                            <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} w-full disabled:opacity-60">Wechseln</button>
-
-                    </form>
-
-                    {% endif %}
-
-                    <form method="post" action="/groups/leave/{{ item.group.id }}" x-data="{ submitting: false }" @submit="submitting = true">
-
-                        {{ csrf_field() }}
-
-                            <button type="submit" :disabled="submitting" class="{{ button_class('danger') }} w-full disabled:opacity-60">Verlassen</button>
-
-                    </form>
-
-                    </div>
-
-                </div>
-
-            </article>
-
+        {{ group_card(item, active_group_id) }}
         {% endfor %}
-
     </div>
-
     {% else %}
-
-    <div class="mb-8">{{ empty_state("Noch keine Betriebe", "Erstelle einen neuen Betrieb oder tritt mit einem Einladungscode bei.") }}</div>
-
+    <div class="mb-6">{{ empty_state("Noch keine Betriebe", "Erstelle einen neuen Betrieb oder tritt mit einem Einladungscode bei.", "", "", "farm") }}</div>
     {% endif %}
 
-
-
-    <div class="grid gap-6 md:grid-cols-2">
-
-        <div class="{{ glass_panel('p-6') }}">
-
-            <h2 class="text-lg font-bold text-slate-950 mb-2">Betrieb erstellen</h2>
-
-            <p class="mb-4 text-sm text-slate-600">Starte einen neuen Betrieb für Hof oder Team.</p>
-
+    <div class="grid gap-4 md:grid-cols-2">
+        <div class="{{ glass_panel('p-5') }}">
+            {{ section_title("Betrieb erstellen", "plus", "text-base font-bold text-slate-950") }}
+            <p class="mt-1 mb-4 text-sm text-slate-500">Starte einen neuen Betrieb für Hof oder Team.</p>
             <form method="post" action="/groups/create" class="space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
-
                 {{ csrf_field() }}
-
                 <div>
-
-                    <label for="name" class="block text-sm font-medium text-slate-700 mb-1">Betriebsname</label>
-
-                    <input type="text" id="name" name="name" required
-
-                           class="min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
-
+                    <label for="name" class="block text-sm font-medium text-slate-700">Betriebsname</label>
+                    <input type="text" id="name" name="name" required class="mt-1.5 {{ form_input_class() }}">
                 </div>
-
-                <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} w-full disabled:opacity-60">
-
-                    Erstellen
-
-                </button>
-
+                <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} w-full disabled:opacity-60">Erstellen</button>
             </form>
-
         </div>
 
-
-
-        <div class="{{ glass_panel('p-6') }}">
-
-            <h2 class="text-lg font-bold text-slate-950 mb-2">Betrieb beitreten</h2>
-
-            <p class="mb-4 text-sm text-slate-600">Gib den Einladungscode eines bestehenden Betriebs ein.</p>
-
+        <div class="{{ glass_panel('p-5') }}">
+            {{ section_title("Betrieb beitreten", "link", "text-base font-bold text-slate-950") }}
+            <p class="mt-1 mb-4 text-sm text-slate-500">Gib den Einladungscode eines bestehenden Betriebs ein.</p>
             <form method="post" action="/groups/join" class="space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
-
                 {{ csrf_field() }}
-
                 <div>
-
-                    <label for="invite_code" class="block text-sm font-medium text-slate-700 mb-1">Einladungscode</label>
-
-                    <input type="text" id="invite_code" name="invite_code" required
-
-                           class="min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 font-mono shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
-
+                    <label for="invite_code" class="block text-sm font-medium text-slate-700">Einladungscode</label>
+                    <input type="text" id="invite_code" name="invite_code" required class="mt-1.5 {{ form_input_class() }} font-mono">
                 </div>
-
-                <button type="submit" :disabled="submitting" class="{{ button_class('secondary') }} w-full disabled:opacity-60">
-
-                    Beitreten
-
-                </button>
-
+                <button type="submit" :disabled="submitting" class="{{ button_class('secondary') }} w-full disabled:opacity-60">Beitreten</button>
             </form>
-
         </div>
-
     </div>
-
 </div>
-
 {% endblock %}
-

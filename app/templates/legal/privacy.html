@@ -1,25 +1,35 @@
 {% extends "marketing_base.html" %}
+{% from "_macros.html" import glass_panel with context %}
+{% set c = company_info() %}
 
 {% block title %}Datenschutz – Tankly{% endblock %}
 
 {% block content %}
-<article class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <h1 class="text-3xl font-bold text-gray-900 mb-6">Datenschutzerklärung</h1>
+<article class="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+    <div class="{{ glass_panel('p-6 sm:p-8') }}">
+    <h1 class="mb-6 text-3xl font-bold text-slate-950">Datenschutzerklärung</h1>
+    {% if not legal_pages_ready() %}
     <p class="text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-4 text-sm mb-8">
-        <strong>Hinweis:</strong> Diese Vorlage muss von einem Rechtsanwalt oder Datenschutzexperten an Ihr konkretes Setup angepasst werden (Hosting, Stripe, E-Mail, Cookies).
+        <strong>Hinweis:</strong> Ergänze die <code>COMPANY_*</code>-Variablen und lasse diese Erklärung vor dem Go-Live rechtlich prüfen.
     </p>
+    {% endif %}
     <div class="space-y-6 text-gray-700 text-sm leading-relaxed">
         <section>
             <h2 class="text-lg font-semibold text-gray-900 mb-2">1. Verantwortlicher</h2>
-            <p>[Name/Firma, Adresse, E-Mail – siehe Impressum]</p>
+            <p>
+                {{ c.legal_name or company_display_name() }}<br>
+                {% if c.street %}{{ c.street }}<br>{% endif %}
+                {% if c.city %}{{ c.city }}, Österreich<br>{% endif %}
+                E-Mail: <a href="mailto:{{ c.email }}" class="text-green-700">{{ c.email }}</a>
+            </p>
         </section>
         <section>
             <h2 class="text-lg font-semibold text-gray-900 mb-2">2. Welche Daten wir verarbeiten</h2>
             <ul class="list-disc pl-5 space-y-1">
                 <li>Registrierungsdaten (Name, E-Mail, Passwort-Hash)</li>
-                <li>Betriebs- und Fahrzeugdaten, die Sie in Tankly eingeben</li>
+                <li>Betriebs- und Fahrzeugdaten, die Sie in {{ product_name() }} eingeben</li>
                 <li>Technische Protokolle (IP, Browser, Session-Cookies)</li>
-                <li>Bei Zahlungen: Abrechnungsdaten über Stripe (Zahlungsmittel, Rechnungsadresse)</li>
+                <li>Bei Zahlungen: Abrechnungsdaten über Stripe (Zahlungsmittel, Rechnungsadresse, UID)</li>
             </ul>
         </section>
         <section>
@@ -29,11 +39,11 @@
         <section>
             <h2 class="text-lg font-semibold text-gray-900 mb-2">4. Auftragsverarbeiter</h2>
             <ul class="list-disc pl-5 space-y-1">
-                <li>Hosting (z. B. Northflank) – Server in der EU</li>
-                <li>Stripe Payments Europe – Zahlungsabwicklung</li>
-                <li>E-Mail-Anbieter (z. B. Brevo) – Passwort-Reset, Benachrichtigungen</li>
+                <li>{{ c.hosting_provider }} – Hosting (EU-Region)</li>
+                <li>Stripe Payments Europe, Ltd. – Zahlungsabwicklung</li>
+                <li>{{ c.mail_provider }} – E-Mail (Passwort-Reset, Zahlungserinnerungen)</li>
             </ul>
-            <p class="mt-2">Mit jedem Auftragsverarbeiter ist ein AVV (Auftragsverarbeitungsvertrag) abzuschließen.</p>
+            <p class="mt-2">Mit jedem Auftragsverarbeiter ist ein AVV abzuschließen.</p>
         </section>
         <section>
             <h2 class="text-lg font-semibold text-gray-900 mb-2">5. Ihre Rechte</h2>
@@ -43,6 +53,7 @@
             <h2 class="text-lg font-semibold text-gray-900 mb-2">6. Cookies</h2>
             <p>Session-Cookie (Anmeldung), CSRF-Schutz-Cookie, optional Flash-Meldungen. Keine Werbe-Tracking-Cookies.</p>
         </section>
+    </div>
     </div>
 </article>
 {% endblock %}

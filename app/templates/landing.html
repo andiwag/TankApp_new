@@ -4,7 +4,7 @@
 
 {% block content %}
 <!-- Hero -->
-<section class="relative overflow-hidden hero-grid">
+<section class="relative overflow-hidden marketing-hero">
     <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
         <div class="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-green-200/30 blur-3xl"></div>
         <div class="absolute bottom-0 left-1/4 h-48 w-48 rounded-full bg-emerald-100/40 blur-2xl"></div>
@@ -13,41 +13,41 @@
     <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28">
         <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div class="animate-fade-up">
-                <div class="inline-flex items-center gap-2 rounded-full bg-white/80 border border-green-200/60 px-4 py-1.5 text-sm font-medium text-green-800 shadow-sm mb-6">
-                    <span class="flex h-2 w-2 rounded-full bg-green-500"></span>
+                <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-[#0d6b4f]/20 bg-white px-4 py-1.5 text-sm font-medium text-[#0d6b4f] shadow-sm">
+                    <span class="flex h-2 w-2 rounded-full bg-[#0d6b4f]"></span>
                     Für österreichische Betriebe
                 </div>
-                <h1 class="text-4xl sm:text-5xl lg:text-[3.25rem] font-bold text-gray-900 leading-[1.1] tracking-tight mb-6">
+                <h1 class="mb-6 text-4xl font-bold leading-[1.1] tracking-tight text-slate-950 sm:text-5xl lg:text-[3.25rem]">
                     Kraftstoff, Fahrzeuge und Wartung –
-                    <span class="text-green-700">alles an einem Ort</span>
+                    <span class="text-[#0d6b4f]">alles an einem Ort</span>
                 </h1>
-                <p class="text-lg sm:text-xl text-gray-600 mb-8 leading-relaxed max-w-xl">
+                <p class="mb-8 max-w-xl text-lg leading-relaxed text-slate-600 sm:text-xl">
                     Tankly hilft Landwirten und Betriebsleitern, Tankvorgänge zu erfassen, Verbrauch zu verstehen und Serviceintervalle nicht zu verpassen. Einfach, mobil und für Teams mit mehreren Mitarbeitern.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                    <a href="/register" class="inline-flex justify-center items-center min-h-[52px] px-7 py-3 rounded-xl bg-green-700 text-white font-semibold hover:bg-green-800 transition shadow-lg shadow-green-700/25 hover:shadow-green-800/30">
+                    <a href="/register" class="inline-flex min-h-[52px] items-center justify-center rounded-[10px] px-7 py-3 text-base font-semibold text-white shadow-sm t-btn-primary transition">
                         Kostenlos registrieren
                         <svg class="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
                     </a>
-                    <a href="/#features" class="inline-flex justify-center items-center min-h-[52px] px-7 py-3 rounded-xl bg-white border border-gray-200 text-gray-700 font-semibold hover:border-green-300 hover:bg-green-50/50 transition shadow-sm">
+                    <a href="/#features" class="inline-flex min-h-[52px] items-center justify-center rounded-[10px] border border-slate-200 bg-white px-7 py-3 text-base font-semibold text-slate-700 shadow-sm transition hover:border-[#0d6b4f]/30 hover:bg-slate-50">
                         Funktionen ansehen
                     </a>
                 </div>
-                <p class="mt-5 text-sm text-gray-500 flex flex-wrap items-center gap-x-4 gap-y-1">
+                <p class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
                     <span class="inline-flex items-center gap-1.5">
-                        <svg class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        <svg class="h-4 w-4 text-[#0d6b4f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                         Keine Kreditkarte
                     </span>
                     <span class="inline-flex items-center gap-1.5">
-                        <svg class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        <svg class="h-4 w-4 text-[#0d6b4f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                         Free-Tarif verfügbar
                     </span>
                 </p>
             </div>
 
             <!-- App preview mock -->
-            <div class="relative animate-float lg:justify-self-end w-full max-w-md mx-auto lg:max-w-none">
-                <div class="rounded-2xl bg-white border border-gray-200/80 shadow-2xl shadow-green-900/10 overflow-hidden">
+            <div class="relative mx-auto w-full max-w-md animate-float lg:max-w-none lg:justify-self-end">
+                <div class="t-card overflow-hidden">
                     <div class="flex items-center gap-2 px-4 py-3 bg-gray-50 border-b border-gray-100">
                         <span class="h-2.5 w-2.5 rounded-full bg-red-300"></span>
                         <span class="h-2.5 w-2.5 rounded-full bg-amber-300"></span>
@@ -59,26 +59,22 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Verbrauch diesen Monat</p>
-                                <p class="text-2xl font-bold text-gray-900 mt-0.5">1.847 <span class="text-base font-semibold text-gray-500">Liter</span></p>
+                                <p class="text-2xl font-bold text-slate-900 mt-0.5">1.847 <span class="text-base font-semibold text-slate-500">Liter</span></p>
                             </div>
-                            <div class="h-10 w-10 rounded-xl bg-green-100 flex items-center justify-center">
-                                <svg class="h-5 w-5 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-                            </div>
+                            <div class="flex h-10 w-10 items-center justify-center rounded-[10px] t-kpi-icon-emerald text-lg">⛽</div>
                         </div>
                         <div class="flex items-end gap-2 h-24 px-1">
                             {% for h in [40, 65, 55, 80, 70, 95, 75] %}
-                            <div class="flex-1 rounded-t-md bg-gradient-to-t from-green-600 to-green-400 opacity-90" style="height: {{ h }}%"></div>
+                            <div class="flex-1 rounded-t-md bg-gradient-to-t from-[#0d6b4f] to-[#34d399] opacity-90" style="height: {{ h }}%"></div>
                             {% endfor %}
                         </div>
                         <div class="space-y-2.5">
                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Letzte Tankvorgänge</p>
                             {% for vehicle, liters, cost in [("Fendt 724", "142 L", "€198"), ("New Holland T7", "89 L", "€124"), ("Steyr PKW", "45 L", "€68")] %}
-                            <div class="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2.5">
+                            <div class="flex items-center justify-between rounded-[12px] bg-slate-50 px-3 py-2.5">
                                 <div class="flex items-center gap-3">
-                                    <div class="h-8 w-8 rounded-lg bg-green-700/10 flex items-center justify-center">
-                                        <svg class="h-4 w-4 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-                                    </div>
-                                    <span class="text-sm font-medium text-gray-800">{{ vehicle }}</span>
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-[10px] t-kpi-icon-emerald text-sm">⛽</div>
+                                    <span class="text-sm font-medium text-slate-800">{{ vehicle }}</span>
                                 </div>
                                 <div class="text-right">
                                     <p class="text-sm font-semibold text-gray-900">{{ liters }}</p>
@@ -89,9 +85,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="absolute -bottom-4 -left-4 sm:-left-8 rounded-xl bg-white border border-gray-100 shadow-lg px-4 py-3 hidden sm:block">
-                    <p class="text-xs text-gray-500">Nächste Wartung</p>
-                    <p class="text-sm font-semibold text-amber-700">Fendt 724 · in 42 h</p>
+                <div class="absolute -bottom-4 -left-4 hidden rounded-[12px] border border-slate-100 bg-white px-4 py-3 shadow-lg sm:-left-8 sm:block">
+                    <p class="text-xs text-slate-500">Nächste Wartung</p>
+                    <p class="text-sm font-semibold text-amber-700">🔧 Fendt 724 · in 42 h</p>
                 </div>
             </div>
         </div>
@@ -152,28 +148,26 @@
 <section id="features" class="py-20 sm:py-24 bg-gray-50/80">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center max-w-2xl mx-auto mb-14">
-            <p class="text-sm font-semibold text-green-700 uppercase tracking-wide mb-3">Funktionen</p>
-            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight mb-4">Was Tankly kann</h2>
-            <p class="text-lg text-gray-600">Entwickelt für Traktoren, Transporter und Maschinen – mit den Einheiten, die im Betrieb zählen.</p>
+            <p class="mb-3 text-sm font-semibold uppercase tracking-wide text-[#0d6b4f]">Funktionen</p>
+            <h2 class="mb-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Was Tankly kann</h2>
+            <p class="text-lg text-slate-600">Entwickelt für Traktoren, Transporter und Maschinen – mit den Einheiten, die im Betrieb zählen.</p>
         </div>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {% for title, desc, icon in [
-                ("Tankbuch", "Tankvorgänge mit Datum, Liter, Kosten und Voll-/Teiltankung.", "M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"),
-                ("Fahrzeugverwaltung", "Traktoren, PKW und Maschinen mit Betriebsstunden oder Kilometern.", "M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"),
-                ("Verbrauchsanalyse", "Trends und Kennzahlen der letzten Monate im Dashboard.", "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"),
-                ("Wartungsprotokoll", "Service, Kosten und nächste fällige Intervalle.", "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z"),
-                ("Service-Erinnerungen", "Benachrichtigung bei fälliger Wartung nach Datum oder Betriebsstunden.", "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"),
-                ("CSV-Export", "Daten für Buchhaltung und Auswertung herunterladen.", "M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"),
-                ("Team & Rollen", "Mitarbeiter einladen mit Admin-, Schreib- oder Lese-Rechten.", "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"),
-                ("Audit-Log", "Nachvollziehen, wer was im Betrieb geändert hat.", "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"),
-                ("Mobil optimiert", "Große Touch-Targets – auch mit Handschuhen nutzbar.", "M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"),
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {% for emoji, title, desc in [
+                ("⛽", "Tankbuch", "Tankvorgänge mit Datum, Liter, Kosten und Voll-/Teiltankung."),
+                ("🚗", "Fahrzeugverwaltung", "Traktoren, PKW und Maschinen mit Betriebsstunden oder Kilometern."),
+                ("📊", "Verbrauchsanalyse", "Trends und Kennzahlen der letzten Monate im Dashboard."),
+                ("🔧", "Wartungsprotokoll", "Service, Kosten und nächste fällige Intervalle."),
+                ("🔔", "Service-Erinnerungen", "Benachrichtigung bei fälliger Wartung nach Datum oder Betriebsstunden."),
+                ("📥", "CSV-Export", "Daten für Buchhaltung und Auswertung herunterladen."),
+                ("👥", "Team & Rollen", "Mitarbeiter einladen mit Admin-, Schreib- oder Lese-Rechten."),
+                ("📋", "Audit-Log", "Nachvollziehen, wer was im Betrieb geändert hat."),
+                ("📱", "Mobil optimiert", "Große Touch-Targets – auch mit Handschuhen nutzbar."),
             ] %}
-            <div class="feature-card group rounded-2xl bg-white border border-gray-100 p-6 shadow-sm hover:shadow-md hover:border-green-200/80 transition duration-300">
-                <div class="h-11 w-11 rounded-xl bg-green-50 text-green-700 flex items-center justify-center mb-4 group-hover:bg-green-700 group-hover:text-white transition duration-300">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="{{ icon }}"/></svg>
-                </div>
-                <h3 class="font-bold text-gray-900 mb-2">{{ title }}</h3>
-                <p class="text-sm text-gray-600 leading-relaxed">{{ desc }}</p>
+            <div class="t-card p-5 transition hover:-translate-y-0.5">
+                <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-[10px] t-kpi-icon-emerald text-lg">{{ emoji }}</div>
+                <h3 class="mb-2 font-bold text-slate-950">{{ title }}</h3>
+                <p class="text-sm leading-relaxed text-slate-600">{{ desc }}</p>
             </div>
             {% endfor %}
         </div>
@@ -190,7 +184,7 @@
             <p class="text-sm text-gray-500 mt-2">Preise zzgl. USt.; bei Unternehmen mit UID gilt die Reverse-Charge-Regelung.</p>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto items-stretch">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:gap-8 max-w-5xl mx-auto items-stretch">
             <!-- Free -->
             <div class="rounded-2xl border border-gray-200 bg-white p-7 flex flex-col hover:border-gray-300 transition">
                 <h3 class="text-lg font-bold text-gray-900">Free</h3>
@@ -205,14 +199,14 @@
                     <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>1 Admin, Team per Invite</li>
                     <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Dashboard & Zusammenfassung</li>
                 </ul>
-                <a href="/register" class="mt-8 block text-center min-h-[48px] leading-[48px] rounded-xl border-2 border-green-700 text-green-700 font-semibold hover:bg-green-50 transition">
-                    Kostenlos starten
+                <a href="{{ pricing_ctas.free.href }}" class="mt-8 block min-h-[48px] rounded-[10px] border-2 border-[#0d6b4f] text-center leading-[48px] font-semibold text-[#0d6b4f] transition hover:bg-[#ecfdf5]">
+                    {{ pricing_ctas.free.label }}
                 </a>
             </div>
 
             <!-- Pro -->
-            <div class="rounded-2xl border-2 border-green-700 bg-gradient-to-b from-green-50/50 to-white p-7 flex flex-col relative shadow-xl shadow-green-900/10 md:-mt-2 md:mb-2">
-                <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-green-700 text-white text-xs font-bold uppercase tracking-wide px-4 py-1.5 rounded-full shadow-md">Beliebt</span>
+            <div class="relative -mt-2 rounded-[16px] border-2 border-[#0d6b4f] bg-gradient-to-b from-[#ecfdf5]/50 to-white p-7 md:-mt-2 md:mb-2">
+                <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-[#0d6b4f] px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-md">Beliebt</span>
                 <h3 class="text-lg font-bold text-gray-900">Pro</h3>
                 <p class="mt-3 flex items-baseline gap-1">
                     <span class="text-4xl font-bold tracking-tight">€19</span>
@@ -225,8 +219,8 @@
                     <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Wartungsprotokoll & Erinnerungen</li>
                     <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Audit-Log</li>
                 </ul>
-                <a href="/register" class="mt-8 block text-center min-h-[48px] leading-[48px] rounded-xl bg-green-700 text-white font-semibold hover:bg-green-800 shadow-lg shadow-green-700/25 transition">
-                    Pro testen
+                <a href="{{ pricing_ctas.pro.href }}" class="mt-8 block min-h-[48px] rounded-[10px] bg-[#0d6b4f] text-center leading-[48px] font-semibold text-white shadow-sm transition hover:bg-[#0a5840]">
+                    {{ pricing_ctas.pro.label }}
                 </a>
             </div>
 
@@ -244,23 +238,27 @@
                     <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Prioritäts-Support</li>
                     <li class="flex items-start gap-2.5"><svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Für wachsende Betriebe</li>
                 </ul>
-                <a href="/register" class="mt-8 block text-center min-h-[48px] leading-[48px] rounded-xl border-2 border-green-700 text-green-700 font-semibold hover:bg-green-50 transition">
-                    Farm wählen
+                <a href="{{ pricing_ctas.farm.href }}" class="mt-8 block min-h-[48px] rounded-[10px] border-2 border-[#0d6b4f] text-center leading-[48px] font-semibold text-[#0d6b4f] transition hover:bg-[#ecfdf5]">
+                    {{ pricing_ctas.farm.label }}
                 </a>
             </div>
         </div>
-        <p class="text-center text-xs text-gray-400 mt-10 max-w-lg mx-auto">Online-Zahlung und Abo-Verwaltung folgen in Kürze (Stripe). Bis dahin ist der Free-Tarif voll nutzbar.</p>
+        {% if stripe_checkout_available() %}
+        <p class="text-center text-xs text-gray-500 mt-10 max-w-lg mx-auto">Pro-Tarif: {{ stripe_trial_days() }} Tage kostenlos testen. Abos und Rechnungen werden über Stripe abgewickelt.</p>
+        {% else %}
+        <p class="text-center text-xs text-gray-500 mt-10 max-w-lg mx-auto">Nach der Registrierung kannst du unter Einstellungen → Abo & Rechnungen upgraden.</p>
+        {% endif %}
     </div>
 </section>
 
 <!-- CTA -->
 <section class="relative overflow-hidden py-20 sm:py-24">
-    <div class="absolute inset-0 bg-gradient-to-br from-green-800 via-green-700 to-emerald-800"></div>
+    <div class="absolute inset-0 bg-gradient-to-br from-[#0a5840] via-[#0d6b4f] to-[#047857]"></div>
     <div class="absolute inset-0 opacity-10" aria-hidden="true" style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%23ffffff&quot; fill-opacity=&quot;1&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
     <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4">Bereit für mehr Übersicht im Betrieb?</h2>
         <p class="text-green-100 text-lg mb-10 max-w-xl mx-auto leading-relaxed">Erstellen Sie in zwei Minuten einen Betrieb, laden Sie Ihr Team ein und erfassen Sie den ersten Tankvorgang.</p>
-        <a href="/register" class="inline-flex justify-center items-center min-h-[52px] px-10 py-3 rounded-xl bg-white text-green-800 font-bold hover:bg-green-50 transition shadow-xl shadow-black/10">
+        <a href="/register" class="inline-flex min-h-[52px] items-center justify-center rounded-[10px] bg-white px-10 py-3 text-base font-bold text-[#0d6b4f] shadow-xl transition hover:bg-[#ecfdf5]">
             Jetzt kostenlos registrieren
             <svg class="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
         </a>

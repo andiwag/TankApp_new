@@ -124,8 +124,11 @@ class TestExportCsv:
 
 
 class TestExportRoutes:
-    async def test_export_fuel_entries_csv_route(self, client, auth_group):
-        auth_group()
+    async def test_export_fuel_entries_csv_route(
+        self, client, auth_group, set_group_tier
+    ):
+        _, group = auth_group()
+        set_group_tier(group.id, "pro")
         response = await client.get("/export/fuel-entries.csv")
         assert response.status_code == 200
         assert "text/csv" in response.headers["content-type"]
@@ -133,9 +136,10 @@ class TestExportRoutes:
         assert "date,vehicle,fuel_liters" in response.text.splitlines()[0]
 
     async def test_export_vehicles_csv_route(
-        self, client, auth_group, create_test_vehicle
+        self, client, auth_group, create_test_vehicle, set_group_tier
     ):
         _, group = auth_group()
+        set_group_tier(group.id, "pro")
         create_test_vehicle(group_id=group.id, name="Exported")
         response = await client.get("/export/vehicles.csv")
         assert response.status_code == 200
@@ -239,9 +243,10 @@ class TestAnalyticsDashboard:
         assert ctx["vehicle_chart"] == [{"name": "Window Tractor", "liters": 40.0}]
 
     async def test_analytics_page_renders(
-        self, client, auth_group, create_test_vehicle
+        self, client, auth_group, create_test_vehicle, set_group_tier
     ):
         _, group = auth_group()
+        set_group_tier(group.id, "pro")
         create_test_vehicle(group_id=group.id)
         response = await client.get("/analytics")
         assert response.status_code == 200

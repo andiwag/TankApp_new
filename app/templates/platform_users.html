@@ -1,38 +1,38 @@
 {% extends "platform_base.html" %}
-{% from "_macros.html" import empty_state, role_badge with context %}
+{% from "_macros.html" import button_class, empty_state, form_input_class, glass_panel, page_header, role_badge with context %}
 
 {% block title %}Benutzer – Tankly Operator{% endblock %}
 
 {% block content %}
-<div class="mb-8">
-    <h1 class="text-3xl font-bold text-white">Benutzer</h1>
-    <p class="mt-2 text-slate-400">Suche nach E-Mail oder Name.</p>
-</div>
+{{ page_header("👤 Benutzer", "", "Suche nach E-Mail oder Name.") }}
 
-<form method="get" action="/platform/users" class="mb-8 flex flex-wrap gap-2">
-    <input type="search" name="q" value="{{ search_query }}" placeholder="E-Mail oder Name…" class="min-w-[260px] flex-1 rounded-xl border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-white placeholder:text-slate-500">
-    <button type="submit" class="rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400">Suchen</button>
+<form method="get" action="/platform/users" class="mb-5 flex flex-wrap gap-2">
+    <input type="search" name="q" value="{{ search_query }}" placeholder="E-Mail oder Name…" class="min-w-[260px] flex-1 {{ form_input_class() }}">
+    <button type="submit" class="{{ button_class('primary') }}">Suchen</button>
 </form>
 
 {% if show_prompt %}
-<p class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-slate-400">Gib einen Suchbegriff ein, um Benutzer zu finden.</p>
+<div class="{{ glass_panel('p-4 text-sm text-slate-500') }}">Gib einen Suchbegriff ein, um Benutzer zu finden.</div>
 {% elif show_empty_state %}
-{{ empty_state("Keine Benutzer gefunden", "Versuche eine andere E-Mail oder einen anderen Namen.") }}
+{{ empty_state("Keine Benutzer gefunden", "Versuche eine andere E-Mail oder einen anderen Namen.", "", "", "user") }}
 {% else %}
-<div class="space-y-4">
+<div class="space-y-3">
     {% for item in users %}
-    <article class="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+    <article class="{{ glass_panel('p-4') }}">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-                <h2 class="text-lg font-bold text-white">
-                    <a href="/platform/users/{{ item.id }}" class="hover:text-sky-300">{{ item.name }}</a>
-                </h2>
-                <p class="text-sm text-slate-400">{{ item.email }}</p>
+            <div class="flex items-start gap-3">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] t-kpi-icon-violet text-lg" aria-hidden="true">👤</div>
+                <div>
+                    <h2 class="text-base font-semibold text-slate-950">
+                        <a href="/platform/users/{{ item.id }}" class="text-[#0d6b4f] hover:underline">{{ item.name }}</a>
+                    </h2>
+                    <p class="text-sm text-slate-500">{{ item.email }}</p>
+                </div>
             </div>
-            <p class="text-xs uppercase tracking-wide text-slate-500">Seit {{ format_datetime(item.created_at) }}</p>
+            <p class="text-xs text-slate-400">Seit {{ format_datetime(item.created_at) }}</p>
         </div>
         {% if item.memberships %}
-        <ul class="mt-4 space-y-2 text-sm text-slate-300">
+        <ul class="mt-3 space-y-1.5 border-t border-slate-100 pt-3 text-sm text-slate-600">
             {% for membership in item.memberships %}
             <li>{{ membership.group_name }} · {{ role_badge(membership.role) }}</li>
             {% endfor %}

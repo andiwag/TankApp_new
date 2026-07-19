@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "_macros.html" import button_class, csrf_field, glass_panel, kpi_card, page_header, status_chip with context %}
+
+{% block title %}Abo & Rechnungen – Tankly{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-3xl space-y-5">
+    {{ page_header("💳 Abo & Rechnungen", "", "Tarif, Zahlungen und Rechnungen für deinen Betrieb verwalten.", "/settings/group", "Betriebseinstellungen") }}
+
+    {% if flash_success %}
+    <div class="rounded-[12px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{{ flash_success }}</div>
+    {% endif %}
+    {% if flash_info %}
+    <div class="rounded-[12px] border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">{{ flash_info }}</div>
+    {% endif %}
+
+    <div class="grid gap-4 sm:grid-cols-2">
+        {{ kpi_card("📦", "Aktueller Tarif", tier_label, "", "", "emerald") }}
+        {{ kpi_card("📋", "Status", status_label, "", "", "violet") }}
+    </div>
+
+    <section class="{{ glass_panel('p-5') }}">
+        <h2 class="text-base font-bold text-slate-950">Enthaltene Funktionen</h2>
+        <ul class="mt-3 space-y-2 text-sm text-slate-600">
+            <li>Fahrzeuge: {% if vehicle_limit is none %}unbegrenzt{% else %}max. {{ vehicle_limit }}{% endif %}</li>
+            <li>Analysen: {% if features.analytics %}✓{% else %}—{% endif %}</li>
+            <li>CSV-Export: {% if features.export %}✓{% else %}—{% endif %}</li>
+            <li>Wartung: {% if features.maintenance %}✓{% else %}—{% endif %}</li>
+        </ul>
+        {% if subscription.current_period_end %}
+        <p class="mt-4 text-sm text-slate-500">Nächste Verlängerung: {{ subscription.current_period_end.strftime('%d.%m.%Y') }}</p>
+        {% endif %}
+        {% if subscription.cancel_at_period_end %}
+        <p class="mt-2 text-sm text-amber-700">Kündigung zum Periodenende aktiv.</p>
+        {% endif %}
+    </section>
+
+    {% if stripe_enabled %}
+    <section class="{{ glass_panel('p-5') }} space-y-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="text-base font-bold text-slate-950">Tarif wechseln</h2>
+            {% if has_yearly_plans %}
+            <div class="inline-flex rounded-[10px] border border-slate-200 bg-slate-50 p-1 text-sm font-semibold">
+                <a href="/settings/billing?interval=month" class="rounded-[8px] px-3 py-1.5 {% if billing_interval == 'month' %}bg-white text-slate-900 shadow-sm{% else %}text-slate-500 hover:text-slate-700{% endif %}">Monatlich</a>
+                <a href="/settings/billing?interval=year" class="rounded-[8px] px-3 py-1.5 {% if billing_interval == 'year' %}bg-white text-slate-900 shadow-sm{% else %}text-slate-500 hover:text-slate-700{% endif %}">Jährlich</a>
+            </div>
+            {% endif %}
+        </div>
+        {% if is_partner_tier %}
+        <p class="text-sm text-slate-600">Dieser Betrieb hat einen kostenlosen Partner-Tarif (Freischaltung durch Tankly). Es gibt kein Stripe-Abo und keine Upgrade-Schaltflächen.</p>
+        {% elif not has_active_subscription and trial_days > 0 and billing_interval == 'month' %}
+        <p class="text-sm text-slate-600">Pro-Tarif: {{ trial_days }} Tage kostenlos testen, danach monatliche Abrechnung.</p>
+        {% endif %}
+        {% if is_partner_tier %}
+        {% elif has_active_subscription %}
+        <p class="text-sm text-slate-600">Tarifwechsel und Kündigung erfolgen über das Kundenportal.</p>
+        {% elif stripe_catalog_ready %}
+            {% for plan in checkout_plans %}
+                {% if (plan.tier == 'pro' and effective_tier != 'pro') or (plan.tier == 'farm' and effective_tier != 'farm') %}
+                <form method="post" action="{{ request.url_for('billing_checkout_post') }}" x-data="{ submitting: false }" @submit="submitting = true">
+                    {{ csrf_field() }}
+                    <input type="hidden" name="lookup_key" value="{{ plan.lookup_key }}">
+                    <button type="submit" :disabled="submitting" class="{{ button_class('primary' if plan.tier == 'pro' else 'secondary') }} disabled:opacity-60">{{ plan.label }}</button>
+                </form>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        {% if subscription.stripe_customer_id and not is_partner_tier %}
+        <form method="post" action="{{ request.url_for('billing_portal_post') }}" x-data="{ submitting: false }" @submit="submitting = true">
+            {{ csrf_field() }}
+            <button type="submit" :disabled="submitting" class="{{ button_class('secondary') }} disabled:opacity-60">Zahlungsmethode & Rechnungen verwalten</button>
+        </form>
+        {% endif %}
+    </section>
+    {% else %}
+    <section class="{{ glass_panel('p-5') }}">
+        <p class="text-sm text-slate-600">Stripe ist noch nicht konfiguriert. Setze die Stripe-Umgebungsvariablen, um Upgrades zu aktivieren.</p>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

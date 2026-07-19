@@ -19,7 +19,7 @@ from app.error_pages import (
     http_exception_response,
     wants_html_response,
 )
-from app.flash import FlashMiddleware
+from app.flash import FlashMiddleware, set_flash
 from app.logging_config import configure_logging
 from app.middleware.platform_view import PlatformViewReadOnlyMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
@@ -80,6 +80,7 @@ app.add_middleware(PlatformViewReadOnlyMiddleware)
 # ── Exception handlers ───────────────────────────────────────────────────────
 
 from app.dependencies import (  # noqa: E402
+    EntitlementRequiredException,
     InsufficientRoleException,
     NoActiveGroupException,
     NotAuthenticatedException,
@@ -104,6 +105,21 @@ async def insufficient_role_handler(request, exc):
 
 @app.exception_handler(PlatformAdminRequiredException)
 async def platform_admin_required_handler(request, exc):
+    return forbidden_response()
+
+
+@app.exception_handler(EntitlementRequiredException)
+async def entitlement_required_handler(request, exc):
+    if request.url.path.startswith("/export/"):
+        return forbidden_response()
+    if wants_html_response(request):
+        response = RedirectResponse(url="/settings/billing", status_code=303)
+        set_flash(
+            response,
+            "Diese Funktion erfordert ein höheres Abo.",
+            "warning",
+        )
+        return response
     return forbidden_response()
 
 
@@ -164,6 +180,7 @@ async def readiness_check() -> JSONResponse:
 from app.routes.analytics import router as analytics_router  # noqa: E402
 from app.routes.audit_log import router as audit_log_router  # noqa: E402
 from app.routes.auth import router as auth_router  # noqa: E402
+from app.routes.billing import router as billing_router  # noqa: E402
 from app.routes.cron import router as cron_router  # noqa: E402
 from app.routes.dashboard import router as dashboard_router  # noqa: E402
 from app.routes.export import router as export_router  # noqa: E402
@@ -177,12 +194,14 @@ from app.routes.profile import router as profile_router  # noqa: E402
 from app.routes.storage_tanks import router as storage_tanks_router  # noqa: E402
 from app.routes.summary import router as summary_router  # noqa: E402
 from app.routes.vehicles import router as vehicles_router  # noqa: E402
+from app.routes.webhooks_stripe import router as webhooks_stripe_router  # noqa: E402
 
 app.include_router(marketing_router)
 app.include_router(auth_router)
 app.include_router(platform_router)
 app.include_router(groups_router)
 app.include_router(group_settings_router)
+app.include_router(billing_router)
 app.include_router(dashboard_router)
 app.include_router(summary_router)
 app.include_router(profile_router)
@@ -194,3 +213,4 @@ app.include_router(analytics_router)
 app.include_router(export_router)
 app.include_router(audit_log_router)
 app.include_router(cron_router)
+app.include_router(webhooks_stripe_router)

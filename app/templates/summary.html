@@ -1,206 +1,107 @@
 {% extends "base.html" %}
+{% from "_macros.html" import empty_state, glass_panel, mobile_header_bar, page_header, section_heading, status_chip, table_scroll_panel with context %}
 
-{% from "_macros.html" import empty_state, glass_panel, page_header, status_chip with context %}
-
-
+{% block mobile_header %}
+{{ mobile_header_bar(title="Zusammenfassung", back_href="/profile") }}
+{% endblock %}
 
 {% block title %}Zusammenfassung – Tankly{% endblock %}
 
-
-
 {% block content %}
-
 <div>
-
-    {{ page_header("Zusammenfassung", "Berichte", "Detaillierte Summen und Verbrauchswerte für Buchhaltung und Planung.", "", "", "/analytics", "Zur Auswertung") }}
-
-
-
-    {% if show_empty_state %}
-
-    <div id="summary-empty-state" class="mb-8">
-
-        {{ empty_state("Noch keine Fahrzeuge in diesem Betrieb", "Füge ein Fahrzeug hinzu, um Kraftstoffstatistiken zu sehen.", "/vehicles/new", "Fahrzeug hinzufügen") }}
-
+    <div class="hidden lg:block">
+        {{ page_header("Zusammenfassung", "", "Detaillierte Summen und Verbrauchswerte für Buchhaltung und Planung.", "", "", "/analytics", "Zur Auswertung", icon="clipboard") }}
     </div>
 
+    {% if show_empty_state %}
+    <div id="summary-empty-state" class="mb-6">
+        {{ empty_state("Noch keine Fahrzeuge in diesem Betrieb", "Füge ein Fahrzeug hinzu, um Kraftstoffstatistiken zu sehen.", "/vehicles/new" if can_edit else "", "Fahrzeug hinzufügen", "vehicle") }}
+    </div>
     {% endif %}
 
-
-
-    <section class="mb-10">
-
-        <div class="mb-4 flex items-center justify-between">
-
-            <h2 class="text-xl font-bold text-slate-950">Kraftstoff nach Fahrzeug</h2>
-
+    <section class="mb-6">
+        <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            {{ section_heading("Kraftstoff nach Fahrzeug") }}
             {{ status_chip("Aktive Fahrzeuge", "success") }}
-
         </div>
-
-        <div class="{{ glass_panel('overflow-x-auto') }}">
-
-            <table class="min-w-full divide-y divide-gray-200">
-
-                <thead class="bg-white/60">
-
+        {% call table_scroll_panel() %}
+            <table class="t-data-table min-w-[480px] w-full sm:min-w-full">
+                <thead>
                     <tr>
-
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fahrzeug</th>
-
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Gesamt (L)</th>
-
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Kosten (€)</th>
-
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Einträge</th>
-
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Ø Verbrauch</th>
-
+                        <th>Fahrzeug</th>
+                        <th class="text-right">Gesamt (L)</th>
+                        <th class="text-right">Kosten (€)</th>
+                        <th class="text-right">Einträge</th>
+                        <th class="text-right">Ø Verbrauch</th>
                     </tr>
-
                 </thead>
-
-                <tbody class="divide-y divide-white/70 bg-white/40">
-
+                <tbody>
                     {% for row in vehicle_rows %}
-
-                    <tr class="hover:bg-white/70">
-
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-950">{{ row.name }}</td>
-
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-emerald-800 text-right">
-
+                    <tr>
+                        <td class="font-semibold text-slate-950">{{ row.name }}</td>
+                        <td class="text-right font-semibold text-[#0d6b4f]">
                             <span id="sum-liters-{{ row.vehicle_id }}">{{ format_number(row.total_liters) }}</span>
-
                         </td>
-
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 text-right">
-
+                        <td class="text-right">
                             {% if row.total_cost_eur is not none %}{{ format_number(row.total_cost_eur, 2) }}{% else %}—{% endif %}
-
                         </td>
-
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 text-right">
-
+                        <td class="text-right">
                             <span id="sum-count-{{ row.vehicle_id }}">{{ row.entry_count }}</span>
-
                         </td>
-
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 text-right">
-
+                        <td class="text-right">
                             {% if row.avg_consumption is not none %}
-
-                                <span class="font-semibold">{{ format_number(row.avg_consumption, 2) }}</span> {{ row.consumption_unit_label }}
-
-                            {% else %}
-
-                                —
-
-                            {% endif %}
-
+                            <span class="font-semibold">{{ format_number(row.avg_consumption, 2) }}</span> {{ row.consumption_unit_label }}
+                            {% else %}—{% endif %}
                         </td>
-
                     </tr>
-
                     {% endfor %}
-
                 </tbody>
-
             </table>
-
-        </div>
-
+        {% endcall %}
     </section>
-
-
 
     {% if total_group_adblue_l is not none %}
-
     <section class="mb-10">
-
         <div class="mb-4 flex items-center justify-between">
-
             <h2 class="text-xl font-bold text-slate-950">AdBlue</h2>
-
             {{ status_chip("Traktoren", "info") }}
-
         </div>
-
         <div class="{{ glass_panel('p-6') }}">
-
             <p class="text-sm text-slate-600">Gesamt AdBlue (getrennt von Kraftstoff-Litern)</p>
-
             <p class="mt-2 text-3xl font-bold text-sky-800"><span id="sum-adblue-total">{{ format_number(total_group_adblue_l) }}</span> L</p>
-
         </div>
-
     </section>
-
     {% endif %}
 
-
-
     <section>
-
-        <div class="mb-4 flex items-center justify-between">
-
-            <h2 class="text-xl font-bold text-slate-950">Kraftstoff nach Monat</h2>
-
+        <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            {{ section_heading("Kraftstoff nach Monat") }}
             {{ status_chip("Letzte 12 Monate", "info") }}
-
         </div>
-
-        <div class="{{ glass_panel('overflow-x-auto') }}">
-
-            <table class="min-w-full divide-y divide-gray-200">
-
-                <thead class="bg-white/60">
-
+        {% call table_scroll_panel() %}
+            <table class="t-data-table min-w-[480px] w-full sm:min-w-full">
+                <thead>
                     <tr>
-
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Monat</th>
-
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Gesamt (L)</th>
-
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Kosten (€)</th>
-
+                        <th>Monat</th>
+                        <th class="text-right">Gesamt (L)</th>
+                        <th class="text-right">Kosten (€)</th>
                     </tr>
-
                 </thead>
-
-                <tbody class="divide-y divide-white/70 bg-white/40">
-
+                <tbody>
                     {% for m in monthly_rows %}
-
-                    <tr class="hover:bg-white/70">
-
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-950">{{ m.label }}</td>
-
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-emerald-800 text-right">
-
+                    <tr>
+                        <td class="font-medium text-slate-950">{{ m.label }}</td>
+                        <td class="text-right font-semibold text-[#0d6b4f]">
                             <span id="sum-month-{{ m.year }}-{{ '%02d'|format(m.month) }}">{{ format_number(m.liters) }}</span>
-
                         </td>
-
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 text-right">
-
+                        <td class="text-right">
                             {% if m.cost_eur is not none %}{{ format_number(m.cost_eur, 2) }}{% else %}—{% endif %}
-
                         </td>
-
                     </tr>
-
                     {% endfor %}
-
                 </tbody>
-
             </table>
-
-        </div>
-
+        {% endcall %}
     </section>
-
 </div>
-
 {% endblock %}
-

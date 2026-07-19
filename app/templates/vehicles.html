@@ -1,98 +1,38 @@
 {% extends "base.html" %}
+{% from "_macros.html" import empty_state, mobile_header_bar, page_header, vehicle_card, vehicle_hero_card with context %}
 
-{% from "_macros.html" import action_button, csrf_field, empty_state, glass_panel, page_header, status_chip with context %}
-
-
+{% block mobile_header %}
+{{ mobile_header_bar(title="Fahrzeuge", action_href="/vehicles/new" if can_edit else "") }}
+{% endblock %}
 
 {% block title %}Fahrzeuge – Tankly{% endblock %}
 
-
-
 {% block content %}
-
 <div>
-
-    {{ page_header("Fuhrpark", "Verwalten", "Fahrzeuge und Maschinen, auf denen Kraftstoff, Wartung und Auswertungen basieren.", "/vehicles/new" if can_edit else "", "Fahrzeug hinzufügen", "/export/vehicles.csv", "CSV exportieren") }}
-
-
-
-    <div id="vehicle-list">
-
-        {% if vehicles %}
-
-        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-
-            {% for v in vehicles %}
-
-            <article class="{{ glass_panel('p-5') }}">
-
-                <div class="flex items-start justify-between gap-4">
-
-                <div>
-
-                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-lg font-bold text-white">{{ v.name[:1] }}</div>
-
-                        <h2 class="mt-4 text-lg font-bold text-slate-950">{{ v.name }}</h2>
-
-                        <div class="mt-3 flex flex-wrap gap-2">
-
-                            {{ status_chip(vehicle_type_label(v.vtype), "info") }}
-
-                            {{ status_chip(fuel_type_label(v.fuel_type), "success") }}
-
-                            {{ status_chip(usage_unit_label(v.usage_unit), "neutral") }}
-
-                        </div>
-
-                </div>
-
-                    <div class="flex flex-col items-end gap-1">
-
-                    {% if can_edit %}
-
-                    <a href="/vehicles/{{ v.id }}/edit" class="rounded-xl px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-100">Bearbeiten</a>
-
-                    {% endif %}
-
-                    {% if can_delete %}
-
-                    <form method="post" action="/vehicles/{{ v.id }}/delete" class="inline" x-data="{ submitting: false }" @submit="if (!confirm('Dieses Fahrzeug entfernen?')) { $event.preventDefault(); return; } submitting = true">
-
-                        {{ csrf_field() }}
-
-                        <button type="submit" :disabled="submitting" class="rounded-xl px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60">Löschen</button>
-
-                    </form>
-
-                    {% endif %}
-
-                    </div>
-
-                </div>
-
-                <div class="mt-5 flex flex-wrap gap-2">
-
-                    {{ action_button("Kraftstoff", "/fuel/new", "secondary", "flex-1") }}
-
-                    {{ action_button("Wartung", "/maintenance/new", "ghost", "flex-1") }}
-
-                </div>
-
-            </article>
-
-            {% endfor %}
-
-        </div>
-
-        {% else %}
-
-        {{ empty_state("Noch keine Fahrzeuge", "Füge dein erstes Fahrzeug hinzu, um Kraftstoff- und Wartungserfassung freizuschalten.", "/vehicles/new" if can_edit else "", "Erstes Fahrzeug hinzufügen") }}
-
-        {% endif %}
-
+    <div class="hidden lg:block">
+        {{ page_header("Fahrzeuge", "", "Fahrzeuge und Maschinen, auf denen Kraftstoff, Wartung und Auswertungen basieren.", "/vehicles/new" if can_edit else "", "Fahrzeug hinzufügen", "/export/vehicles.csv" if can_export else "", "CSV exportieren", icon="vehicle") }}
     </div>
 
+    <div id="vehicle-list">
+        {% if vehicles %}
+        <div class="space-y-4 lg:hidden">
+            {% for v in vehicles %}
+            {{ vehicle_hero_card(v, vehicle_stats[v.id], can_edit, can_delete) }}
+            {% endfor %}
+        </div>
+        <div class="hidden gap-4 lg:grid sm:grid-cols-2 xl:grid-cols-3">
+            {% for v in vehicles %}
+            {{ vehicle_card(v, can_edit, can_delete) }}
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="lg:hidden">
+            {{ empty_state("Noch keine Fahrzeuge", "Füge dein erstes Fahrzeug hinzu — oben rechts mit +.", "", "", "vehicle") }}
+        </div>
+        <div class="hidden lg:block">
+        {{ empty_state("Noch keine Fahrzeuge", "Füge dein erstes Fahrzeug hinzu, um Kraftstoff- und Wartungserfassung freizuschalten.", "/vehicles/new" if can_edit else "", "Erstes Fahrzeug hinzufügen", "vehicle") }}
+        </div>
+        {% endif %}
+    </div>
 </div>
-
 {% endblock %}
-

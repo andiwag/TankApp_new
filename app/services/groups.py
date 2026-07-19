@@ -1,13 +1,19 @@
 """Group listing and membership mutations."""
 
+import logging
+
 from sqlalchemy.orm import Session
 
 from app.enums import Role
-from app.models import Group, User, UserGroup
+from app.models import Group, GroupSubscription, User, UserGroup
 from app.schemas import GroupCreate
+from app.services.billing import stripe_client
+from app.services.billing.subscriptions import ensure_group_subscription
 from app.services.invite_codes import generate_unique_invite_code
 from app.services.membership import count_group_admins, get_membership
 from app.time_utils import utc_now
+
+logger = logging.getLogger(__name__)
 
 
 class GroupActionError(Exception):
@@ -40,6 +46,7 @@ def create_group(db: Session, user: User, data: GroupCreate) -> Group:
     db.flush()
     db.add(UserGroup(user_id=user.id, group_id=group.id, role=Role.admin.value))
     db.flush()
+    ensure_group_subscription(db, group.id)
     return group
 
 
@@ -115,5 +122,19 @@ def soft_delete_group_as_admin(db: Session, user: User, group_id: int) -> Group 
         return None
 
     group.deleted_at = utc_now()
+    sub = (
+        db.query(GroupSubscription)
+        .filter(GroupSubscription.group_id == group_id)
+        .first()
+    )
+    if sub and sub.stripe_subscription_id:
+        try:
+            stripe_client.cancel_subscription(sub.stripe_subscription_id)
+        except Exception:
+            logger.exception(
+                "Failed to cancel Stripe subscription %s for group %s",
+                sub.stripe_subscription_id,
+                group_id,
+            )
     db.flush()
     return group

@@ -1,4 +1,4 @@
-{% from "_macros.html" import brand_logo, csrf_field with context %}
+{% from "_macros.html" import brand_lockup, brand_logo, csrf_field, icon_chevron, mobile_header_bar, nav_emoji_link, user_initials, app_icon with context %}
 
 <!DOCTYPE html>
 
@@ -15,41 +15,54 @@
     <title>{% block title %}{{ product_name() }}{% endblock %}</title>
 
     <link rel="manifest" href="/static/manifest.json">
+
     <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
+
     <link rel="apple-touch-icon" href="/static/icon-192.png">
-    <meta name="theme-color" content="#047857">
+
+    <meta name="theme-color" content="#0d6b4f">
+
     <script src="/static/vendor/tailwindcss.js"></script>
+
+    <link rel="stylesheet" href="/static/app.css?v=12">
+
     <script defer src="/static/vendor/alpine.min.js"></script>
+
 </head>
 
-<body class="min-h-screen bg-gradient-to-br from-stone-100 via-emerald-50 to-lime-100 text-slate-900 pb-[calc(env(safe-area-inset-bottom)+5rem)] lg:pb-0{% if request.state.platform_view %} pt-16{% endif %}">
+{% set current_path = request.url.path %}
+
+<body class="min-h-screen bg-[#f4f6f8] text-slate-900 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] lg:pb-0{% if request.state.platform_view %} pt-16{% endif %}">
+
+
 
     {% if request.state.platform_view %}
+
     <div class="fixed inset-x-0 top-0 z-50 border-b border-amber-300 bg-amber-100 px-4 py-3 text-amber-950 shadow-lg">
+
         <div class="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
             <p class="text-sm font-semibold">
+
                 <span class="uppercase tracking-wide text-amber-800">Support view:</span>
+
                 Du siehst <strong>{{ request.state.platform_view_group.name }}</strong> als Plattform-Operator (schreibgeschützt).
+
             </p>
+
             <form method="post" action="/platform/exit-view">
+
                 {{ csrf_field() }}
-                <button type="submit" class="rounded-lg bg-amber-900 px-3 py-1.5 text-sm font-semibold text-amber-50 hover:bg-amber-950">
-                    Support-Ansicht beenden
-                </button>
+
+                <button type="submit" class="rounded-lg bg-amber-900 px-3 py-1.5 text-sm font-semibold text-amber-50 hover:bg-amber-950">Support-Ansicht beenden</button>
+
             </form>
+
         </div>
+
     </div>
+
     {% endif %}
-
-    <div class="pointer-events-none fixed inset-0 overflow-hidden">
-
-        <div class="absolute -left-24 top-10 h-72 w-72 rounded-full bg-emerald-300/30 blur-3xl"></div>
-
-        <div class="absolute right-0 top-1/4 h-80 w-80 rounded-full bg-amber-200/30 blur-3xl"></div>
-
-        <div class="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-lime-200/30 blur-3xl"></div>
-
-    </div>
 
 
 
@@ -57,99 +70,45 @@
 
     <div class="relative z-10 lg:flex lg:min-h-screen">
 
-        <aside class="hidden lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-72 lg:flex-col lg:p-4">
 
-            <div class="flex h-full flex-col rounded-3xl border border-white/70 bg-white/70 p-5 shadow-2xl shadow-emerald-900/10 backdrop-blur-xl">
 
-                <a href="{% if request.state.active_group %}/dashboard{% else %}/groups{% endif %}" class="flex items-center gap-3">
+        <aside class="hidden lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[260px] lg:shrink-0 lg:flex-col lg:border-r lg:border-slate-200/70 lg:bg-white">
 
-                    {{ brand_logo() }}
+            <div class="flex h-full flex-col px-4 py-5">
 
-                    <span>
-
-                        <span class="block text-lg font-bold tracking-tight text-slate-950">{{ product_name() }}</span>
-
-                        <span class="block text-xs font-medium text-emerald-700">Betriebs-Cockpit</span>
-
-                    </span>
-
-                </a>
+                {{ brand_lockup("/dashboard" if request.state.active_group else "/groups", size="lg") }}
 
 
 
-                {% if request.state.active_group %}
-
-                <div class="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50/80 p-4">
-
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Betrieb</p>
-
-                    <p class="mt-1 truncate font-semibold text-slate-950">{{ request.state.active_group.name }}</p>
-
-                    <a href="/groups" class="mt-2 inline-flex text-xs font-semibold text-emerald-800 hover:text-emerald-950">Betrieb wechseln</a>
-
-                </div>
-
-                {% endif %}
-
-
-
-                <nav class="mt-6 flex-1 space-y-6 text-sm">
+                <nav class="mt-8 flex-1 space-y-0.5">
 
                     {% if request.state.active_group %}
 
-                    <div>
+                    {{ nav_emoji_link("/dashboard", "Dashboard", "home", current_path == "/dashboard") }}
 
-                        <p class="px-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Beobachten</p>
+                    {{ nav_emoji_link("/vehicles", "Fahrzeuge", "vehicle", current_path.startswith("/vehicles")) }}
 
-                        <div class="mt-2 space-y-1">
+                    {{ nav_emoji_link("/fuel", "Tankvorgänge", "fuel", current_path.startswith("/fuel")) }}
 
-                            <a href="/dashboard" class="flex items-center rounded-xl px-3 py-2 font-medium text-slate-700 hover:bg-emerald-100/80 hover:text-emerald-900">Übersicht</a>
+                    {{ nav_emoji_link("/maintenance", "Wartungen", "wrench", current_path.startswith("/maintenance")) }}
 
-                            <a href="/fuel" class="flex items-center rounded-xl px-3 py-2 font-medium text-slate-700 hover:bg-emerald-100/80 hover:text-emerald-900">Kraftstoff</a>
+                    {{ nav_emoji_link("/analytics", "Auswertung", "chart", current_path.startswith("/analytics")) }}
 
-                            <a href="/tanks" class="flex items-center rounded-xl px-3 py-2 font-medium text-slate-700 hover:bg-emerald-100/80 hover:text-emerald-900">Tanklager</a>
+                    {{ nav_emoji_link("/tanks", "Tanklager", "fuel", current_path.startswith("/tanks")) }}
 
-                            <a href="/vehicles" class="flex items-center rounded-xl px-3 py-2 font-medium text-slate-700 hover:bg-emerald-100/80 hover:text-emerald-900">Fahrzeuge</a>
+                    {{ nav_emoji_link("/summary", "Zusammenfassung", "clipboard", current_path == "/summary") }}
 
-                            <a href="/maintenance" class="flex items-center rounded-xl px-3 py-2 font-medium text-slate-700 hover:bg-emerald-100/80 hover:text-emerald-900">Wartung</a>
+                    <div class="my-3 border-t border-slate-100"></div>
 
-                        </div>
+                    {{ nav_emoji_link("/settings/group", "Einstellungen", "settings", current_path.startswith("/settings")) }}
 
-                    </div>
-
-                    <div>
-
-                        <p class="px-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Analysieren</p>
-
-                        <div class="mt-2 space-y-1">
-
-                            <a href="/analytics" class="flex items-center rounded-xl px-3 py-2 font-medium text-slate-700 hover:bg-sky-100/80 hover:text-sky-900">Auswertung</a>
-
-                            <a href="/summary" class="flex items-center rounded-xl px-3 py-2 font-medium text-slate-700 hover:bg-sky-100/80 hover:text-sky-900">Zusammenfassung</a>
-
-                        </div>
-
-                    </div>
-
-                    <div>
-
-                        <p class="px-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Verwalten</p>
-
-                        <div class="mt-2 space-y-1">
-
-                            <a href="/settings/group" class="flex items-center rounded-xl px-3 py-2 font-medium text-slate-700 hover:bg-stone-100 hover:text-slate-950">Betriebseinstellungen</a>
-
-                            <a href="/profile" class="flex items-center rounded-xl px-3 py-2 font-medium text-slate-700 hover:bg-stone-100 hover:text-slate-950">Profil</a>
-
-                        </div>
-
-                    </div>
+                    {{ nav_emoji_link("/profile", "Profil", "user", current_path == "/profile") }}
 
                     {% else %}
 
-                    <a href="/groups" class="flex items-center rounded-xl px-3 py-2 font-medium text-slate-700 hover:bg-emerald-100/80 hover:text-emerald-900">Betriebe</a>
+                    {{ nav_emoji_link("/groups", "Betriebe", "farm", current_path.startswith("/groups")) }}
 
-                    <a href="/profile" class="flex items-center rounded-xl px-3 py-2 font-medium text-slate-700 hover:bg-stone-100 hover:text-slate-950">Profil</a>
+                    {{ nav_emoji_link("/profile", "Profil", "user", current_path == "/profile") }}
 
                     {% endif %}
 
@@ -157,19 +116,55 @@
 
 
 
-                <div class="border-t border-white/70 pt-4">
+                {% if request.state.active_group %}
 
-                    <p class="truncate text-sm font-semibold text-slate-900">{{ request.state.user.name }}</p>
+                <div class="mt-4 rounded-[12px] border border-slate-100 bg-slate-50/80 px-3 py-2.5">
 
-                    <form method="post" action="/logout" class="mt-3" x-data="{ submitting: false }" @submit="submitting = true">
+                    <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Aktiver Betrieb</p>
 
-                        {{ csrf_field() }}
+                    <p class="mt-1 truncate text-sm font-semibold text-slate-900">{{ request.state.active_group.name }}</p>
 
-                        <button type="submit" :disabled="submitting" class="text-sm font-semibold text-slate-500 transition hover:text-red-700 disabled:opacity-60">Abmelden</button>
+                    <a href="/groups" class="mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-[#0d6b4f] transition hover:text-[#0a5840]">
 
-                    </form>
+                        {{ app_icon("farm", "h-3.5 w-3.5") }} Betrieb wechseln
+
+                    </a>
 
                 </div>
+
+                {% endif %}
+
+
+
+                <a href="/profile" class="mt-3 flex items-center gap-3 rounded-[12px] border border-slate-100 bg-slate-50/80 p-3 transition hover:bg-slate-50">
+
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#ecfdf5] text-xs font-bold text-[#0d6b4f]">{{ user_initials(request.state.user.name) }}</div>
+
+                    <div class="min-w-0 flex-1">
+
+                        <p class="truncate text-sm font-semibold text-slate-900">{{ request.state.user.name }}</p>
+
+                        {% if request.state.user_role %}
+
+                        <p class="text-xs text-slate-500">{{ role_label(request.state.user_role) }}</p>
+
+                        {% endif %}
+
+                    </div>
+
+                    {{ icon_chevron('h-4 w-4 shrink-0 text-slate-400') }}
+
+                </a>
+
+
+
+                <form method="post" action="/logout" class="mt-2 px-2" x-data="{ submitting: false }" @submit="submitting = true">
+
+                    {{ csrf_field() }}
+
+                    <button type="submit" :disabled="submitting" class="text-xs font-medium text-slate-500 transition hover:text-red-600 disabled:opacity-60">Abmelden</button>
+
+                </form>
 
             </div>
 
@@ -179,27 +174,13 @@
 
         <div class="flex min-w-0 flex-1 flex-col">
 
-            <header class="sticky top-0 z-30 border-b border-white/60 bg-white/60 backdrop-blur-xl lg:hidden">
+            <header class="t-mobile-header lg:hidden">
 
-                <div class="flex min-h-16 items-center justify-between px-4">
+                {% block mobile_header %}
 
-                    <a href="{% if request.state.active_group %}/dashboard{% else %}/groups{% endif %}" class="flex items-center gap-2 font-bold tracking-tight text-slate-950">
+                {{ mobile_header_bar(show_brand=true) }}
 
-                        {{ brand_logo('h-9 w-9 rounded-xl object-contain') }}
-
-                        <span>{{ product_name() }}</span>
-
-                    </a>
-
-                    <div class="text-right">
-
-                        {% if request.state.active_group %}<p class="max-w-[12rem] truncate text-xs font-semibold text-emerald-700">{{ request.state.active_group.name }}</p>{% endif %}
-
-                        <a href="/profile" class="text-xs text-slate-500">{{ request.state.user.name }}</a>
-
-                    </div>
-
-                </div>
+                {% endblock %}
 
             </header>
 
@@ -207,37 +188,15 @@
 
             {% if request.state.flash %}
 
-            <div class="mx-auto w-full max-w-7xl px-4 pt-4 sm:px-6 lg:px-8"
+            <div class="mx-auto w-full px-4 pt-4 lg:px-5" x-data="{ show: true }" x-show="show" x-transition>
 
-                 x-data="{ show: true }"
-
-                 x-show="show"
-
-                 x-transition>
-
-                <div class="rounded-2xl border p-4 shadow-lg backdrop-blur-xl
-
-                    {% if request.state.flash.category == 'error' %}
-
-                        border-red-200 bg-red-50/90 text-red-800
-
-                    {% elif request.state.flash.category == 'warning' %}
-
-                        border-amber-200 bg-amber-50/90 text-amber-800
-
-                    {% else %}
-
-                        border-emerald-200 bg-emerald-50/90 text-emerald-800
-
-                    {% endif %}
-
-                ">
+                <div class="t-card p-4 {% if request.state.flash.category == 'error' %}border-red-200 bg-red-50 text-red-800{% elif request.state.flash.category == 'warning' %}border-amber-200 bg-amber-50 text-amber-800{% else %}border-emerald-200 bg-emerald-50 text-emerald-800{% endif %}">
 
                     <div class="flex justify-between gap-4">
 
-                        <p class="text-sm font-medium">{{ request.state.flash.message }}</p>
+                        <p class="min-w-0 flex-1 text-sm font-medium">{{ request.state.flash.message }}</p>
 
-                        <button @click="show = false" class="text-current opacity-60 hover:opacity-100">&times;</button>
+                        <button @click="show = false" class="shrink-0 text-current opacity-60 hover:opacity-100">&times;</button>
 
                     </div>
 
@@ -249,11 +208,23 @@
 
 
 
-            <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+            <main class="t-mobile-main w-full min-w-0 max-w-full flex-1 px-4 py-5 lg:px-5 lg:py-6">
 
                 {% block content %}{% endblock %}
 
             </main>
+
+
+
+            {% if request.state.active_group %}
+
+            <footer class="hidden py-6 text-center text-xs text-slate-400 lg:block">
+
+                {{ product_name() }} v{{ product_version() }}
+
+            </footer>
+
+            {% endif %}
 
         </div>
 
@@ -261,51 +232,13 @@
 
         {% if request.state.active_group %}
 
-        <div class="fixed inset-x-3 bottom-3 z-40 lg:hidden" x-data="{ addOpen: false, moreOpen: false }">
+        <div class="fixed inset-x-0 bottom-0 z-40 lg:hidden" x-data="{ addSheetOpen: false, moreOpen: false }">
 
-            <div x-show="addOpen" x-transition class="mb-3 rounded-3xl border border-white/70 bg-white/90 p-3 shadow-2xl shadow-emerald-900/20 backdrop-blur-xl">
+            {% include "partials/mobile_add_sheet.html" %}
 
-                <div class="grid grid-cols-3 gap-2">
+            {% include "partials/mobile_more_menu.html" %}
 
-                    <a href="/fuel/new" class="rounded-2xl bg-emerald-700 px-3 py-4 text-center text-sm font-semibold text-white">Tankvorgang</a>
-
-                    <a href="/maintenance/new" class="rounded-2xl bg-amber-100 px-3 py-4 text-center text-sm font-semibold text-amber-900">Wartung</a>
-
-                    <a href="/vehicles/new" class="rounded-2xl bg-slate-100 px-3 py-4 text-center text-sm font-semibold text-slate-800">Fahrzeug</a>
-
-                </div>
-
-            </div>
-
-            <div x-show="moreOpen" x-transition class="mb-3 rounded-3xl border border-white/70 bg-white/90 p-3 shadow-2xl shadow-emerald-900/20 backdrop-blur-xl">
-
-                <div class="grid grid-cols-2 gap-2 text-sm font-semibold">
-
-                    <a href="/analytics" class="rounded-2xl bg-sky-50 px-3 py-3 text-sky-900">Auswertung</a>
-
-                    <a href="/summary" class="rounded-2xl bg-sky-50 px-3 py-3 text-sky-900">Zusammenfassung</a>
-
-                    <a href="/settings/group" class="rounded-2xl bg-slate-50 px-3 py-3 text-slate-800">Einstellungen</a>
-
-                    <a href="/profile" class="rounded-2xl bg-slate-50 px-3 py-3 text-slate-800">Profil</a>
-
-                </div>
-
-            </div>
-
-            <nav class="grid grid-cols-5 items-center rounded-3xl border border-white/70 bg-white/85 p-2 text-xs font-semibold text-slate-600 shadow-2xl shadow-emerald-900/20 backdrop-blur-xl">
-
-                <a href="/dashboard" class="rounded-2xl px-2 py-2 text-center hover:bg-emerald-100 hover:text-emerald-900">Start</a>
-
-                <a href="/fuel" class="rounded-2xl px-2 py-2 text-center hover:bg-emerald-100 hover:text-emerald-900">Kraftstoff</a>
-
-                <button type="button" @click="addOpen = !addOpen; moreOpen = false" class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-700 text-2xl leading-none text-white shadow-lg shadow-emerald-900/20">+</button>
-
-                <a href="/vehicles" class="rounded-2xl px-2 py-2 text-center hover:bg-emerald-100 hover:text-emerald-900">Fuhrpark</a>
-
-                <button type="button" @click="moreOpen = !moreOpen; addOpen = false" class="rounded-2xl px-2 py-2 text-center hover:bg-slate-100 hover:text-slate-900">Mehr</button>
-
-            </nav>
+            {% include "partials/mobile_bottom_nav.html" %}
 
         </div>
 
@@ -319,19 +252,13 @@
 
         <header class="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
 
-            <a href="/" class="flex items-center gap-3 font-bold text-slate-950">
-
-                {{ brand_logo('h-10 w-10 rounded-xl object-contain') }}
-
-                <span>{{ product_name() }}</span>
-
-            </a>
+            {{ brand_lockup("/", size="lg") }}
 
             <div class="flex gap-2 text-sm font-semibold">
 
-                <a href="/login" class="rounded-xl px-3 py-2 text-slate-700 hover:bg-white/70">Anmelden</a>
+                <a href="/login" class="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-100">Anmelden</a>
 
-                <a href="/register" class="rounded-xl bg-emerald-700 px-3 py-2 text-white hover:bg-emerald-800">Registrieren</a>
+                <a href="/register" class="rounded-[10px] t-btn-primary px-3 py-2 text-white">Registrieren</a>
 
             </div>
 
@@ -341,7 +268,7 @@
 
         <div class="mx-auto w-full max-w-3xl px-4">
 
-            <div class="rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4 text-sm font-medium text-emerald-800 shadow-lg backdrop-blur-xl">{{ request.state.flash.message }}</div>
+            <div class="t-card border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800">{{ request.state.flash.message }}</div>
 
         </div>
 
@@ -363,11 +290,7 @@
 
         if ('serviceWorker' in navigator) {
 
-            window.addEventListener('load', () => {
-
-                navigator.serviceWorker.register('/static/sw.js');
-
-            });
+            window.addEventListener('load', () => { navigator.serviceWorker.register('/static/sw.js'); });
 
         }
 

@@ -2,9 +2,11 @@
 
 Step-by-step checklist for integrating **Stripe Checkout + Billing + Tax** into Tankly. Billing is **per Group** (farm/business), not per user. The existing `Group.subscription_tier` column becomes a denormalized cache updated from webhooks.
 
-**Status:** Planned (Development Plan Phase 23) — **not implemented** in the app yet.
+**Status:** Implemented (Phase 23). Go-live steps: [STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md).
 
-**Prerequisites:** Landing page live (`/`), legal pages filled in (`/impressum`, `/datenschutz`, `/agb`), Steuerberater consulted. Operator support tooling: [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) (Phase 22, also planned).
+**Prerequisites:** Landing page live (`/`), legal pages filled in (`/impressum`, `/datenschutz`, `/agb`), Steuerberater consulted. Operator support tooling: [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) (Phase 22).
+
+**Partner tier:** `partner` is a **non-Stripe** complimentary tier (same feature limits as `farm`). It is granted/revoked only by platform admins via `/platform/farms/{id}` — never via Checkout. Rows stay without `stripe_subscription_id`, so webhooks/reconcile do not overwrite them. Do not fake a paid `farm`/`pro` tier for gifted farms.
 
 ---
 
@@ -149,7 +151,7 @@ class GroupSubscription(Base):
     stripe_customer_id: Mapped[str | None]
     stripe_subscription_id: Mapped[str | None]
     status: Mapped[str]  # trialing|active|past_due|canceled|incomplete|unpaid
-    tier: Mapped[str]    # free|pro|farm
+    tier: Mapped[str]    # free|pro|farm|partner (partner = platform grant, non-Stripe)
     current_period_end: Mapped[datetime | None]
     cancel_at_period_end: Mapped[bool] = mapped_column(default=False)
     trial_ends_at: Mapped[datetime | None]
@@ -210,7 +212,7 @@ Keep `groups.subscription_tier` in sync via webhook handler (denormalized for fa
                                        └──────────────────┘
 ```
 
-### New files (planned)
+### New files (Phase 23)
 
 | File | Purpose |
 |------|---------|
@@ -292,11 +294,11 @@ if request.url.path.startswith(("/cron/", "/webhooks/")):
 
 ### Phase 6 – Polish
 
-- [ ] 14-day Pro trial (`trial_period_days=14` on Checkout)
-- [ ] Annual pricing toggle on billing page
-- [ ] Email on payment failure (reuse `fastapi-mail`)
-- [ ] Landing page pricing CTAs → `/settings/billing` when logged in with group
-- [ ] Remove footer note “Stripe folgt in Kürze” on landing page
+- [x] 14-day Pro trial (`trial_period_days=14` on Checkout)
+- [x] Annual pricing toggle on billing page
+- [x] Email on payment failure (reuse `fastapi-mail`)
+- [x] Landing page pricing CTAs → `/register` with trial label when Stripe enabled
+- [x] Remove footer note “Stripe folgt in Kürze” on landing page
 
 ---
 
@@ -506,8 +508,9 @@ Stripe is the payment processor; **you** remain the seller (not MoR).
 ## Related docs
 
 - [PRODUCTION.md](./PRODUCTION.md) – deployment, env vars, health checks
-- [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) – Phase 23 (planned)
-- [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) – operator dashboard (Phase 22, planned)
+- [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) – Phase 23 (complete)
+- [STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md) – production go-live checklist
+- [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) – operator dashboard (Phase 22, complete)
 - [Stripe Docs: Checkout subscriptions](https://docs.stripe.com/billing/subscriptions/build-subscriptions?ui=checkout)
 - [Stripe Tax EU](https://docs.stripe.com/tax)
 

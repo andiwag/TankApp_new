@@ -610,3 +610,258 @@ class TestPlatformSupportView:
             },
         )
         assert create.status_code == 303
+
+
+class TestPartnerTierGrant:
+    async def test_grant_partner_requires_platform_admin(
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        auth_cookie,
+        monkeypatch,
+    ):
+        _set_platform_admins(monkeypatch, "ops@tankly.test")
+        group = create_test_group(name="Grant Farm", invite_code="FARM-PRT01")
+        _login_as(client, create_test_user, auth_cookie, email="user@farm.com")
+
+        response = await client.post(
+            f"/platform/farms/{group.id}/grant-partner",
+            follow_redirects=False,
+        )
+        assert response.status_code == 403
+
+    async def test_grant_partner_sets_tier_and_audit(
+        self,
+        client,
+        db,
+        create_test_user,
+        create_test_group,
+        auth_cookie,
+        monkeypatch,
+    ):
+        from app.enums import SubscriptionTier
+        from app.models import GroupSubscription
+        from app.services.entitlements import (
+            can_add_vehicle,
+            effective_tier,
+            tier_has_feature,
+            vehicle_limit_for_tier,
+        )
+
+        _set_platform_admins(monkeypatch, "ops@tankly.test")
+        group = create_test_group(name="Partner Farm", invite_code="FARM-PRT02")
+        operator = _login_as(
+            client, create_test_user, auth_cookie, email="ops@tankly.test"
+        )
+
+        response = await client.post(
+            f"/platform/farms/{group.id}/grant-partner",
+            follow_redirects=False,
+        )
+        assert response.status_code == 303
+        assert response.headers.get("location") == f"/platform/farms/{group.id}"
+
+        db.expire_all()
+        sub = (
+            db.query(GroupSubscription)
+            .filter(GroupSubscription.group_id == group.id)
+            .one()
+        )
+        assert sub.tier == SubscriptionTier.partner.value
+        assert sub.status == "active"
+        assert sub.stripe_subscription_id is None
+        assert group.subscription_tier == SubscriptionTier.partner.value
+        assert effective_tier(db, group.id) == SubscriptionTier.partner.value
+        assert vehicle_limit_for_tier(SubscriptionTier.partner.value) is None
+        assert tier_has_feature(SubscriptionTier.partner.value, "analytics") is True
+        assert can_add_vehicle(db, group.id) is True
+
+        log = (
+            db.query(AuditLog)
+            .filter(AuditLog.action == "platform.billing.grant_partner")
+            .one()
+        )
+        assert log.group_id == group.id
+        assert log.user_id == operator.id
+
+        detail = await client.get(f"/platform/farms/{group.id}")
+        assert detail.status_code == 200
+        assert "partner" in detail.text.lower()
+        assert "revoke-partner" in detail.text
+
+    async def test_revoke_partner_resets_to_free(
+        self,
+        client,
+        db,
+        create_test_user,
+        create_test_group,
+        auth_cookie,
+        monkeypatch,
+        set_group_tier,
+    ):
+        from app.enums import SubscriptionTier
+        from app.models import GroupSubscription
+        from app.services.entitlements import effective_tier
+
+        _set_platform_admins(monkeypatch, "ops@tankly.test")
+        group = create_test_group(name="Revoke Farm", invite_code="FARM-PRT03")
+        set_group_tier(group.id, SubscriptionTier.partner.value)
+        operator = _login_as(
+            client, create_test_user, auth_cookie, email="ops@tankly.test"
+        )
+
+        response = await client.post(
+            f"/platform/farms/{group.id}/revoke-partner",
+            follow_redirects=False,
+        )
+        assert response.status_code == 303
+        assert response.headers.get("location") == f"/platform/farms/{group.id}"
+
+        db.expire_all()
+        sub = (
+            db.query(GroupSubscription)
+            .filter(GroupSubscription.group_id == group.id)
+            .one()
+        )
+        assert sub.tier == SubscriptionTier.free.value
+        assert effective_tier(db, group.id) == SubscriptionTier.free.value
+        assert group.subscription_tier == SubscriptionTier.free.value
+
+        log = (
+            db.query(AuditLog)
+            .filter(AuditLog.action == "platform.billing.revoke_partner")
+            .one()
+        )
+        assert log.user_id == operator.id
+        assert log.group_id == group.id
+
+        detail = await client.get(f"/platform/farms/{group.id}")
+        assert "grant-partner" in detail.text
+
+    async def test_grant_partner_blocked_when_stripe_subscription_exists(
+        self,
+        client,
+        db,
+        create_test_user,
+        create_test_group,
+        auth_cookie,
+        monkeypatch,
+    ):
+        from app.enums import SubscriptionTier
+        from app.flash import FLASH_COOKIE_NAME
+        from app.models import GroupSubscription
+
+        _set_platform_admins(monkeypatch, "ops@tankly.test")
+        group = create_test_group(name="Stripe Farm", invite_code="FARM-PRT04")
+        db.add(
+            GroupSubscription(
+                group_id=group.id,
+                tier=SubscriptionTier.pro.value,
+                status="active",
+                stripe_subscription_id="sub_existing",
+                stripe_customer_id="cus_existing",
+            )
+        )
+        group.subscription_tier = SubscriptionTier.pro.value
+        db.commit()
+        _login_as(client, create_test_user, auth_cookie, email="ops@tankly.test")
+
+        response = await client.post(
+            f"/platform/farms/{group.id}/grant-partner",
+            follow_redirects=False,
+        )
+        assert response.status_code == 303
+        assert response.headers.get("location") == f"/platform/farms/{group.id}"
+        assert FLASH_COOKIE_NAME in response.cookies
+
+        db.expire_all()
+        sub = (
+            db.query(GroupSubscription)
+            .filter(GroupSubscription.group_id == group.id)
+            .one()
+        )
+        assert sub.tier == SubscriptionTier.pro.value
+        assert sub.stripe_subscription_id == "sub_existing"
+        assert (
+            db.query(AuditLog)
+            .filter(AuditLog.action == "platform.billing.grant_partner")
+            .count()
+            == 0
+        )
+
+    async def test_grant_partner_idempotent_when_already_partner(
+        self,
+        client,
+        db,
+        create_test_user,
+        create_test_group,
+        auth_cookie,
+        monkeypatch,
+        set_group_tier,
+    ):
+        from app.enums import SubscriptionTier
+
+        _set_platform_admins(monkeypatch, "ops@tankly.test")
+        group = create_test_group(name="Already Partner", invite_code="FARM-PRT05")
+        set_group_tier(group.id, SubscriptionTier.partner.value)
+        _login_as(client, create_test_user, auth_cookie, email="ops@tankly.test")
+
+        response = await client.post(
+            f"/platform/farms/{group.id}/grant-partner",
+            follow_redirects=False,
+        )
+        assert response.status_code == 303
+        assert (
+            db.query(AuditLog)
+            .filter(AuditLog.action == "platform.billing.grant_partner")
+            .count()
+            == 0
+        )
+
+    async def test_grant_partner_missing_group_returns_404(
+        self,
+        client,
+        create_test_user,
+        auth_cookie,
+        monkeypatch,
+    ):
+        _set_platform_admins(monkeypatch, "ops@tankly.test")
+        _login_as(client, create_test_user, auth_cookie, email="ops@tankly.test")
+
+        response = await client.post(
+            "/platform/farms/99999/grant-partner",
+            follow_redirects=False,
+        )
+        assert response.status_code == 404
+
+    async def test_farm_detail_hides_grant_when_stripe_subscription_present(
+        self,
+        client,
+        db,
+        create_test_user,
+        create_test_group,
+        auth_cookie,
+        monkeypatch,
+    ):
+        from app.enums import SubscriptionTier
+        from app.models import GroupSubscription
+
+        _set_platform_admins(monkeypatch, "ops@tankly.test")
+        group = create_test_group(name="Stripe Detail", invite_code="FARM-PRT06")
+        db.add(
+            GroupSubscription(
+                group_id=group.id,
+                tier=SubscriptionTier.pro.value,
+                status="active",
+                stripe_subscription_id="sub_detail",
+            )
+        )
+        group.subscription_tier = SubscriptionTier.pro.value
+        db.commit()
+        _login_as(client, create_test_user, auth_cookie, email="ops@tankly.test")
+
+        response = await client.get(f"/platform/farms/{group.id}")
+        assert response.status_code == 200
+        assert "grant-partner" not in response.text
+        assert "Stripe-Abo" in response.text

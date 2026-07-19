@@ -6,7 +6,7 @@ This document covers **production hardening** and **step-by-step deployment** fo
 
 **Quick start:** see [BETA_DEPLOY.md](./BETA_DEPLOY.md) for a focused private-beta checklist.
 
-**Documentation index:** [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) · [TECHNICAL_DOCUMENTATION.md](./TECHNICAL_DOCUMENTATION.md) · [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) (planned) · [STRIPE_BILLING.md](./STRIPE_BILLING.md) (planned)
+**Documentation index:** [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) · [TECHNICAL_DOCUMENTATION.md](./TECHNICAL_DOCUMENTATION.md) · [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) · [STRIPE_BILLING.md](./STRIPE_BILLING.md) · [STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md)
 
 | Component | Service | Cost |
 |-----------|---------|------|
@@ -545,8 +545,9 @@ See Northflank's own [FastAPI + Postgres guide](https://northflank.com/guides/de
 ## Related docs
 
 - [BETA_DEPLOY.md](./BETA_DEPLOY.md) — private beta quick start
-- [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) — Phases 0–21 complete; 22–23 planned
+- [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) — Phases 0–23 complete
 - [TECHNICAL_DOCUMENTATION.md](./TECHNICAL_DOCUMENTATION.md) — architecture, schema, routes
 - [DECISION_LOG.md](./DECISION_LOG.md) — design decisions
-- [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) — operator dashboard (planned)
-- [STRIPE_BILLING.md](./STRIPE_BILLING.md) — billing (planned)
+- [PLATFORM_ADMIN.md](./PLATFORM_ADMIN.md) — operator dashboard (Phase 22)
+- [STRIPE_BILLING.md](./STRIPE_BILLING.md) — billing (Phase 23)
+- [STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md) — production Stripe checklist

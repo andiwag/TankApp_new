@@ -67,6 +67,34 @@ class Group(Base):
     )
     vehicles: Mapped[list["Vehicle"]] = relationship(back_populates="group")
     storage_tanks: Mapped[list["StorageTank"]] = relationship(back_populates="group")
+    subscription: Mapped["GroupSubscription | None"] = relationship(
+        back_populates="group", uselist=False
+    )
+
+
+class GroupSubscription(Base):
+    __tablename__ = "group_subscriptions"
+
+    group_id: Mapped[int] = mapped_column(ForeignKey("groups.id"), primary_key=True)
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(255))
+    stripe_subscription_id: Mapped[str | None] = mapped_column(String(255))
+    status: Mapped[str] = mapped_column(String(32), default="active")
+    tier: Mapped[str] = mapped_column(String(16), default="free")
+    current_period_end: Mapped[datetime | None] = mapped_column()
+    cancel_at_period_end: Mapped[bool] = mapped_column(Boolean, default=False)
+    trial_ends_at: Mapped[datetime | None] = mapped_column()
+    updated_at: Mapped[datetime] = mapped_column(default=_utcnow, onupdate=_utcnow)
+
+    group: Mapped["Group"] = relationship(back_populates="subscription")
+
+
+class BillingEvent(Base):
+    __tablename__ = "billing_events"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    stripe_event_id: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    event_type: Mapped[str] = mapped_column(String(128))
+    processed_at: Mapped[datetime] = mapped_column(default=_utcnow)
 
 
 class UserGroup(Base):

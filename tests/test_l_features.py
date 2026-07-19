@@ -27,6 +27,7 @@ class TestMaintenanceLogs:
         create_test_vehicle,
         auth_cookie,
         db,
+        set_group_tier,
     ):
         user, group = create_authenticated_group(
             client,
@@ -36,6 +37,7 @@ class TestMaintenanceLogs:
             auth_cookie,
             role="contributor",
         )
+        set_group_tier(group.id, "pro")
         vehicle = create_test_vehicle(group_id=group.id)
         response = await client.post(
             "/maintenance/new",
@@ -57,8 +59,11 @@ class TestMaintenanceLogs:
         audit = db.query(AuditLog).filter(AuditLog.action == "maintenance.create").one()
         assert audit.entity_id == log.id
 
-    async def test_reader_cannot_create_maintenance(self, client, auth_group):
-        auth_group(role="reader")
+    async def test_reader_cannot_create_maintenance(
+        self, client, auth_group, set_group_tier
+    ):
+        _, group = auth_group(role="reader")
+        set_group_tier(group.id, "pro")
         response = await client.get("/maintenance/new", follow_redirects=False)
         assert response.status_code == 403
 
@@ -71,6 +76,7 @@ class TestMaintenanceLogs:
         create_test_vehicle,
         auth_cookie,
         db,
+        set_group_tier,
     ):
         user, group = create_authenticated_group(
             client,
@@ -80,6 +86,7 @@ class TestMaintenanceLogs:
             auth_cookie,
             role="contributor",
         )
+        set_group_tier(group.id, "pro")
         vehicle = create_test_vehicle(group_id=group.id)
         log = MaintenanceLog(
             vehicle_id=vehicle.id,
@@ -276,5 +283,5 @@ class TestSessionRevocation:
 
         response = await client.get("/dashboard")
         assert response.status_code == 200
-        assert "Wartungserinnerungen" in response.text
+        assert "Wartungen" in response.text
         assert "Due Tractor" in response.text

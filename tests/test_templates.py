@@ -74,6 +74,25 @@ class TestAuthenticatedPageElements:
         assert response.status_code == 200
         assert "/logout" in response.text
 
+    async def test_authenticated_page_shows_switch_farm_link(
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+    ):
+        user = create_test_user()
+        group = create_test_group(name="Green Farm", created_by=user.id)
+        create_test_user_group(user.id, group.id, role="admin")
+        auth_cookie(client, user.id, group.id)
+
+        response = await client.get("/dashboard")
+
+        assert response.status_code == 200
+        assert "Betrieb wechseln" in response.text
+        assert 'href="/groups"' in response.text
+
 
 class TestFlashMessages:
     async def test_flash_message_displayed_after_redirect(self, client):

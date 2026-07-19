@@ -1,264 +1,140 @@
 {% extends "base.html" %}
+{% from "_macros.html" import button_class, csrf_field, form_error, form_input_class, glass_panel, mobile_header_bar, page_header, status_chip with context %}
 
-{% from "_macros.html" import button_class, csrf_field, glass_panel, page_header with context %}
-
-
+{% block mobile_header %}
+{{ mobile_header_bar(title=("Tankvorgang" if mode == "create" else "Bearbeiten"), back_href="/fuel") }}
+{% endblock %}
 
 {% block title %}{% if mode == 'create' %}Neuer Tankvorgang{% else %}Tankvorgang bearbeiten{% endif %} – Tankly{% endblock %}
 
-
-
 {% block content %}
-
 <div class="mx-auto max-w-2xl">
-
-    {{ page_header("Neuer Tankvorgang" if mode == "create" else "Tankvorgang bearbeiten", "Feldeingabe", "Erfasse den Tankvorgang direkt an der Zapfsäule. Notizen oder Kosten kannst du später ergänzen.") }}
-
-
-
-    {% if error %}
-
-    <div class="mb-4 rounded-md p-4 bg-red-50 text-red-800 border border-red-200 text-sm" role="alert">
-
-        {{ error }}
-
+    <div class="hidden lg:block">
+        {{ page_header(("Neuer Tankvorgang" if mode == "create" else "Tankvorgang bearbeiten"), "", "Erfasse den Tankvorgang direkt an der Zapfsäule. Notizen oder Kosten kannst du später ergänzen.", icon="fuel") }}
     </div>
 
-    {% endif %}
+    {% if error %}{{ form_error(error) }}{% endif %}
 
-
-
-    <form method="post" action="{% if mode == 'create' %}/fuel/new{% else %}/fuel/{{ entry.id }}/edit{% endif %}" class="{{ glass_panel('space-y-6 p-5 sm:p-6') }}" x-data="{ submitting: false, selectedVehicleId: '{{ form_vehicle_id or (vehicle.id if vehicle else '') }}', vehicleVtypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.vtype }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode == 'edit' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.vtype }}'{% endif %} }, vehicleFuelTypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.fuel_type }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode == 'edit' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.fuel_type }}'{% endif %} }, fillSource: '{{ form_fill_source or (entry.fill_source if entry else 'external') }}', isTractor() { return this.vehicleVtypes[this.selectedVehicleId] === 'tractor'; }, isFarm() { return this.fillSource === 'farm'; }, currentFuelType() { {% if mode == 'edit' %}return '{{ vehicle.fuel_type }}';{% else %}return this.vehicleFuelTypes[this.selectedVehicleId] || '';{% endif %} }, tankVisible(fuelType) { return this.isFarm() && this.currentFuelType() === fuelType; } }" @submit="submitting = true">
-
+    <form method="post" action="{% if mode == 'create' %}/fuel/new{% else %}/fuel/{{ entry.id }}/edit{% endif %}" class="{{ glass_panel('space-y-5 p-5 sm:p-6') }}" x-data="{ submitting: false, selectedVehicleId: '{{ form_vehicle_id or (vehicle.id if vehicle else '') }}', vehicleVtypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.vtype }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode == 'edit' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.vtype }}'{% endif %} }, vehicleFuelTypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.fuel_type }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode == 'edit' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.fuel_type }}'{% endif %} }, fillSource: '{{ form_fill_source or (entry.fill_source if entry else 'external') }}', isTractor() { return this.vehicleVtypes[this.selectedVehicleId] === 'tractor'; }, isFarm() { return this.fillSource === 'farm'; }, currentFuelType() { {% if mode == 'edit' %}return '{{ vehicle.fuel_type }}';{% else %}return this.vehicleFuelTypes[this.selectedVehicleId] || '';{% endif %} }, tankVisible(fuelType) { return this.isFarm() && this.currentFuelType() === fuelType; } }" @submit="submitting = true">
         {{ csrf_field() }}
 
-        <section class="rounded-2xl bg-white/60 p-4">
-
-            <h2 class="font-semibold text-slate-950">Fahrzeug</h2>
-
-        {% if mode == 'create' %}
-
-            <label for="vehicle_id" class="mt-4 block text-sm font-medium text-slate-700">Fahrzeug wählen</label>
-
-            <select name="vehicle_id" id="vehicle_id" required class="mt-1 block min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500" @change="selectedVehicleId = $event.target.value">
-
+        <section class="t-form-section">
+            <h2 class="mb-3 text-sm font-semibold text-slate-900"><span aria-hidden="true">🚗</span> Fahrzeug</h2>
+            {% if mode == 'create' %}
+            <label for="vehicle_id" class="block text-sm font-medium text-slate-700">Fahrzeug wählen</label>
+            <select name="vehicle_id" id="vehicle_id" required class="mt-1.5 {{ form_input_class() }}" @change="selectedVehicleId = $event.target.value">
                 <option value="">Fahrzeug auswählen</option>
-
                 {% for v in vehicles %}
-
                 <option value="{{ v.id }}" data-vtype="{{ v.vtype }}" data-fuel-type="{{ v.fuel_type }}" {% if form_vehicle_id and form_vehicle_id == (v.id ~ '') %}selected{% endif %}>{{ v.name }}</option>
-
                 {% endfor %}
-
             </select>
-
-        {% else %}
-
-            <p class="mt-3 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800">{{ vehicle.name }}</p>
-
-        {% endif %}
-
+            {% else %}
+            <p class="inline-flex">{{ status_chip(vehicle.name, "success") }}</p>
+            {% endif %}
         </section>
 
-
-
-        <section class="rounded-2xl bg-white/60 p-4 space-y-4">
-
-            <h2 class="font-semibold text-slate-950">Tankquelle</h2>
-
+        <section class="t-form-section space-y-4">
+            <h2 class="text-sm font-semibold text-slate-900">Tankquelle</h2>
             <div class="flex flex-col gap-3 sm:flex-row">
-
                 <label class="inline-flex min-h-[44px] flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-3 py-2">
-
                     <input type="radio" name="fill_source" value="external" x-model="fillSource" {% if (form_fill_source or (entry.fill_source if entry else 'external')) == 'external' %}checked{% endif %} />
-
                     <span class="text-sm font-medium text-slate-800">Externe Tankstelle</span>
-
                 </label>
-
                 <label class="inline-flex min-h-[44px] flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-3 py-2">
-
                     <input type="radio" name="fill_source" value="farm" x-model="fillSource" {% if (form_fill_source or (entry.fill_source if entry else 'external')) == 'farm' %}checked{% endif %} />
-
                     <span class="text-sm font-medium text-slate-800">Eigene Tankstelle</span>
-
                 </label>
-
             </div>
-
             <div x-show="isFarm()" x-cloak>
-
                 <label for="fuel_tank_id" class="block text-sm font-medium text-slate-700">Hof-Tank</label>
-
-                <select name="fuel_tank_id" id="fuel_tank_id" class="mt-1 block min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
-
+                <select name="fuel_tank_id" id="fuel_tank_id" class="mt-1.5 {{ form_input_class() }}">
                     <option value="">Tank auswählen</option>
-
                     {% for tank in storage_tanks %}
-
                     <option value="{{ tank.id }}" data-fuel-type="{{ tank.fuel_type }}" {% if (storage_tanks|length == 1) or (entry and entry.fuel_tank_id == tank.id) or (form_fuel_tank_id and form_fuel_tank_id == (tank.id ~ '')) %}selected{% endif %} x-show="tankVisible('{{ tank.fuel_type }}')">{{ tank.name }} ({{ format_number(tank.current_stock_l) }} L)</option>
-
                     {% endfor %}
-
                 </select>
-
                 <p class="mt-2 text-xs text-slate-500">Wähle den Tank, von dem der Kraftstoff entnommen wurde.</p>
-
             </div>
-
         </section>
 
-
-
-        <section class="grid gap-4 rounded-2xl bg-white/60 p-4 sm:grid-cols-2">
-
-            <div>
-
-            <label for="fuel_amount_l" class="block text-sm font-medium text-slate-700">Kraftstoff (Liter)</label>
-
-            <input type="number" name="fuel_amount_l" id="fuel_amount_l" required inputmode="decimal" min="0.01" step="0.01"
-
-                   value="{% if entry %}{{ entry.fuel_amount_l }}{% else %}{{ form_fuel_amount_l }}{% endif %}"
-
-                   class="mt-1 block min-h-[52px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-lg font-semibold shadow-sm focus:border-emerald-500 focus:ring-emerald-500" />
-
-        </div>
-
-        <div>
-
-            <label for="usage_reading" class="block text-sm font-medium text-slate-700">Betriebsstand</label>
-
-            <input type="number" name="usage_reading" id="usage_reading" required inputmode="decimal" min="0" step="0.01"
-
-                   value="{% if entry %}{{ entry.usage_reading }}{% else %}{{ form_usage_reading }}{% endif %}"
-
-                   class="mt-1 block min-h-[52px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-lg font-semibold shadow-sm focus:border-emerald-500 focus:ring-emerald-500" />
-
-        </div>
-
-            <p class="sm:col-span-2 text-xs text-slate-500">Bei km-Fahrzeugen den Kilometerstand, bei Traktoren und Maschinen den Betriebsstundenzähler verwenden.</p>
-
+        <section class="t-form-section">
+            <h2 class="mb-3 text-sm font-semibold text-slate-900"><span aria-hidden="true">⛽</span> Tankdaten</h2>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label for="fuel_amount_l" class="block text-sm font-medium text-slate-700">Kraftstoff (Liter)</label>
+                    <input type="number" name="fuel_amount_l" id="fuel_amount_l" required inputmode="decimal" min="0.01" step="0.01"
+                           value="{% if entry %}{{ entry.fuel_amount_l }}{% else %}{{ form_fuel_amount_l }}{% endif %}"
+                           class="mt-1.5 {{ form_input_class() }} text-base font-semibold" />
+                </div>
+                <div>
+                    <label for="usage_reading" class="block text-sm font-medium text-slate-700">Betriebsstand</label>
+                    <input type="number" name="usage_reading" id="usage_reading" required inputmode="decimal" min="0" step="0.01"
+                           value="{% if entry %}{{ entry.usage_reading }}{% else %}{{ form_usage_reading }}{% endif %}"
+                           class="mt-1.5 {{ form_input_class() }} text-base font-semibold" />
+                </div>
+            </div>
+            <p class="mt-3 text-xs text-slate-500">Bei km-Fahrzeugen den Kilometerstand, bei Traktoren und Maschinen den Betriebsstundenzähler verwenden.</p>
         </section>
-
-
 
         {% if mode == 'edit' and vehicle.vtype == 'tractor' %}
-
-        <section class="rounded-2xl bg-white/60 p-4">
-
+        <section class="t-form-section">
             <label for="adblue_amount_l" class="block text-sm font-medium text-slate-700">AdBlue (Liter, optional)</label>
-
             <input type="number" name="adblue_amount_l" id="adblue_amount_l" inputmode="decimal" min="0.01" step="0.01"
-
                    value="{% if entry and entry.adblue_amount_l is not none %}{{ entry.adblue_amount_l }}{% else %}{{ form_adblue_amount_l }}{% endif %}"
-
-                   class="mt-1 block min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500" />
-
+                   class="mt-1.5 {{ form_input_class() }}" />
             <p class="mt-2 text-xs text-slate-500">AdBlue wird getrennt vom Diesel erfasst und fließt nicht in Verbrauchswerte ein.</p>
-
         </section>
-
         {% elif mode == 'create' %}
-
-        <section class="rounded-2xl bg-white/60 p-4" x-show="isTractor()" x-cloak>
-
+        <section class="t-form-section" x-show="isTractor()" x-cloak>
             <label for="adblue_amount_l" class="block text-sm font-medium text-slate-700">AdBlue (Liter, optional)</label>
-
             <input type="number" name="adblue_amount_l" id="adblue_amount_l" inputmode="decimal" min="0.01" step="0.01"
-
                    value="{{ form_adblue_amount_l }}"
-
-                   class="mt-1 block min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500" />
-
+                   class="mt-1.5 {{ form_input_class() }}" />
             <p class="mt-2 text-xs text-slate-500">AdBlue wird getrennt vom Diesel erfasst und fließt nicht in Verbrauchswerte ein.</p>
-
         </section>
-
         {% endif %}
 
-
-
-        <section class="rounded-2xl border border-emerald-100 bg-emerald-50/80 p-4">
-
-            <div class="flex items-center gap-3 min-h-[44px]">
-
+        <section class="rounded-[12px] border border-emerald-100 bg-emerald-50/80 p-4">
+            <div class="flex min-h-[44px] items-center gap-3">
                 <input type="hidden" name="full_tank" id="full_tank_field"
-
                        value="{% if entry %}{% if entry.full_tank %}1{% else %}0{% endif %}{% elif form_full_tank %}1{% else %}0{% endif %}" />
-
                 <input type="checkbox" id="full_tank" value="1"
-
-                       class="h-5 w-5 rounded border-gray-300 text-green-700 focus:ring-green-500"
-
+                       class="h-5 w-5 rounded border-gray-300 text-[#0d6b4f] focus:ring-[#0d6b4f]"
                        {% if entry %}{% if entry.full_tank %}checked{% endif %}{% elif form_full_tank %}checked{% endif %}
-
                        onchange="document.getElementById('full_tank_field').value = this.checked ? '1' : '0'" />
-
                 <label for="full_tank" class="text-sm font-semibold text-slate-900">Voller Tank</label>
-
             </div>
-
             <p class="ml-8 text-xs text-slate-600">Nur volle Tankungen fließen in Verbrauchsdurchschnitte ein.</p>
-
         </section>
 
-
-
-        <section class="grid gap-4 rounded-2xl bg-white/60 p-4 sm:grid-cols-2">
-
-        <div>
-
-            <label for="entry_date" class="block text-sm font-medium text-slate-700">Datum</label>
-
-            <input type="date" name="entry_date" id="entry_date" required
-
-                   value="{% if entry %}{{ entry.entry_date.isoformat() }}{% elif form_entry_date %}{{ form_entry_date }}{% endif %}"
-
-                   class="mt-1 block min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500" />
-
-        </div>
-
-        <div>
-
-            <label for="total_cost_eur" class="block text-sm font-medium text-slate-700">Gesamtkosten (€, optional)</label>
-
-            <input type="number" name="total_cost_eur" id="total_cost_eur" inputmode="decimal" min="0" step="0.01"
-
-                   value="{% if entry and entry.total_cost_eur is not none %}{{ entry.total_cost_eur }}{% else %}{{ form_total_cost_eur }}{% endif %}"
-
-                   class="mt-1 block min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500" />
-
-        </div>
-
-            <div class="sm:col-span-2">
-
-                <label for="notes" class="block text-sm font-medium text-slate-700">Notizen (optional)</label>
-
-                <textarea name="notes" id="notes" rows="3" maxlength="500"
-
-                          class="mt-1 block w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500">{% if entry %}{{ entry.notes or '' }}{% else %}{{ form_notes }}{% endif %}</textarea>
-
+        <section class="t-form-section">
+            <h2 class="mb-3 text-sm font-semibold text-slate-900"><span aria-hidden="true">📋</span> Details</h2>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label for="entry_date" class="block text-sm font-medium text-slate-700">Datum</label>
+                    <input type="date" name="entry_date" id="entry_date" required
+                           value="{% if entry %}{{ entry.entry_date.isoformat() }}{% elif form_entry_date %}{{ form_entry_date }}{% endif %}"
+                           class="mt-1.5 {{ form_input_class() }}" />
+                </div>
+                <div>
+                    <label for="total_cost_eur" class="block text-sm font-medium text-slate-700">Gesamtkosten (€, optional)</label>
+                    <input type="number" name="total_cost_eur" id="total_cost_eur" inputmode="decimal" min="0" step="0.01"
+                           value="{% if entry and entry.total_cost_eur is not none %}{{ entry.total_cost_eur }}{% else %}{{ form_total_cost_eur }}{% endif %}"
+                           class="mt-1.5 {{ form_input_class() }}" />
+                </div>
+                <div class="sm:col-span-2">
+                    <label for="notes" class="block text-sm font-medium text-slate-700">Notizen (optional)</label>
+                    <textarea name="notes" id="notes" rows="3" maxlength="500" class="mt-1.5 {{ form_input_class() }}">{% if entry %}{{ entry.notes or '' }}{% else %}{{ form_notes }}{% endif %}</textarea>
+                </div>
             </div>
-
         </section>
 
-
-
-        <div class="sticky bottom-24 z-10 -mx-1 flex flex-col gap-3 rounded-2xl border border-white/70 bg-white/90 p-3 shadow-xl backdrop-blur-xl sm:static sm:flex-row sm:bg-transparent sm:p-0 sm:shadow-none">
-
-            <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} min-h-[52px] flex-1 text-base">
-
+        <div class="sticky bottom-24 z-10 flex flex-col gap-3 rounded-2xl border border-white/70 bg-white/90 p-3 shadow-xl backdrop-blur-xl sm:static sm:flex-row sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+            <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} min-h-[48px] flex-1">
                 {% if mode == 'create' %}Speichern{% else %}Aktualisieren{% endif %}
-
             </button>
-
-            <a href="/fuel" class="{{ button_class('secondary') }} min-h-[52px]">Abbrechen</a>
-
+            <a href="/fuel" class="{{ button_class('secondary') }} min-h-[48px]">Abbrechen</a>
         </div>
-
     </form>
-
 </div>
-
 {% endblock %}
-

@@ -12,6 +12,7 @@ from app.models import Group
 from app.responses import not_found_response
 from app.schemas import VehicleCreate, VehicleUpdate, first_validation_error_message
 from app.services import vehicles as vehicle_service
+from app.services.entitlements import can_add_vehicle
 from app.templating import templates
 
 router = APIRouter()
@@ -78,6 +79,18 @@ async def create_vehicle_post(
             request,
             mode="create",
             error=first_validation_error_message(exc),
+            form_name=name,
+            form_vtype=vtype,
+            form_fuel_type=fuel_type,
+        )
+    if not can_add_vehicle(db, group.id):
+        return _vehicle_form_response(
+            request,
+            mode="create",
+            error=(
+                "Fahrzeug-Limit erreicht. Bitte upgrade dein Abo unter "
+                "Einstellungen → Abo & Rechnungen."
+            ),
             form_name=name,
             form_vtype=vtype,
             form_fuel_type=fuel_type,

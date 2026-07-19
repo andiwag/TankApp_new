@@ -1,98 +1,44 @@
 {% extends "base.html" %}
-
-{% from "_macros.html" import button_class, csrf_field, glass_panel with context %}
-
-
+{% from "_macros.html" import brand_lockup, button_class, csrf_field, form_error, form_input_class, glass_panel with context %}
 
 {% block title %}Anmelden – Tankly{% endblock %}
 
-
-
 {% block content %}
-
 <div class="mx-auto grid w-full max-w-5xl items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-
     <section class="hidden lg:block">
-
-        <p class="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">Tankly Betriebs-Cockpit</p>
-
-        <h1 class="mt-4 text-5xl font-bold tracking-tight text-slate-950">Melde dich in deinem Betriebs-Cockpit an.</h1>
-
-        <p class="mt-5 max-w-xl text-slate-600">Kraftstoff, Wartung, Fuhrparkaktivität und Team-Einträge – alles in einem übersichtlichen Betrieb.</p>
-
+        <p class="text-sm font-semibold text-[#0d6b4f]">⛽ Tankly Betriebs-Cockpit</p>
+        <h1 class="mt-4 text-4xl font-bold tracking-tight text-slate-950">Melde dich in deinem Betriebs-Cockpit an.</h1>
+        <p class="mt-4 max-w-xl text-slate-500">Kraftstoff, Wartung, Fuhrparkaktivität und Team-Einträge – alles in einem übersichtlichen Betrieb.</p>
     </section>
-
-
 
     <section class="{{ glass_panel('w-full p-6 sm:p-8') }}">
-
-    <h1 class="text-3xl font-bold text-slate-950 mb-2">Anmelden</h1>
-
-        <p class="mb-6 text-sm text-slate-600">Willkommen zurück. Setze deine Fuhrpark-Erfassung fort.</p>
-
-
-
-    {% if error %}
-
-    <div class="bg-red-50 text-red-800 border border-red-200 rounded-2xl p-4 mb-4">
-
-        <p class="text-sm">{{ error }}</p>
-
-    </div>
-
-    {% endif %}
-
-
-
-    <form method="post" action="/login" class="space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
-
-        {{ csrf_field() }}
-
-        <div>
-
-            <label for="email" class="block text-sm font-medium text-slate-700 mb-1">E-Mail</label>
-
-            <input type="email" id="email" name="email" required
-
-                   class="min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
-
+        <div class="mb-6 flex justify-center lg:justify-start">
+            {{ brand_lockup("/", size="hero", show_name=false, centered=true) }}
         </div>
+        <h1 class="mb-1 text-2xl font-bold text-slate-950">👋 Anmelden</h1>
+        <p class="mb-6 text-sm text-slate-500">Willkommen zurück. Setze deine Fuhrpark-Erfassung fort.</p>
 
-        <div>
+        {% if error %}{{ form_error(error) }}{% endif %}
 
-            <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Passwort</label>
+        <form method="post" action="/login" class="space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
+            {{ csrf_field() }}
+            <div>
+                <label for="email" class="block text-sm font-medium text-slate-700">E-Mail</label>
+                <input type="email" id="email" name="email" required class="mt-1.5 {{ form_input_class() }}">
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-slate-700">Passwort</label>
+                <input type="password" id="password" name="password" required class="mt-1.5 {{ form_input_class() }}">
+            </div>
+            <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} w-full disabled:opacity-60">Anmelden</button>
+        </form>
 
-            <input type="password" id="password" name="password" required
-
-                   class="min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
-
-        </div>
-
-        <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} w-full disabled:opacity-60">
-
-            Anmelden
-
-        </button>
-
-    </form>
-
-
-
-    <p class="mt-4 text-sm text-slate-600 text-center">
-
-        <a href="/forgot-password" class="font-semibold text-emerald-700 hover:text-emerald-900">Passwort vergessen?</a>
-
-    </p>
-
-    <p class="mt-2 text-sm text-slate-600 text-center">
-
-        Noch kein Konto? <a href="/register" class="font-semibold text-emerald-700 hover:text-emerald-900">Registrieren</a>
-
-    </p>
-
+        <p class="mt-4 text-center text-sm text-slate-500">
+            <a href="/forgot-password" class="font-semibold text-[#0d6b4f] hover:text-[#0a5840]">Passwort vergessen?</a>
+        </p>
+        <p class="mt-2 text-center text-sm text-slate-500">
+            Noch kein Konto? <a href="/register" class="font-semibold text-[#0d6b4f] hover:text-[#0a5840]">Registrieren</a>
+        </p>
     </section>
-
 </div>
-
 {% endblock %}
-

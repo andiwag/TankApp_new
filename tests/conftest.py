@@ -13,7 +13,15 @@ from app.csrf import (
 )
 from app.database import Base, get_db
 from app.main import app
-from app.models import FuelEntry, Group, StorageTank, User, UserGroup, Vehicle
+from app.models import (
+    FuelEntry,
+    Group,
+    GroupSubscription,
+    StorageTank,
+    User,
+    UserGroup,
+    Vehicle,
+)
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
@@ -36,7 +44,10 @@ def _run_alembic_upgrade() -> None:
         check=False,
     )
     if result.returncode != 0:
-        raise RuntimeError(result.stderr or result.stdout)
+        detail = "\n".join(
+            part for part in (result.stderr, result.stdout) if part
+        ).strip()
+        raise RuntimeError(detail or "alembic upgrade head failed")
 
 
 if _USE_POSTGRES:
@@ -184,6 +195,39 @@ def create_test_group(db, create_test_user):
         return group
 
     return _create
+
+
+def ensure_group_subscription_tier(
+    db, group_id: int, tier: str = "free", status: str = "active"
+) -> GroupSubscription:
+    sub = (
+        db.query(GroupSubscription)
+        .filter(GroupSubscription.group_id == group_id)
+        .first()
+    )
+    if sub is None:
+        sub = GroupSubscription(
+            group_id=group_id,
+            tier=tier,
+            status=status,
+        )
+        db.add(sub)
+    else:
+        sub.tier = tier
+        sub.status = status
+    group = db.query(Group).filter(Group.id == group_id).one()
+    group.subscription_tier = tier
+    db.commit()
+    db.refresh(sub)
+    return sub
+
+
+@pytest.fixture
+def set_group_tier(db):
+    def _set(group_id: int, tier: str = "pro") -> GroupSubscription:
+        return ensure_group_subscription_tier(db, group_id, tier=tier)
+
+    return _set
 
 
 @pytest.fixture

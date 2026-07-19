@@ -16,3 +16,4 @@ fastapi-mail==1.6.2
 fastapi-csrf-protect==1.0.7
 redis==5.2.1
 sentry-sdk[fastapi]==2.25.1
+stripe==11.6.0
