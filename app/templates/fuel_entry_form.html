@@ -25,7 +25,7 @@
             vehicleVtypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.vtype }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode == 'edit' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.vtype }}'{% endif %} },
             vehicleFuelTypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.fuel_type }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode == 'edit' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.fuel_type }}'{% endif %} },
             fillSource: '{{ form_fill_source or (entry.fill_source if entry else 'external') }}',
-            tanks: {{ storage_tanks | tojson }},
+            tanks: [],
             isTractor() {
               const id = String(this.selectedVehicleId || '');
               return id !== '' && this.vehicleVtypes[id] === 'tractor';
@@ -45,9 +45,14 @@
               if (!ids.includes(String(this.selectedTankId || ''))) {
                 this.selectedTankId = ids.length === 1 ? ids[0] : '';
               }
+            },
+            loadTanks() {
+              const el = document.getElementById('storage-tanks-data');
+              this.tanks = el ? JSON.parse(el.textContent || '[]') : [];
+              this.syncTankSelection();
             }
           }"
-          x-init="$watch('selectedVehicleId', () => syncTankSelection()); $watch('fillSource', () => syncTankSelection()); syncTankSelection()"
+          x-init="loadTanks(); $watch('selectedVehicleId', () => syncTankSelection()); $watch('fillSource', () => syncTankSelection())"
           @submit="submitting = true">
         {{ csrf_field() }}
 

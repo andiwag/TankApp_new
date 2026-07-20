@@ -467,6 +467,34 @@ class TestFillSourceRoutes:
         assert "bg-red-50" in response.text
         assert db.query(FuelEntry).count() == 0
 
+    async def test_fuel_entry_form_does_not_embed_tojson_inside_x_data_attribute(
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_storage_tank,
+        auth_cookie,
+    ):
+        """JSON double-quotes inside x-data=\"...\" break the attribute and leak JS."""
+        _user, group = create_authenticated_group(
+            client,
+            create_test_user,
+            create_test_group,
+            create_test_user_group,
+            auth_cookie,
+        )
+        create_test_storage_tank(
+            group_id=group.id, name="Diesel Hof", fuel_type="diesel"
+        )
+        response = await client.get("/fuel/new")
+        assert response.status_code == 200
+        form_open = response.text.split("<form", 1)[1].split(">", 1)[0]
+        assert "tanks: [{" not in form_open
+        assert 'id="storage-tanks-data"' in response.text
+        assert "JSON.parse" in response.text
+        assert "Diesel Hof" in response.text
+
     async def test_fuel_entry_single_matching_tank_sync_logic_present(
         self,
         client,
@@ -494,7 +522,10 @@ class TestFillSourceRoutes:
         assert "Benzin Hof" in response.text
         assert "ids.length === 1" in response.text
         assert "syncTankSelection" in response.text
+        assert "JSON.parse" in response.text
         assert f"selectedTankId: '{tank.id}'" not in response.text
+        form_open = response.text.split("<form", 1)[1].split(">", 1)[0]
+        assert "tanks: [{" not in form_open
 
     async def test_fuel_entry_farm_tank_other_group_rejected(
         self,

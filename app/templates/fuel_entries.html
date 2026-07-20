@@ -2,7 +2,12 @@
 {% from "_macros.html" import empty_state, fuel_entry_list_item, glass_panel, mobile_header_bar, page_header with context %}
 
 {% block mobile_header %}
-{{ mobile_header_bar(title="Tankvorgänge", action_href="/fuel/new" if can_edit else "") }}
+{{ mobile_header_bar(
+    title="Tankvorgänge",
+    action_href="/fuel/new" if can_edit else "",
+    secondary_action_href="/tanks/external/new" if can_edit else "",
+    secondary_action_label="Externe Abgabe",
+) }}
 {% endblock %}
 
 {% block title %}Tankvorgänge – Tankly{% endblock %}
