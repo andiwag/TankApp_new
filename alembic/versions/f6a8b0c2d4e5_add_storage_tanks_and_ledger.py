@@ -10,39 +10,45 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 revision: str = "f6a8b0c2d4e5"
 down_revision: Union[str, None] = "c8d0e2f4a6b8"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-tank_movement_type_enum = sa.Enum(
+# Reuse vehicles.fuel_type enum — sa.Enum(... create_type=False) is ignored.
+fuel_type_enum = postgresql.ENUM(
+    "diesel", "petrol", name="fuel_type_enum", create_type=False
+)
+
+tank_movement_type_enum = postgresql.ENUM(
     "delivery",
     "vehicle_withdrawal",
     "external_withdrawal",
     "adjustment",
     name="tank_movement_type_enum",
+    create_type=False,
 )
 
 
 def upgrade() -> None:
+    tank_movement_type_enum.create(op.get_bind(), checkfirst=True)
     op.create_table(
         "storage_tanks",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("group_id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column(
-            "fuel_type",
-            sa.Enum("diesel", "petrol", name="fuel_type_enum", create_type=False),
-            nullable=False,
-        ),
+        sa.Column("fuel_type", fuel_type_enum, nullable=False),
         sa.Column("capacity_l", sa.Float(), nullable=True),
         sa.Column("opening_balance_l", sa.Float(), nullable=False),
         sa.Column("notes", sa.String(length=500), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
-        sa.CheckConstraint("opening_balance_l >= 0", name="ck_tank_opening_non_negative"),
+        sa.CheckConstraint(
+            "opening_balance_l >= 0", name="ck_tank_opening_non_negative"
+        ),
         sa.CheckConstraint(
             "capacity_l IS NULL OR capacity_l > 0",
             name="ck_tank_capacity_positive",
@@ -86,7 +92,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("ix_tank_ledger_entries_fuel_entry_id", table_name="tank_ledger_entries")
+    op.drop_index(
+        "ix_tank_ledger_entries_fuel_entry_id", table_name="tank_ledger_entries"
+    )
     op.drop_index("ix_tank_ledger_entries_tank_id", table_name="tank_ledger_entries")
     op.drop_table("tank_ledger_entries")
     op.drop_index("ix_storage_tanks_group_id", table_name="storage_tanks")

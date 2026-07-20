@@ -801,3 +801,15 @@ Architectural and design decisions for **Tankly**. Cookie names in older entries
 **Rationale:** Matches landing "Pro testen" promise without giving unlimited trial on the highest tier.
 
 **Trade-off:** Trial eligibility is enforced in app code, not Stripe Dashboard price config alone.
+
+---
+
+## D-061: Postgres ENUMs in Alembic via `postgresql.ENUM`
+
+**Decision:** Alembic migrations that create columns using an existing Postgres enum must use `sqlalchemy.dialects.postgresql.ENUM(..., create_type=False)`. New enums use the same type with `create_type=False` plus an explicit `.create(bind, checkfirst=True)` before `create_table` / `add_column`.
+
+**Context:** `sa.Enum(..., create_type=False)` silently ignores `create_type` (SQLAlchemy 2.0.x); the dialect still emits `CREATE TYPE`. Fresh `alembic upgrade head` on an empty DB can hide this because one Alembic process memos enum names across revisions. Deploy upgrades from a mid-chain revision with an empty memo and hits `DuplicateObject`.
+
+**Rationale:** `postgresql.ENUM` is the documented API that honors `create_type`. Explicit `checkfirst=True` create is safe for new types and for re-runs.
+
+**Trade-off:** Migrations are Postgres-specific for enum columns (acceptable: production is Postgres; SQLite tests use `create_all`).

@@ -10,13 +10,14 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 revision: str = "a7b9c1d3e5f6"
 down_revision: Union[str, None] = "f6a8b0c2d4e5"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-fill_source_enum = sa.Enum(
+fill_source_enum = postgresql.ENUM(
     "external", "farm", name="fill_source_enum", create_type=False
 )
 
@@ -47,7 +48,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_constraint("fk_fuel_entries_fuel_tank_id", "fuel_entries", type_="foreignkey")
+    op.drop_constraint(
+        "fk_fuel_entries_fuel_tank_id", "fuel_entries", type_="foreignkey"
+    )
     op.drop_column("fuel_entries", "fuel_tank_id")
     op.drop_column("fuel_entries", "fill_source")
     fill_source_enum.drop(op.get_bind(), checkfirst=True)

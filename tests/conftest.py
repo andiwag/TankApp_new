@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from datetime import date
 
 import pytest
@@ -33,7 +34,7 @@ _USE_POSTGRES = TEST_DATABASE_URL.startswith("postgresql")
 
 def _run_alembic_upgrade() -> None:
     result = subprocess.run(
-        ["alembic", "upgrade", "head"],
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
         env={
             **os.environ,
             "DATABASE_URL": TEST_DATABASE_URL,
