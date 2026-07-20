@@ -467,7 +467,7 @@ class TestFillSourceRoutes:
         assert "bg-red-50" in response.text
         assert db.query(FuelEntry).count() == 0
 
-    async def test_fuel_entry_single_petrol_tank_preselected(
+    async def test_fuel_entry_single_matching_tank_sync_logic_present(
         self,
         client,
         create_test_user,
@@ -476,6 +476,7 @@ class TestFillSourceRoutes:
         create_test_storage_tank,
         auth_cookie,
     ):
+        """One matching tank is auto-selected client-side via syncTankSelection."""
         _user, group = create_authenticated_group(
             client,
             create_test_user,
@@ -488,8 +489,12 @@ class TestFillSourceRoutes:
         )
         response = await client.get("/fuel/new")
         assert response.status_code == 200
-        assert f'value="{tank.id}"' in response.text
-        assert "selected" in response.text
+        assert 'id="storage-tanks-data"' in response.text
+        assert f'"id": {tank.id}' in response.text or f'"id":{tank.id}' in response.text
+        assert "Benzin Hof" in response.text
+        assert "ids.length === 1" in response.text
+        assert "syncTankSelection" in response.text
+        assert f"selectedTankId: '{tank.id}'" not in response.text
 
     async def test_fuel_entry_farm_tank_other_group_rejected(
         self,
@@ -584,9 +589,13 @@ class TestFillSourceRoutes:
         )
         response = await client.get("/fuel/new")
         assert response.status_code == 200
-        option = re.search(rf'<option[^>]*value="{tank.id}"[^>]*>', response.text)
-        assert option is not None
-        assert "selected" not in option.group(0)
+        assert "Only Diesel" in response.text
+        assert f'"id": {tank.id}' in response.text or f'"id":{tank.id}' in response.text
+        assert f"selectedTankId: '{tank.id}'" not in response.text
+        assert (
+            re.search(rf'<option[^>]*value="{tank.id}"[^>]*selected', response.text)
+            is None
+        )
 
     async def test_fuel_entry_farm_fill_via_post(
         self,
