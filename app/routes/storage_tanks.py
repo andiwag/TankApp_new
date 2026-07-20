@@ -9,7 +9,7 @@ from app.database import get_db
 from app.dependencies import get_active_group, require_role
 from app.enums import Role
 from app.flash import set_flash
-from app.form_parsing import parse_date, parse_float, parse_optional_float
+from app.form_parsing import parse_date, parse_float, parse_int, parse_optional_float
 from app.models import Group
 from app.responses import not_found_response
 from app.schemas import (
@@ -104,25 +104,29 @@ def _adjustment_form_response(
 def _external_form_response(
     request: Request,
     *,
-    tank,
+    tanks: list,
     error: str | None = None,
+    form_tank_id: str = "",
     form_amount_l: str = "",
     form_entry_date: str = "",
     form_recipient_name: str = "",
     form_total_cost_eur: str = "",
     form_notes: str = "",
+    back_href: str = "/fuel",
 ):
     return templates.TemplateResponse(
         request,
         "tank_external_form.html",
         {
-            "tank": tank,
+            "tanks": tanks,
             "error": error,
+            "form_tank_id": form_tank_id,
             "form_amount_l": form_amount_l,
             "form_entry_date": form_entry_date,
             "form_recipient_name": form_recipient_name,
             "form_total_cost_eur": form_total_cost_eur,
             "form_notes": form_notes,
+            "back_href": back_href,
         },
     )
 
@@ -145,6 +149,97 @@ async def new_tank_form(
     _user=Depends(require_role(Role.contributor.value)),
 ):
     return _tank_form_response(request, mode="create")
+
+
+@router.get("/tanks/external/new")
+async def new_external_withdrawal_picker_form(
+    request: Request,
+    tank_id: int | None = None,
+    db: Session = Depends(get_db),
+    group: Group = Depends(get_active_group),
+    _user=Depends(require_role(Role.contributor.value)),
+):
+    tanks = tank_service.list_storage_tanks_for_group(db, group.id)
+    preselect = ""
+    back_href = "/fuel"
+    if tank_id is not None:
+        tank = tank_service.get_active_storage_tank_in_group(db, tank_id, group.id)
+        if tank:
+            preselect = str(tank.id)
+            back_href = f"/tanks/{tank.id}"
+    return _external_form_response(
+        request,
+        tanks=tanks,
+        form_tank_id=preselect,
+        form_entry_date=date.today().isoformat(),
+        back_href=back_href,
+    )
+
+
+@router.post("/tanks/external/new")
+async def create_external_withdrawal_picker_post(
+    request: Request,
+    tank_id: str = Form(""),
+    amount_l: str = Form(""),
+    entry_date: str = Form(""),
+    recipient_name: str = Form(""),
+    total_cost_eur: str = Form(""),
+    notes: str = Form(""),
+    db: Session = Depends(get_db),
+    group: Group = Depends(get_active_group),
+    user=Depends(require_role(Role.contributor.value)),
+):
+    tanks = tank_service.list_storage_tanks_for_group(db, group.id)
+
+    def _error(msg: str):
+        return _external_form_response(
+            request,
+            tanks=tanks,
+            error=msg,
+            form_tank_id=tank_id,
+            form_amount_l=amount_l,
+            form_entry_date=entry_date,
+            form_recipient_name=recipient_name,
+            form_total_cost_eur=total_cost_eur,
+            form_notes=notes,
+            back_href="/fuel",
+        )
+
+    try:
+        parsed_tank_id = parse_int(tank_id, "Hof-Tank")
+    except ValueError as exc:
+        return _error(str(exc))
+
+    tank = tank_service.get_active_storage_tank_in_group(db, parsed_tank_id, group.id)
+    if not tank:
+        return _error("Bitte einen gültigen Hof-Tank aus dieser Gruppe wählen.")
+
+    try:
+        data = TankExternalWithdrawalCreate(
+            amount_l=parse_float(amount_l, "Menge"),
+            entry_date=parse_date(entry_date, "Datum"),
+            recipient_name=recipient_name,
+            total_cost_eur=parse_optional_float(total_cost_eur, "Kosten")
+            if total_cost_eur.strip()
+            else None,
+            notes=notes.strip() or None,
+        )
+    except (ValueError, ValidationError) as exc:
+        msg = (
+            str(exc)
+            if isinstance(exc, ValueError)
+            else first_validation_error_message(exc)
+        )
+        return _error(msg)
+
+    try:
+        ledger_service.post_external_withdrawal(db, user.id, group.id, tank, data)
+    except ValueError as exc:
+        return _error(str(exc))
+
+    response = RedirectResponse(url=f"/tanks/{tank.id}", status_code=303)
+    set_flash(response, "Externe Abgabe erfasst.", "success")
+    return response
 
 
 @router.post("/tanks/new")
@@ -425,8 +520,8 @@ async def new_external_withdrawal_form(
     tank = tank_service.get_active_storage_tank_in_group(db, tank_id, group.id)
     if not tank:
         return not_found_response()
-    return _external_form_response(
-        request, tank=tank, form_entry_date=date.today().isoformat()
+    return RedirectResponse(
+        url=f"/tanks/external/new?tank_id={tank.id}", status_code=303
     )
 
 
@@ -447,16 +542,20 @@ async def create_external_withdrawal_post(
     if not tank:
         return not_found_response()
 
+    tanks = tank_service.list_storage_tanks_for_group(db, group.id)
+
     def _error(msg: str):
         return _external_form_response(
             request,
-            tank=tank,
+            tanks=tanks,
             error=msg,
+            form_tank_id=str(tank.id),
             form_amount_l=amount_l,
             form_entry_date=entry_date,
             form_recipient_name=recipient_name,
             form_total_cost_eur=total_cost_eur,
             form_notes=notes,
+            back_href=f"/tanks/{tank.id}",
         )
 
     try:

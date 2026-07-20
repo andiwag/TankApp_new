@@ -1,5 +1,6 @@
 """Tests for Phase 26: fill source and farm tank selection on fuel entries."""
 
+import re
 from datetime import date
 
 import pytest
@@ -552,10 +553,40 @@ class TestFillSourceRoutes:
         )
         response = await client.get("/fuel/new")
         assert response.status_code == 200
-        assert 'data-fuel-type="petrol"' in response.text
-        assert 'data-fuel-type="diesel"' in response.text
         assert "Petrol Tank" in response.text
         assert "Diesel Tank" in response.text
+        assert 'id="storage-tanks-data"' in response.text
+        assert 'x-show="tankVisible' not in response.text
+        assert "x-show='tankVisible" not in response.text
+
+    async def test_fuel_entry_form_does_not_autoselect_single_mismatched_fuel_tank(
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_vehicle,
+        create_test_storage_tank,
+        auth_cookie,
+    ):
+        _user, group = create_authenticated_group(
+            client,
+            create_test_user,
+            create_test_group,
+            create_test_user_group,
+            auth_cookie,
+        )
+        create_test_vehicle(
+            group_id=group.id, name="Auto", vtype="car", fuel_type="petrol"
+        )
+        tank = create_test_storage_tank(
+            group_id=group.id, name="Only Diesel", fuel_type="diesel"
+        )
+        response = await client.get("/fuel/new")
+        assert response.status_code == 200
+        option = re.search(rf'<option[^>]*value="{tank.id}"[^>]*>', response.text)
+        assert option is not None
+        assert "selected" not in option.group(0)
 
     async def test_fuel_entry_farm_fill_via_post(
         self,

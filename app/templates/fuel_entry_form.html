@@ -15,7 +15,40 @@
 
     {% if error %}{{ form_error(error) }}{% endif %}
 
-    <form method="post" action="{% if mode == 'create' %}/fuel/new{% else %}/fuel/{{ entry.id }}/edit{% endif %}" class="{{ glass_panel('space-y-5 p-5 sm:p-6') }}" x-data="{ submitting: false, selectedVehicleId: '{{ form_vehicle_id or (vehicle.id if vehicle else '') }}', vehicleVtypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.vtype }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode == 'edit' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.vtype }}'{% endif %} }, vehicleFuelTypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.fuel_type }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode == 'edit' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.fuel_type }}'{% endif %} }, fillSource: '{{ form_fill_source or (entry.fill_source if entry else 'external') }}', isTractor() { const id = String(this.selectedVehicleId || ''); return id !== '' && this.vehicleVtypes[id] === 'tractor'; }, isFarm() { return this.fillSource === 'farm'; }, currentFuelType() { {% if mode == 'edit' %}return '{{ vehicle.fuel_type }}';{% else %}const id = String(this.selectedVehicleId || ''); return this.vehicleFuelTypes[id] || '';{% endif %} }, tankVisible(fuelType) { return this.isFarm() && this.currentFuelType() === fuelType; } }" @submit="submitting = true">
+    <script type="application/json" id="storage-tanks-data">{{ storage_tanks | tojson }}</script>
+    <form method="post" action="{% if mode == 'create' %}/fuel/new{% else %}/fuel/{{ entry.id }}/edit{% endif %}"
+          class="{{ glass_panel('space-y-5 p-5 sm:p-6') }}"
+          x-data="{
+            submitting: false,
+            selectedVehicleId: '{{ form_vehicle_id or (vehicle.id if vehicle else '') }}',
+            selectedTankId: '{{ form_fuel_tank_id or (entry.fuel_tank_id if entry and entry.fuel_tank_id else '') }}',
+            vehicleVtypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.vtype }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode == 'edit' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.vtype }}'{% endif %} },
+            vehicleFuelTypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.fuel_type }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode == 'edit' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.fuel_type }}'{% endif %} },
+            fillSource: '{{ form_fill_source or (entry.fill_source if entry else 'external') }}',
+            tanks: {{ storage_tanks | tojson }},
+            isTractor() {
+              const id = String(this.selectedVehicleId || '');
+              return id !== '' && this.vehicleVtypes[id] === 'tractor';
+            },
+            isFarm() { return this.fillSource === 'farm'; },
+            currentFuelType() {
+              {% if mode == 'edit' %}return '{{ vehicle.fuel_type }}';
+              {% else %}const id = String(this.selectedVehicleId || ''); return this.vehicleFuelTypes[id] || '';{% endif %}
+            },
+            matchingTanks() {
+              const ft = this.currentFuelType();
+              if (!ft) return [];
+              return this.tanks.filter((t) => t.fuel_type === ft);
+            },
+            syncTankSelection() {
+              const ids = this.matchingTanks().map((t) => String(t.id));
+              if (!ids.includes(String(this.selectedTankId || ''))) {
+                this.selectedTankId = ids.length === 1 ? ids[0] : '';
+              }
+            }
+          }"
+          x-init="$watch('selectedVehicleId', () => syncTankSelection()); $watch('fillSource', () => syncTankSelection()); syncTankSelection()"
+          @submit="submitting = true">
         {{ csrf_field() }}
 
         <section class="t-form-section">
@@ -65,13 +98,15 @@
             </div>
             <div x-show="isFarm()" x-transition>
                 <label for="fuel_tank_id" class="block text-sm font-medium text-slate-700">Hof-Tank</label>
-                <select name="fuel_tank_id" id="fuel_tank_id" class="mt-1.5 {{ form_input_class() }}">
+                <select name="fuel_tank_id" id="fuel_tank_id" class="mt-1.5 {{ form_input_class() }}" x-model="selectedTankId">
                     <option value="">Tank auswählen</option>
-                    {% for tank in storage_tanks %}
-                    <option value="{{ tank.id }}" data-fuel-type="{{ tank.fuel_type }}" {% if (storage_tanks|length == 1) or (entry and entry.fuel_tank_id == tank.id) or (form_fuel_tank_id and form_fuel_tank_id == (tank.id ~ '')) %}selected{% endif %} x-show="tankVisible('{{ tank.fuel_type }}')">{{ tank.name }} ({{ format_number(tank.current_stock_l) }} L)</option>
-                    {% endfor %}
+                    <template x-for="tank in matchingTanks()" :key="tank.id">
+                        <option :value="tank.id" x-text="tank.name + ' (' + Number(tank.current_stock_l).toLocaleString('de-DE', { maximumFractionDigits: 2 }) + ' L)'"></option>
+                    </template>
                 </select>
-                <p class="mt-2 text-xs text-slate-500">Wähle den Tank, von dem der Kraftstoff entnommen wurde.</p>
+                <p class="mt-2 text-xs text-slate-500" x-show="matchingTanks().length > 0">Wähle den Tank, von dem der Kraftstoff entnommen wurde.</p>
+                <p class="mt-2 text-xs text-amber-800" x-show="isFarm() && currentFuelType() && matchingTanks().length === 0">Kein Hof-Tank für diesen Kraftstoff vorhanden. Lege zuerst einen passenden Tank unter Tanklager an.</p>
+                <p class="mt-2 text-xs text-slate-500" x-show="isFarm() && !currentFuelType()">Zuerst ein Fahrzeug wählen, dann den passenden Hof-Tank.</p>
             </div>
         </section>
 

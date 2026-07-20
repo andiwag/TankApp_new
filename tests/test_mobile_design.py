@@ -59,6 +59,8 @@ class TestPhase7Shell:
         auth_group(role="admin")
         response = await client.get("/dashboard")
         assert 'href="/fuel/new"' in response.text
+        assert 'href="/tanks/external/new"' in response.text
+        assert "Externe Abgabe" in response.text
         assert 'href="/vehicles/new"' in response.text
         assert 'href="/tanks/new"' in response.text
 

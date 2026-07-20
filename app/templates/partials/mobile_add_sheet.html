@@ -6,6 +6,7 @@
         <div class="mt-4 space-y-1">
             {% if user_can_edit(request) %}
             {{ bottom_sheet_row("fuel", "Tankvorgang", "Neuen Tankvorgang erfassen", "/fuel/new", "emerald") }}
+            {{ bottom_sheet_row("fuel", "Externe Abgabe", "Abgabe an externe Person vom Hof-Tank", "/tanks/external/new", "sky") }}
             {% if group_feature_enabled(request, "maintenance") %}
             {{ bottom_sheet_row("wrench", "Wartung", "Wartung oder Service hinzufügen", "/maintenance/new", "violet") }}
             {% endif %}

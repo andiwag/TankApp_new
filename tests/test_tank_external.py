@@ -215,6 +215,212 @@ class TestExternalWithdrawalStatsIsolation:
         assert after["vehicle_chart"] == before["vehicle_chart"]
 
 
+class TestExternalWithdrawalPickerRoutes:
+    async def test_external_new_get_lists_active_tanks(
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_storage_tank,
+        auth_cookie,
+    ):
+        _user, group = create_authenticated_group(
+            client,
+            create_test_user,
+            create_test_group,
+            create_test_user_group,
+            auth_cookie,
+        )
+        create_test_storage_tank(group_id=group.id, name="Diesel Hof")
+        create_test_storage_tank(
+            group_id=group.id, name="Benzin Hof", fuel_type="petrol"
+        )
+        response = await client.get("/tanks/external/new")
+        assert response.status_code == 200
+        assert "Diesel Hof" in response.text
+        assert "Benzin Hof" in response.text
+        assert 'name="tank_id"' in response.text
+
+    async def test_external_new_get_empty_state_when_no_tanks(
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+    ):
+        create_authenticated_group(
+            client,
+            create_test_user,
+            create_test_group,
+            create_test_user_group,
+            auth_cookie,
+        )
+        response = await client.get("/tanks/external/new")
+        assert response.status_code == 200
+        assert "/tanks/new" in response.text
+        assert 'name="tank_id"' not in response.text
+
+    async def test_external_new_post_creates_ledger_and_redirects_to_tank(
+        self,
+        client,
+        db,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_storage_tank,
+        auth_cookie,
+    ):
+        _user, group = create_authenticated_group(
+            client,
+            create_test_user,
+            create_test_group,
+            create_test_user_group,
+            auth_cookie,
+        )
+        tank = create_test_storage_tank(group_id=group.id, opening_balance_l=120.0)
+        response = await client.post(
+            "/tanks/external/new",
+            data={
+                "tank_id": str(tank.id),
+                "amount_l": "20",
+                "entry_date": date.today().isoformat(),
+                "recipient_name": "Kreuzmayr",
+            },
+            follow_redirects=False,
+        )
+        assert response.status_code == 303
+        assert response.headers["location"] == f"/tanks/{tank.id}"
+        assert current_stock_l(db, tank) == pytest.approx(100.0)
+        assert db.query(TankLedgerEntry).one().recipient_name == "Kreuzmayr"
+
+    async def test_external_new_post_missing_tank_id_redisplays_error(
+        self,
+        client,
+        db,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_storage_tank,
+        auth_cookie,
+    ):
+        _user, group = create_authenticated_group(
+            client,
+            create_test_user,
+            create_test_group,
+            create_test_user_group,
+            auth_cookie,
+        )
+        create_test_storage_tank(group_id=group.id)
+        response = await client.post(
+            "/tanks/external/new",
+            data={
+                "tank_id": "",
+                "amount_l": "10",
+                "entry_date": date.today().isoformat(),
+                "recipient_name": "Gast",
+            },
+        )
+        assert response.status_code == 200
+        assert "bg-red-50" in response.text
+        assert db.query(TankLedgerEntry).count() == 0
+
+    async def test_external_new_post_foreign_tank_rejected(
+        self,
+        client,
+        db,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_storage_tank,
+        auth_cookie,
+    ):
+        user = create_test_user()
+        g_a = create_test_group(
+            name="Farm A", invite_code="FARM-AAAAA", created_by=user.id
+        )
+        g_b = create_test_group(
+            name="Farm B", invite_code="FARM-BBBBB", created_by=user.id
+        )
+        create_test_user_group(user.id, g_a.id, role="admin")
+        create_test_storage_tank(group_id=g_a.id, name="Own Tank")
+        tank_b = create_test_storage_tank(group_id=g_b.id, name="Other Tank")
+        auth_cookie(client, user.id, g_a.id)
+        response = await client.post(
+            "/tanks/external/new",
+            data={
+                "tank_id": str(tank_b.id),
+                "amount_l": "10",
+                "entry_date": date.today().isoformat(),
+                "recipient_name": "Gast",
+            },
+        )
+        assert response.status_code == 200
+        assert "bg-red-50" in response.text
+        assert db.query(TankLedgerEntry).count() == 0
+
+    async def test_external_new_requires_contributor(
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_storage_tank,
+        auth_cookie,
+    ):
+        user = create_test_user()
+        group = create_test_group(created_by=user.id)
+        create_test_user_group(user.id, group.id, role="reader")
+        create_test_storage_tank(group_id=group.id)
+        auth_cookie(client, user.id, group.id)
+        response = await client.get("/tanks/external/new")
+        assert response.status_code == 403
+
+    async def test_tank_scoped_external_new_redirects_to_picker(
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_storage_tank,
+        auth_cookie,
+    ):
+        _user, group = create_authenticated_group(
+            client,
+            create_test_user,
+            create_test_group,
+            create_test_user_group,
+            auth_cookie,
+        )
+        tank = create_test_storage_tank(group_id=group.id)
+        response = await client.get(
+            f"/tanks/{tank.id}/external/new", follow_redirects=False
+        )
+        assert response.status_code == 303
+        assert response.headers["location"] == f"/tanks/external/new?tank_id={tank.id}"
+
+    async def test_fuel_list_links_externe_abgabe_for_editors(
+        self,
+        client,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        auth_cookie,
+    ):
+        create_authenticated_group(
+            client,
+            create_test_user,
+            create_test_group,
+            create_test_user_group,
+            auth_cookie,
+        )
+        response = await client.get("/fuel")
+        assert response.status_code == 200
+        assert 'href="/tanks/external/new"' in response.text
+        assert "Externe Abgabe" in response.text
+
+
 class TestExternalWithdrawalRoutes:
     async def test_external_withdrawal_via_post(
         self,

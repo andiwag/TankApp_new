@@ -813,3 +813,13 @@ Architectural and design decisions for **Tankly**. Cookie names in older entries
 **Rationale:** `postgresql.ENUM` is the documented API that honors `create_type`. Explicit `checkfirst=True` create is safe for new types and for re-runs.
 
 **Trade-off:** Migrations are Postgres-specific for enum columns (acceptable: production is Postgres; SQLite tests use `create_all`).
+
+---
+
+## D-062: Externe Abgabe as sibling action to Tankvorgang
+
+**Decision:** Externe Abgabe is entered via dedicated `/tanks/external/new` (Hof-Tank picker), reachable from the same places as Tankvorgang (mobile + sheet, Tankvorgänge header). It is not a mode on `/fuel/new`. Farm-tank options on the fuel form must not use Alpine `x-show` on `<option>` — filter via client-side matching list / `x-for` only.
+
+**Rationale:** Keeps vehicle fills and non-fleet withdrawals as separate models; avoids confusing “Externe Tankstelle” with “Externe Abgabe”; `x-show` on options breaks selection in common browsers.
+
+**Trade-off:** Two “add liters” actions in the + sheet instead of one mega-form.

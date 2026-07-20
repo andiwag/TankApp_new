@@ -281,8 +281,10 @@ Add **Tanklager** link in `base.html` when active group is set (all roles can vi
 |--------|-------|------|--------|
 | GET | `/tanks/{id}/delivery/new` | contributor+ | Delivery form |
 | POST | `/tanks/{id}/delivery/new` | contributor+ | Post delivery |
-| GET | `/tanks/{id}/external/new` | contributor+ | External withdrawal form |
-| POST | `/tanks/{id}/external/new` | contributor+ | Post external withdrawal |
+| GET | `/tanks/{id}/external/new` | contributor+ | Redirect to `/tanks/external/new?tank_id=` |
+| GET | `/tanks/external/new` | contributor+ | External withdrawal form (tank picker); entry points: mobile +, Tankvorgänge, tank detail |
+| POST | `/tanks/external/new` | contributor+ | Post external withdrawal |
+| POST | `/tanks/{id}/external/new` | contributor+ | Post external withdrawal (tank from path) |
 | GET | `/tanks/ledger/{id}/edit` | contributor+ | Edit adjustment/delivery/external |
 | POST | `/tanks/ledger/{id}/edit` | contributor+ | Update |
 | POST | `/tanks/ledger/{id}/delete` | admin | Soft delete ledger row |
