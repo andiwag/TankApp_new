@@ -2,6 +2,8 @@
 
 from datetime import date, timedelta
 
+import pytest
+
 from app.enums import FillSource, Role, VehicleType
 from app.models import (
     FuelEntry,
@@ -185,7 +187,7 @@ class TestSeedDev:
                 .all()
             )
             expected = tank.opening_balance_l + sum(e.amount_l for e in ledger)
-            assert current_stock_l(db, tank) == expected
+            assert current_stock_l(db, tank) == pytest.approx(expected)
             assert expected > 0
 
             farm_liters = sum(
