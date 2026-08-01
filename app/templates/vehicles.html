@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import empty_state, mobile_header_bar, page_header, vehicle_card, vehicle_hero_card with context %}
+{% from "_macros.html" import empty_state, lean_export_link, mobile_header_bar, app_icon, vehicle_list_item with context %}
 
 {% block mobile_header %}
 {{ mobile_header_bar(title="Fahrzeuge", action_href="/vehicles/new" if can_edit else "") }}
@@ -8,21 +8,31 @@
 {% block title %}Fahrzeuge – Tankly{% endblock %}
 
 {% block content %}
-<div>
-    <div class="hidden lg:block">
-        {{ page_header("Fahrzeuge", "", "Fahrzeuge und Maschinen, auf denen Kraftstoff, Wartung und Auswertungen basieren.", "/vehicles/new" if can_edit else "", "Fahrzeug hinzufügen", "/export/vehicles.csv" if can_export else "", "CSV exportieren", icon="vehicle") }}
-    </div>
-
-    <div id="vehicle-list">
-        {% if vehicles %}
-        <div class="space-y-4 lg:hidden">
-            {% for v in vehicles %}
-            {{ vehicle_hero_card(v, vehicle_stats[v.id], can_edit, can_delete) }}
-            {% endfor %}
+<div class="t-lean space-y-4">
+    <header class="t-dashboard-header hidden lg:flex">
+        <div class="min-w-0">
+            <h1 class="t-dashboard-header__title">Fahrzeuge</h1>
+            <p class="t-dashboard-header__subtitle">Fahrzeuge und Maschinen, auf denen Kraftstoff, Wartung und Auswertungen basieren.</p>
         </div>
-        <div class="hidden gap-4 lg:grid sm:grid-cols-2 xl:grid-cols-3">
+        <div class="t-dashboard-actions">
+            {% if can_edit %}
+            <a href="/vehicles/new" class="t-dashboard-primary-action t-btn-primary">{{ app_icon("vehicle", "h-4 w-4") }} Fahrzeug hinzufügen</a>
+            {% endif %}
+            {% if can_export %}
+            <a href="/export/vehicles.csv" class="t-dashboard-action-menu__trigger">CSV exportieren</a>
+            {% endif %}
+        </div>
+    </header>
+
+    {% if can_export %}
+    <div class="lg:hidden">{{ lean_export_link("/export/vehicles.csv") }}</div>
+    {% endif %}
+
+    <section id="vehicle-list" class="t-dashboard-panel" aria-label="Fahrzeuge">
+        {% if vehicles %}
+        <div class="t-dashboard-section-list">
             {% for v in vehicles %}
-            {{ vehicle_card(v, can_edit, can_delete) }}
+            {{ vehicle_list_item(v, vehicle_stats.get(v.id), can_edit, can_delete) }}
             {% endfor %}
         </div>
         {% else %}
@@ -33,6 +43,6 @@
         {{ empty_state("Noch keine Fahrzeuge", "Füge dein erstes Fahrzeug hinzu, um Kraftstoff- und Wartungserfassung freizuschalten.", "/vehicles/new" if can_edit else "", "Erstes Fahrzeug hinzufügen", "vehicle") }}
         </div>
         {% endif %}
-    </div>
+    </section>
 </div>
 {% endblock %}

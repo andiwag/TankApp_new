@@ -24,7 +24,7 @@
 
     <script src="/static/vendor/tailwindcss.js"></script>
 
-    <link rel="stylesheet" href="/static/app.css?v=12">
+    <link rel="stylesheet" href="/static/app.css?v=23">
 
     <script defer src="/static/vendor/alpine.min.js"></script>
 
@@ -32,7 +32,7 @@
 
 {% set current_path = request.url.path %}
 
-<body class="min-h-screen bg-[#f4f6f8] text-slate-900 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] lg:pb-0{% if request.state.platform_view %} pt-16{% endif %}">
+<body class="min-h-screen bg-[var(--yard)] text-[var(--ink)] pb-[calc(env(safe-area-inset-bottom)+5.5rem)] lg:pb-0{% if request.state.platform_view %} pt-16{% endif %}">
 
 
 
@@ -86,18 +86,17 @@
 
                     {{ nav_emoji_link("/dashboard", "Dashboard", "home", current_path == "/dashboard") }}
 
-                    {{ nav_emoji_link("/vehicles", "Fahrzeuge", "vehicle", current_path.startswith("/vehicles")) }}
-
                     {{ nav_emoji_link("/fuel", "Tankvorgänge", "fuel", current_path.startswith("/fuel")) }}
+
+                    {{ nav_emoji_link("/tanks", "Tanklager", "tank", current_path.startswith("/tanks")) }}
+
+                    {{ nav_emoji_link("/vehicles", "Fahrzeuge", "vehicle", current_path.startswith("/vehicles")) }}
 
                     {{ nav_emoji_link("/maintenance", "Wartungen", "wrench", current_path.startswith("/maintenance")) }}
 
                     {{ nav_emoji_link("/analytics", "Auswertung", "chart", current_path.startswith("/analytics")) }}
 
-                    {{ nav_emoji_link("/tanks", "Tanklager", "fuel", current_path.startswith("/tanks")) }}
-
                     {{ nav_emoji_link("/summary", "Zusammenfassung", "clipboard", current_path == "/summary") }}
-
                     <div class="my-3 border-t border-slate-100"></div>
 
                     {{ nav_emoji_link("/settings/group", "Einstellungen", "settings", current_path.startswith("/settings")) }}

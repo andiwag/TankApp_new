@@ -291,7 +291,7 @@ class TestCreateVehicle:
             data={"name": "Bad", "vtype": "not_a_type", "fuel_type": "diesel"},
         )
         assert response.status_code == 200
-        assert "bg-red-50" in response.text
+        assert "t-form-alert--fault" in response.text or "bg-red-50" in response.text
         assert "Input should" in response.text
 
     async def test_create_vehicle_empty_name_fails(

@@ -250,7 +250,7 @@ class TestAnalyticsDashboard:
         create_test_vehicle(group_id=group.id)
         response = await client.get("/analytics")
         assert response.status_code == 200
-        assert "Einblicke" in response.text
+        assert "Auswertung" in response.text
         assert "vehicle-chart" in response.text
         assert "chart.umd.min.js" in response.text
 

@@ -1,21 +1,20 @@
 {% extends "base.html" %}
-{% from "_macros.html" import action_button, glass_panel with context %}
+{% from "_macros.html" import action_button with context %}
 
 {% block title %}{{ title }} – Tankly{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-lg py-12 text-center">
-    <section class="{{ glass_panel('p-8') }}">
-        <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl t-kpi-icon-amber text-2xl" aria-hidden="true">⚠️</div>
-        <p class="text-5xl font-bold text-slate-200">{{ status_code }}</p>
-        <h1 class="mt-3 text-2xl font-bold text-slate-950">{{ title }}</h1>
-        <p class="mt-3 text-sm leading-relaxed text-slate-500">{{ message }}</p>
+<div class="t-auth t-auth--narrow">
+    <section class="t-auth-panel t-error-panel t-motion-enter">
+        <p class="t-error-panel__code" aria-hidden="true">{{ status_code }}</p>
+        <h1 class="t-auth-panel__title">{{ title }}</h1>
+        <p class="t-auth-panel__subtitle">{{ message }}</p>
 
         {% if detail %}
-        <pre class="mt-6 overflow-x-auto rounded-[12px] border border-red-200 bg-red-50 p-4 text-left text-xs text-red-800">{{ detail }}</pre>
+        <pre class="t-error-panel__detail">{{ detail }}</pre>
         {% endif %}
 
-        <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+        <div class="t-error-panel__actions">
             {{ action_button("Startseite", "/", "primary") }}
             {{ action_button("Anmelden", "/login", "secondary") }}
         </div>

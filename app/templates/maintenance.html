@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import empty_state, glass_panel, maintenance_list_item, mobile_header_bar, page_header with context %}
+{% from "_macros.html" import empty_state, maintenance_list_item, mobile_header_bar, app_icon with context %}
 
 {% block mobile_header %}
 {{ mobile_header_bar(title="Wartungen", back_href="/profile", action_href="/maintenance/new" if can_edit else "") }}
@@ -8,14 +8,22 @@
 {% block title %}Wartung – Tankly{% endblock %}
 
 {% block content %}
-<div>
-    <div class="hidden lg:block">
-        {{ page_header("Wartung", "", "Arbeiten, Kosten, Betriebsstände und nächste Wartungserinnerungen im Überblick.", "/maintenance/new" if can_edit else "", "Eintrag erfassen", icon="wrench") }}
-    </div>
+<div class="t-lean space-y-4">
+    <header class="t-dashboard-header hidden lg:flex">
+        <div class="min-w-0">
+            <h1 class="t-dashboard-header__title">Wartung</h1>
+            <p class="t-dashboard-header__subtitle">Arbeiten, Kosten, Betriebsstände und nächste Wartungserinnerungen im Überblick.</p>
+        </div>
+        <div class="t-dashboard-actions">
+            {% if can_edit %}
+            <a href="/maintenance/new" class="t-dashboard-primary-action t-btn-primary">{{ app_icon("wrench", "h-4 w-4") }} Eintrag erfassen</a>
+            {% endif %}
+        </div>
+    </header>
 
-    <div id="maintenance-list">
+    <section id="maintenance-list" class="t-dashboard-panel" aria-label="Wartungen">
         {% if logs %}
-        <div class="{{ glass_panel('px-4 py-1 sm:px-5') }}">
+        <div class="t-dashboard-section-list">
             {% for log in logs %}
             {{ maintenance_list_item(log, can_edit, can_delete) }}
             {% endfor %}
@@ -23,6 +31,6 @@
         {% else %}
         {{ empty_state("Noch keine Wartungseinträge", "Protokolliere Wartungen und Erinnerungen, damit anstehende Arbeiten nicht verloren gehen.", "/maintenance/new" if can_edit else "", "Ersten Eintrag erfassen", "wrench") }}
         {% endif %}
-    </div>
+    </section>
 </div>
 {% endblock %}

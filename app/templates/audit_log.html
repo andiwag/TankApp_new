@@ -1,20 +1,30 @@
 {% extends "base.html" %}
-{% from "_macros.html" import audit_log_item, empty_state, glass_panel, page_header with context %}
+{% from "_macros.html" import audit_log_item, empty_state, app_icon with context %}
 
 {% block title %}Änderungsprotokoll – Tankly{% endblock %}
 
 {% block content %}
-<div>
-    {{ page_header("Änderungsprotokoll", "", "Zeitstrahl wichtiger Betriebsänderungen.", "", "", "/settings/group", "Betriebseinstellungen", icon="audit") }}
+<div class="t-lean space-y-4">
+    <header class="t-dashboard-header hidden lg:flex">
+        <div class="min-w-0">
+            <h1 class="t-dashboard-header__title">Änderungsprotokoll</h1>
+            <p class="t-dashboard-header__subtitle">Zeitstrahl wichtiger Betriebsänderungen.</p>
+        </div>
+        <div class="t-dashboard-actions">
+            <a href="/settings/group" class="t-dashboard-action-menu__trigger">{{ app_icon("settings", "h-4 w-4") }} Betriebseinstellungen</a>
+        </div>
+    </header>
 
-    {% if show_empty_state %}
-    {{ empty_state("Noch keine Protokolleinträge", "Wichtige Änderungen an Betrieb, Mitgliedern und Fahrzeugen erscheinen hier.", "", "", "audit") }}
-    {% else %}
-    <div class="{{ glass_panel('px-4 py-1 sm:px-5') }}">
-        {% for row in audit_rows %}
-        {{ audit_log_item(row) }}
-        {% endfor %}
-    </div>
-    {% endif %}
+    <section class="t-dashboard-panel" aria-label="Änderungsprotokoll">
+        {% if show_empty_state %}
+        {{ empty_state("Noch keine Protokolleinträge", "Wichtige Änderungen an Betrieb, Mitgliedern und Fahrzeugen erscheinen hier.", "", "", "audit") }}
+        {% else %}
+        <div class="t-dashboard-section-list">
+            {% for row in audit_rows %}
+            {{ audit_log_item(row) }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </section>
 </div>
 {% endblock %}

@@ -407,11 +407,35 @@ class TestDashboardContext:
         assert ctx["greeting"]
         assert ctx["today_fuel_count"] == 1
         assert ctx["month_fuel_count"] == 1
+        assert ctx["vehicle_count"] == 1
         assert len(ctx["cost_chart"]) == 6
         assert isinstance(ctx["consumption_chart"], list)
-        assert len(ctx["vehicles_preview"]) == 1
-        assert ctx["vehicles_preview"][0].name == "Audi A4"
+        assert "vehicles_preview" not in ctx
+        assert len(ctx["recent_entry_rows"]) == 1
         assert ctx["tank_stock_rows"] == []
+
+    def test_dashboard_vehicle_count_excludes_deleted_without_preview(
+        self,
+        db,
+        create_test_user,
+        create_test_group,
+        create_test_user_group,
+        create_test_vehicle,
+    ):
+        user = create_test_user()
+        group = create_test_group(created_by=user.id)
+        create_test_user_group(user.id, group.id, role="admin")
+        create_test_vehicle(group_id=group.id, name="Active")
+        gone = create_test_vehicle(group_id=group.id, name="Gone")
+        db.query(Vehicle).filter(Vehicle.id == gone.id).update(
+            {"deleted_at": utc_now()}
+        )
+        db.commit()
+
+        ctx = get_dashboard_context(db, user, group.id)
+
+        assert ctx["vehicle_count"] == 1
+        assert "vehicles_preview" not in ctx
 
     async def test_dashboard_shows_personalized_greeting(
         self,
@@ -450,3 +474,269 @@ class TestDashboardContext:
         assert response.status_code == 200
         assert 'id="consumption-chart"' in response.text
         assert 'id="cost-bar-chart"' in response.text
+        assert 'id="dashboard-consumption-data"' in response.text
+        assert 'id="dashboard-cost-data"' in response.text
+        assert 'type="application/json"' in response.text
+        assert "/static/vendor/chart.umd.min.js" in response.text
+        assert "/static/dashboard.js" in response.text
+        chart_pos = response.text.find("/static/vendor/chart.umd.min.js")
+        dash_pos = response.text.find("/static/dashboard.js")
+        assert chart_pos < dash_pos
+
+
+class TestDashboardRedesignContracts:
+    async def test_metric_ids_present_on_desktop_band(self, client, auth_group):
+        auth_group()
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        html = response.text
+        assert 'id="stat-vehicles"' in html
+        assert 'id="stat-month-entries"' in html
+        assert 'id="stat-month-cost"' in html
+        assert 'id="stat-maintenance-due"' in html
+        assert "t-dashboard-metrics" in html
+
+    async def test_admin_sees_primary_fuel_action(self, client, auth_group):
+        auth_group(role="admin")
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        assert "t-dashboard-primary-action" in response.text
+        assert 'href="/fuel/new"' in response.text
+        assert "Tankvorgang erfassen" in response.text
+
+    async def test_contributor_sees_primary_fuel_action(self, client, auth_group):
+        auth_group(role="contributor")
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        assert "t-dashboard-primary-action" in response.text
+        assert 'href="/fuel/new"' in response.text
+
+    async def test_reader_has_no_new_links_but_keeps_export(
+        self, client, auth_group, set_group_tier
+    ):
+        _, group = auth_group(role="reader")
+        set_group_tier(group.id, "pro")
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        assert 'href="/fuel/new"' not in response.text
+        assert 'href="/vehicles/new"' not in response.text
+        assert 'href="/maintenance/new"' not in response.text
+        assert "t-dashboard-primary-action" not in response.text
+        assert "/export/fuel-entries.csv" in response.text
+
+    async def test_free_tier_hides_export_and_paid_dead_links(
+        self, client, auth_group, db
+    ):
+        from app.enums import SubscriptionTier
+
+        from tests.test_billing import _ensure_subscription
+
+        _, group = auth_group(role="admin")
+        _ensure_subscription(db, group.id, tier=SubscriptionTier.free.value)
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        assert "/export/fuel-entries.csv" not in response.text
+
+    async def test_no_attention_omits_attention_section(self, client, auth_group):
+        auth_group()
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        assert 'id="dashboard-attention"' not in response.text
+
+    async def test_negative_stock_attention_is_danger_linked_to_tanks(
+        self,
+        client,
+        auth_group,
+        create_test_storage_tank,
+        db,
+    ):
+        from app.schemas import TankExternalWithdrawalCreate
+        from app.services.tank_ledger import post_external_withdrawal
+
+        user, group = auth_group(role="admin")
+        tank = create_test_storage_tank(group_id=group.id, opening_balance_l=10.0)
+        post_external_withdrawal(
+            db,
+            user.id,
+            group.id,
+            tank,
+            TankExternalWithdrawalCreate(
+                amount_l=25.0,
+                entry_date=date.today(),
+                recipient_name="Nachbar",
+            ),
+        )
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        html = response.text
+        assert 'id="dashboard-attention"' in html
+        assert "t-dashboard-attention-item--danger" in html
+        assert "negative-stock-warning" in html
+        attention = html.split('id="dashboard-attention"', 1)[1]
+        assert 'href="/tanks"' in attention
+
+    async def test_overdue_maintenance_attention_uses_danger(
+        self, client, auth_group, create_test_vehicle, db, set_group_tier
+    ):
+        from app.models import MaintenanceLog
+
+        user, group = auth_group(role="admin")
+        set_group_tier(group.id, "pro")
+        vehicle = create_test_vehicle(group_id=group.id, name="Late Tractor")
+        db.add(
+            MaintenanceLog(
+                vehicle_id=vehicle.id,
+                group_id=group.id,
+                user_id=user.id,
+                description="Ölwechsel",
+                service_date=date.today() - timedelta(days=60),
+                next_service_date=date.today() - timedelta(days=3),
+            )
+        )
+        db.commit()
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        html = response.text
+        assert 'id="dashboard-attention"' in html
+        assert "t-dashboard-attention-item--danger" in html
+        assert "überfällig" in html
+
+    async def test_attention_orders_negative_stock_before_overdue(
+        self,
+        client,
+        auth_group,
+        create_test_vehicle,
+        create_test_storage_tank,
+        db,
+        set_group_tier,
+    ):
+        from app.models import MaintenanceLog
+        from app.schemas import TankExternalWithdrawalCreate
+        from app.services.tank_ledger import post_external_withdrawal
+
+        user, group = auth_group(role="admin")
+        set_group_tier(group.id, "pro")
+        tank = create_test_storage_tank(
+            group_id=group.id, name="Neg Tank", opening_balance_l=5.0
+        )
+        post_external_withdrawal(
+            db,
+            user.id,
+            group.id,
+            tank,
+            TankExternalWithdrawalCreate(
+                amount_l=20.0,
+                entry_date=date.today(),
+                recipient_name="Nachbar",
+            ),
+        )
+        vehicle = create_test_vehicle(group_id=group.id, name="Late Tractor")
+        db.add(
+            MaintenanceLog(
+                vehicle_id=vehicle.id,
+                group_id=group.id,
+                user_id=user.id,
+                description="Filter",
+                service_date=date.today() - timedelta(days=40),
+                next_service_date=date.today() - timedelta(days=1),
+            )
+        )
+        db.commit()
+        response = await client.get("/dashboard")
+        html = response.text
+        attention = html.split('id="dashboard-attention"', 1)[1]
+        neg_pos = attention.find("Neg Tank")
+        overdue_pos = attention.find("Filter")
+        assert neg_pos != -1 and overdue_pos != -1
+        assert neg_pos < overdue_pos
+
+    async def test_empty_group_shows_zeros_and_empty_state(self, client, auth_group):
+        auth_group(role="admin")
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        assert _stat(response.text, "stat-vehicles") == 0
+        assert _stat(response.text, "stat-month-entries") == 0
+        assert "Noch keine Tankvorgänge" in response.text
+
+    async def test_action_menu_has_aria_and_permitted_actions(
+        self, client, auth_group, set_group_tier
+    ):
+        _, group = auth_group(role="admin")
+        set_group_tier(group.id, "pro")
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        html = response.text
+        assert "t-dashboard-action-menu" in html
+        assert 'aria-haspopup="menu"' in html
+        assert "aria-expanded" in html
+        assert "Weitere Aktionen" in html
+        assert 'href="/maintenance/new"' in html
+        assert 'href="/vehicles/new"' in html
+        assert "/export/fuel-entries.csv" in html
+
+    async def test_vehicle_preview_section_absent(self, client, auth_group):
+        auth_group()
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        assert "vehicles_preview" not in response.text
+        assert "Alle Fahrzeuge anzeigen" not in response.text
+
+    async def test_chart_tabs_and_panels_present(self, client, auth_group):
+        auth_group()
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        html = response.text
+        assert 'role="tablist"' in html
+        assert 'role="tab"' in html
+        assert 'aria-controls="dashboard-chart-consumption"' in html
+        assert 'aria-controls="dashboard-chart-cost"' in html
+        assert 'id="dashboard-chart-consumption"' in html
+        assert 'id="dashboard-chart-cost"' in html
+        assert "Noch nicht genug Daten für Verbrauchstrend" in html
+
+    async def test_inventory_caps_visible_rows(
+        self, client, auth_group, create_test_storage_tank
+    ):
+        _, group = auth_group(role="admin")
+        for i in range(6):
+            create_test_storage_tank(
+                group_id=group.id,
+                name=f"Tank {i}",
+                opening_balance_l=100.0 + i,
+            )
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        html = response.text
+        desktop = html.split('id="tank-stock"', 1)[1].split("</section>", 1)[0]
+        assert (
+            len(re.findall(r'class="t-dashboard-inventory-row(?:\s|")', desktop)) == 4
+        )
+        assert "weitere anzeigen" in desktop
+
+    async def test_mobile_shows_three_recent_entries(
+        self,
+        client,
+        auth_group,
+        create_test_vehicle,
+        create_test_fuel_entry,
+    ):
+        user, group = auth_group(role="admin")
+        vehicle = create_test_vehicle(group_id=group.id, name="Fleet Truck")
+        for offset in range(5):
+            create_test_fuel_entry(
+                vehicle_id=vehicle.id,
+                group_id=group.id,
+                user_id=user.id,
+                fuel_amount_l=10.0 + offset,
+                entry_date=date.today() - timedelta(days=offset),
+            )
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        mobile = response.text.split("t-mobile-page", 1)[1].split(
+            "t-dashboard-desktop", 1
+        )[0]
+        recent_section = mobile.split("Letzte Tankvorgänge", 1)[1]
+        assert (
+            len(re.findall(r'class="t-dashboard-activity-row(?:\s|")', recent_section))
+            == 3
+        )

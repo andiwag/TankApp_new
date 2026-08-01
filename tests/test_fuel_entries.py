@@ -430,7 +430,7 @@ class TestCreateFuelEntry:
             },
         )
         assert response.status_code == 200
-        assert "bg-red-50" in response.text
+        assert "t-form-alert--fault" in response.text or "bg-red-50" in response.text
 
     async def test_create_fuel_entry_soft_deleted_vehicle_denied(
         self,
@@ -464,7 +464,7 @@ class TestCreateFuelEntry:
             },
         )
         assert response.status_code == 200
-        assert "bg-red-50" in response.text
+        assert "t-form-alert--fault" in response.text or "bg-red-50" in response.text
 
     async def test_create_fuel_entry_negative_amount_fails(
         self,
@@ -495,7 +495,7 @@ class TestCreateFuelEntry:
             },
         )
         assert response.status_code == 200
-        assert "bg-red-50" in response.text
+        assert "t-form-alert--fault" in response.text or "bg-red-50" in response.text
 
     async def test_create_fuel_entry_zero_amount_fails(
         self,
@@ -526,7 +526,7 @@ class TestCreateFuelEntry:
             },
         )
         assert response.status_code == 200
-        assert "bg-red-50" in response.text
+        assert "t-form-alert--fault" in response.text or "bg-red-50" in response.text
 
     async def test_create_fuel_entry_negative_reading_fails(
         self,
@@ -557,7 +557,7 @@ class TestCreateFuelEntry:
             },
         )
         assert response.status_code == 200
-        assert "bg-red-50" in response.text
+        assert "t-form-alert--fault" in response.text or "bg-red-50" in response.text
 
     async def test_create_fuel_entry_future_date_fails(
         self,
@@ -588,7 +588,7 @@ class TestCreateFuelEntry:
             },
         )
         assert response.status_code == 200
-        assert "bg-red-50" in response.text
+        assert "t-form-alert--fault" in response.text or "bg-red-50" in response.text
 
     async def test_create_fuel_entry_requires_contributor_role(
         self,

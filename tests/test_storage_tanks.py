@@ -301,7 +301,7 @@ class TestStorageTankMobile:
         response = await client.get("/tanks/new")
         assert response.status_code == 200
         assert 'href="/tanks"' in response.text
-        assert "sticky bottom-24" in response.text
+        assert "t-lean-form-footer" in response.text
 
     async def test_fuel_list_shows_farm_fill_source_badge(
         self,

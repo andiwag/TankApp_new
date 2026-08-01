@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import empty_state, glass_panel, mobile_header_bar, page_header, section_heading, status_chip, table_scroll_panel with context %}
+{% from "_macros.html" import empty_state, mobile_header_bar, status_chip, table_scroll_panel with context %}
 
 {% block mobile_header %}
 {{ mobile_header_bar(title="Zusammenfassung", back_href="/profile") }}
@@ -8,20 +8,26 @@
 {% block title %}Zusammenfassung – Tankly{% endblock %}
 
 {% block content %}
-<div>
-    <div class="hidden lg:block">
-        {{ page_header("Zusammenfassung", "", "Detaillierte Summen und Verbrauchswerte für Buchhaltung und Planung.", "", "", "/analytics", "Zur Auswertung", icon="clipboard") }}
-    </div>
+<div class="t-lean space-y-4">
+    <header class="t-dashboard-header hidden lg:flex">
+        <div class="min-w-0">
+            <h1 class="t-dashboard-header__title">Zusammenfassung</h1>
+            <p class="t-dashboard-header__subtitle">Detaillierte Summen und Verbrauchswerte für Buchhaltung und Planung.</p>
+        </div>
+        <div class="t-dashboard-actions">
+            <a href="/analytics" class="t-dashboard-action-menu__trigger">Zur Auswertung</a>
+        </div>
+    </header>
 
     {% if show_empty_state %}
-    <div id="summary-empty-state" class="mb-6">
+    <div id="summary-empty-state" class="t-dashboard-panel">
         {{ empty_state("Noch keine Fahrzeuge in diesem Betrieb", "Füge ein Fahrzeug hinzu, um Kraftstoffstatistiken zu sehen.", "/vehicles/new" if can_edit else "", "Fahrzeug hinzufügen", "vehicle") }}
     </div>
     {% endif %}
 
-    <section class="mb-6">
-        <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            {{ section_heading("Kraftstoff nach Fahrzeug") }}
+    <section class="t-dashboard-panel" aria-label="Kraftstoff nach Fahrzeug">
+        <div class="t-dashboard-panel__header">
+            <h2>Kraftstoff nach Fahrzeug</h2>
             {{ status_chip("Aktive Fahrzeuge", "success") }}
         </div>
         {% call table_scroll_panel() %}
@@ -61,21 +67,19 @@
     </section>
 
     {% if total_group_adblue_l is not none %}
-    <section class="mb-10">
-        <div class="mb-4 flex items-center justify-between">
-            <h2 class="text-xl font-bold text-slate-950">AdBlue</h2>
+    <section class="t-dashboard-panel" aria-label="AdBlue">
+        <div class="t-dashboard-panel__header">
+            <h2>AdBlue</h2>
             {{ status_chip("Traktoren", "info") }}
         </div>
-        <div class="{{ glass_panel('p-6') }}">
-            <p class="text-sm text-slate-600">Gesamt AdBlue (getrennt von Kraftstoff-Litern)</p>
-            <p class="mt-2 text-3xl font-bold text-sky-800"><span id="sum-adblue-total">{{ format_number(total_group_adblue_l) }}</span> L</p>
-        </div>
+        <p class="text-sm text-slate-600">Gesamt AdBlue (getrennt von Kraftstoff-Litern)</p>
+        <p class="mt-2 text-3xl font-bold text-sky-800"><span id="sum-adblue-total">{{ format_number(total_group_adblue_l) }}</span> L</p>
     </section>
     {% endif %}
 
-    <section>
-        <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            {{ section_heading("Kraftstoff nach Monat") }}
+    <section class="t-dashboard-panel" aria-label="Kraftstoff nach Monat">
+        <div class="t-dashboard-panel__header">
+            <h2>Kraftstoff nach Monat</h2>
             {{ status_chip("Letzte 12 Monate", "info") }}
         </div>
         {% call table_scroll_panel() %}

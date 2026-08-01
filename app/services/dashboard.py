@@ -3,6 +3,7 @@
 from collections import defaultdict
 from datetime import date, timedelta
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.models import FuelEntry, User, Vehicle
@@ -12,11 +13,10 @@ from app.services.consumption import (
 )
 from app.services.fuel_queries import active_fuel_entries_for_group
 from app.services.membership import group_page_capabilities
-from app.services.storage_tanks import list_storage_tanks_for_group
+from app.services.storage_tanks import list_storage_tanks_for_group, tank_fill_percent
 from app.services.tank_ledger import current_stock_by_tanks
 
 RECENT_FUEL_ENTRIES_LIMIT = 5
-VEHICLES_PREVIEW_LIMIT = 4
 CONSUMPTION_CHART_DAYS = 30
 COST_CHART_MONTHS = 6
 
@@ -179,6 +179,18 @@ def _recent_entry_rows(
     return rows
 
 
+def _active_vehicle_count(db: Session, group_id: int) -> int:
+    return (
+        db.query(func.count(Vehicle.id))
+        .filter(
+            Vehicle.group_id == group_id,
+            Vehicle.deleted_at == None,  # noqa: E711
+        )
+        .scalar()
+        or 0
+    )
+
+
 def get_dashboard_context(
     db: Session,
     user: User,
@@ -193,17 +205,7 @@ def get_dashboard_context(
     cost_start = date(cost_month_keys[0][0], cost_month_keys[0][1], 1)
     range_start = min(month_start, consumption_start, cost_start)
 
-    vehicles = (
-        db.query(Vehicle)
-        .filter(
-            Vehicle.group_id == group_id,
-            Vehicle.deleted_at == None,  # noqa: E711
-        )
-        .order_by(Vehicle.name.asc())
-        .all()
-    )
-    vehicle_count = len(vehicles)
-    vehicles_preview = vehicles[:VEHICLES_PREVIEW_LIMIT]
+    vehicle_count = _active_vehicle_count(db, group_id)
 
     ranged_rows = (
         active_fuel_entries_for_group(db, group_id)
@@ -238,14 +240,17 @@ def get_dashboard_context(
 
     tanks = list_storage_tanks_for_group(db, group_id)
     stock_by_tank_id = current_stock_by_tanks(db, tanks)
-    tank_stock_rows = [
-        {
-            "tank": tank,
-            "current_stock_l": stock_by_tank_id[tank.id],
-            "negative_stock": stock_by_tank_id[tank.id] < 0,
-        }
-        for tank in tanks
-    ]
+    tank_stock_rows = []
+    for tank in tanks:
+        stock = stock_by_tank_id[tank.id]
+        tank_stock_rows.append(
+            {
+                "tank": tank,
+                "current_stock_l": stock,
+                "negative_stock": stock < 0,
+                "fill_percent": tank_fill_percent(stock, tank.capacity_l),
+            }
+        )
 
     return {
         "vehicle_count": vehicle_count,
@@ -256,7 +261,6 @@ def get_dashboard_context(
         "recent_entry_rows": recent_entry_rows,
         "consumption_chart": consumption_chart,
         "cost_chart": cost_chart,
-        "vehicles_preview": vehicles_preview,
         "greeting": dashboard_greeting(today=anchor),
         "user_first_name": _first_name(user.name),
         "tank_stock_rows": tank_stock_rows,

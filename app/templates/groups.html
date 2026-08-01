@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import button_class, csrf_field, empty_state, form_error, form_input_class, glass_panel, group_card, mobile_header_bar, page_header, section_title with context %}
+{% from "_macros.html" import button_class, csrf_field, empty_state, form_error, form_input_class, group_card, mobile_header_bar with context %}
 
 {% block mobile_header %}
 {{ mobile_header_bar(title="Betriebe", back_href="/profile") }}
@@ -8,27 +8,30 @@
 {% block title %}Betriebe – Tankly{% endblock %}
 
 {% block content %}
-<div>
-    <div class="hidden lg:block">
-        {{ page_header("Betriebe", "", "Wähle den Betrieb, in dem du arbeiten möchtest.", icon="farm") }}
-    </div>
+<div class="t-lean space-y-4">
+    <header class="t-dashboard-header hidden lg:block">
+        <div class="min-w-0">
+            <h1 class="t-dashboard-header__title">Betriebe</h1>
+            <p class="t-dashboard-header__subtitle">Wähle den Betrieb, in dem du arbeiten möchtest.</p>
+        </div>
+    </header>
 
     {% if error %}{{ form_error(error) }}{% endif %}
 
     {% if groups %}
-    <div class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {% for item in groups %}
         {{ group_card(item, active_group_id) }}
         {% endfor %}
     </div>
     {% else %}
-    <div class="mb-6">{{ empty_state("Noch keine Betriebe", "Erstelle einen neuen Betrieb oder tritt mit einem Einladungscode bei.", "", "", "farm") }}</div>
+    <div class="t-dashboard-panel">{{ empty_state("Noch keine Betriebe", "Erstelle einen neuen Betrieb oder tritt mit einem Einladungscode bei.", "", "", "farm") }}</div>
     {% endif %}
 
     <div class="grid gap-4 md:grid-cols-2">
-        <div class="{{ glass_panel('p-5') }}">
-            {{ section_title("Betrieb erstellen", "plus", "text-base font-bold text-slate-950") }}
-            <p class="mt-1 mb-4 text-sm text-slate-500">Starte einen neuen Betrieb für Hof oder Team.</p>
+        <section class="t-dashboard-panel t-lean-form space-y-4">
+            <h2 class="text-base font-bold text-slate-950">Betrieb erstellen</h2>
+            <p class="text-sm text-slate-500">Starte einen neuen Betrieb für Hof oder Team.</p>
             <form method="post" action="/groups/create" class="space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
                 {{ csrf_field() }}
                 <div>
@@ -37,11 +40,11 @@
                 </div>
                 <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} w-full disabled:opacity-60">Erstellen</button>
             </form>
-        </div>
+        </section>
 
-        <div class="{{ glass_panel('p-5') }}">
-            {{ section_title("Betrieb beitreten", "link", "text-base font-bold text-slate-950") }}
-            <p class="mt-1 mb-4 text-sm text-slate-500">Gib den Einladungscode eines bestehenden Betriebs ein.</p>
+        <section class="t-dashboard-panel t-lean-form space-y-4">
+            <h2 class="text-base font-bold text-slate-950">Betrieb beitreten</h2>
+            <p class="text-sm text-slate-500">Gib den Einladungscode eines bestehenden Betriebs ein.</p>
             <form method="post" action="/groups/join" class="space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
                 {{ csrf_field() }}
                 <div>
@@ -50,7 +53,7 @@
                 </div>
                 <button type="submit" :disabled="submitting" class="{{ button_class('secondary') }} w-full disabled:opacity-60">Beitreten</button>
             </form>
-        </div>
+        </section>
     </div>
 </div>
 {% endblock %}

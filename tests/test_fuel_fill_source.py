@@ -464,7 +464,7 @@ class TestFillSourceRoutes:
             data=_fuel_post(car.id, fill_source="farm"),
         )
         assert response.status_code == 200
-        assert "bg-red-50" in response.text
+        assert "t-form-alert--fault" in response.text or "bg-red-50" in response.text
         assert db.query(FuelEntry).count() == 0
 
     async def test_fuel_entry_form_does_not_embed_tojson_inside_x_data_attribute(
@@ -558,7 +558,7 @@ class TestFillSourceRoutes:
             ),
         )
         assert response.status_code == 200
-        assert "bg-red-50" in response.text
+        assert "t-form-alert--fault" in response.text or "bg-red-50" in response.text
         assert db.query(FuelEntry).count() == 0
 
     async def test_fuel_entry_form_tank_dropdown_lists_only_matching_fuel_type(

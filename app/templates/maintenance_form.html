@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import button_class, csrf_field, form_error, form_input_class, glass_panel, mobile_header_bar, page_header, status_chip with context %}
+{% from "_macros.html" import button_class, csrf_field, form_actions_footer, form_error, form_input_class, mobile_header_bar, status_chip with context %}
 
 {% block mobile_header %}
 {{ mobile_header_bar(title=("Wartung" if mode == "create" else "Bearbeiten"), back_href="/maintenance") }}
@@ -8,18 +8,21 @@
 {% block title %}{% if mode == 'create' %}Neue Wartung{% else %}Wartung bearbeiten{% endif %} – Tankly{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-2xl">
-    <div class="hidden lg:block">
-        {{ page_header(("Neuer Wartungseintrag" if mode == "create" else "Wartungseintrag bearbeiten"), "", "Erfasse die durchgeführte Arbeit und setze die nächste Erinnerung, solange alles frisch im Kopf ist.", icon="wrench") }}
-    </div>
+<div class="t-lean mx-auto max-w-2xl space-y-4">
+    <header class="t-dashboard-header hidden lg:block">
+        <div class="min-w-0">
+            <h1 class="t-dashboard-header__title">{% if mode == "create" %}Neuer Wartungseintrag{% else %}Wartungseintrag bearbeiten{% endif %}</h1>
+            <p class="t-dashboard-header__subtitle">Erfasse die durchgeführte Arbeit und setze die nächste Erinnerung, solange alles frisch im Kopf ist.</p>
+        </div>
+    </header>
 
     {% if error %}{{ form_error(error) }}{% endif %}
 
-    <form method="post" action="{% if mode == 'create' %}/maintenance/new{% else %}/maintenance/{{ log.id }}/edit{% endif %}" class="{{ glass_panel('space-y-5 p-5 sm:p-6') }}" x-data="{ submitting: false }" @submit="submitting = true">
+    <form method="post" action="{% if mode == 'create' %}/maintenance/new{% else %}/maintenance/{{ log.id }}/edit{% endif %}" class="t-dashboard-panel t-lean-form space-y-5" x-data="{ submitting: false }" @submit="submitting = true">
         {{ csrf_field() }}
 
         <section class="t-form-section">
-            <h2 class="mb-3 text-sm font-semibold text-slate-900"><span aria-hidden="true">🚗</span> Fahrzeug & Datum</h2>
+            <h2 class="mb-3 text-sm font-semibold text-slate-900">Fahrzeug & Datum</h2>
             <div class="grid gap-4 sm:grid-cols-2">
                 {% if mode == 'create' %}
                 <div>
@@ -47,13 +50,13 @@
         </section>
 
         <section class="t-form-section">
-            <h2 class="mb-3 text-sm font-semibold text-slate-900"><span aria-hidden="true">🔧</span> Durchgeführte Arbeit</h2>
+            <h2 class="mb-3 text-sm font-semibold text-slate-900">Durchgeführte Arbeit</h2>
             <label for="description" class="block text-sm font-medium text-slate-700">Beschreibung</label>
             <textarea name="description" id="description" rows="3" maxlength="500" required class="mt-1.5 {{ form_input_class() }}">{% if log %}{{ log.description }}{% else %}{{ form_description }}{% endif %}</textarea>
         </section>
 
         <section class="t-form-section">
-            <h2 class="mb-3 text-sm font-semibold text-slate-900"><span aria-hidden="true">💰</span> Kosten & Stand</h2>
+            <h2 class="mb-3 text-sm font-semibold text-slate-900">Kosten & Stand</h2>
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label for="usage_reading" class="block text-sm font-medium text-slate-700">Betriebsstand (optional)</label>
@@ -70,8 +73,8 @@
             </div>
         </section>
 
-        <section class="rounded-[12px] border border-amber-100 bg-amber-50/70 p-4">
-            <h2 class="text-sm font-semibold text-slate-900"><span aria-hidden="true">📅</span> Nächste Erinnerung</h2>
+        <section class="rounded-[8px] border border-amber-100 bg-amber-50/70 p-4">
+            <h2 class="text-sm font-semibold text-slate-900">Nächste Erinnerung</h2>
             <p class="mt-1 text-xs text-slate-600">Optional, aber hilfreich für geplante Serviceintervalle.</p>
             <div class="mt-4 grid gap-4 sm:grid-cols-2">
                 <div>
@@ -89,12 +92,12 @@
             </div>
         </section>
 
-        <div class="sticky bottom-24 z-10 -mx-1 flex flex-col gap-3 rounded-2xl border border-white/70 bg-white/90 p-3 shadow-xl backdrop-blur-xl sm:static sm:flex-row sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+        {% call form_actions_footer() %}
             <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} min-h-[48px] flex-1">
                 {% if mode == 'create' %}Speichern{% else %}Aktualisieren{% endif %}
             </button>
             <a href="/maintenance" class="{{ button_class('secondary') }} min-h-[48px]">Abbrechen</a>
-        </div>
+        {% endcall %}
     </form>
 </div>
 {% endblock %}

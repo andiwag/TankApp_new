@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% from "_macros.html" import button_class, csrf_field, glass_panel, mobile_header_bar, page_header with context %}
+{% from "_macros.html" import button_class, csrf_field, form_actions_footer, mobile_header_bar with context %}
 
 {% block mobile_header %}
 {{ mobile_header_bar(title="Externe Abgabe", back_href=back_href) }}
@@ -9,25 +9,28 @@
 {% block title %}Externe Abgabe – Tankly{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-2xl">
-    <div class="hidden lg:block">
-        {{ page_header("Externe Abgabe", "", "Kraftstoffabgabe an externe Person erfassen — ohne Fahrzeug im Fuhrpark.") }}
-    </div>
+<div class="t-lean mx-auto max-w-2xl space-y-4">
+    <header class="t-dashboard-header hidden lg:block">
+        <div class="min-w-0">
+            <h1 class="t-dashboard-header__title">Externe Abgabe</h1>
+            <p class="t-dashboard-header__subtitle">Kraftstoffabgabe an externe Person erfassen — ohne Fahrzeug im Fuhrpark.</p>
+        </div>
+    </header>
 
     {% if error %}
     <div class="mb-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">{{ error }}</div>
     {% endif %}
 
     {% if not tanks %}
-    <div class="{{ glass_panel('space-y-4 p-5 sm:p-6') }}">
+    <div class="t-dashboard-panel t-lean-form space-y-4">
         <p class="text-sm text-slate-700">Noch kein Hof-Tank vorhanden. Lege zuerst ein Tanklager an, bevor du eine externe Abgabe erfasst.</p>
         <a href="/tanks/new" class="{{ button_class('primary') }} min-h-[48px] inline-flex">Hof-Tank anlegen</a>
         <a href="{{ back_href }}" class="{{ button_class('secondary') }} min-h-[48px] inline-flex">Abbrechen</a>
     </div>
     {% else %}
-    <form method="post" action="/tanks/external/new" class="{{ glass_panel('space-y-6 p-5 sm:p-6') }}" x-data="{ submitting: false }" @submit="submitting = true">
+    <form method="post" action="/tanks/external/new" class="t-dashboard-panel t-lean-form space-y-6" x-data="{ submitting: false }" @submit="submitting = true">
         {{ csrf_field() }}
-        <section class="grid gap-4 rounded-2xl bg-white/60 p-4 sm:grid-cols-2">
+        <section class="grid gap-4 sm:grid-cols-2">
             <div class="sm:col-span-2">
                 <label for="tank_id" class="block text-sm font-medium text-slate-700">Hof-Tank</label>
                 <select name="tank_id" id="tank_id" required class="mt-1 block min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
@@ -58,10 +61,10 @@
                 <textarea name="notes" id="notes" rows="3" maxlength="500" class="mt-1 block w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500">{{ form_notes }}</textarea>
             </div>
         </section>
-        <div class="sticky bottom-24 z-10 flex flex-col gap-3 rounded-2xl border border-white/70 bg-white/90 p-3 shadow-xl backdrop-blur-xl sm:static sm:flex-row sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+        {% call form_actions_footer() %}
             <button type="submit" class="{{ button_class('primary') }} min-h-[48px] flex-1">Speichern</button>
             <a href="{{ back_href }}" class="{{ button_class('secondary') }} min-h-[48px]">Abbrechen</a>
-        </div>
+        {% endcall %}
     </form>
     {% endif %}
 </div>

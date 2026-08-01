@@ -1,124 +1,127 @@
-{% extends "base.html" %}
-{% from "_macros.html" import button_class, csrf_field, form_error, form_input_class, glass_panel, mobile_header_bar, page_header, section_title, status_chip, app_icon with context %}
-
-{% block mobile_header %}
-{{ mobile_header_bar(title="Profil", back_href="/dashboard") }}
-{% endblock %}
-
-{% block title %}Profil – Tankly{% endblock %}
-
-{% block content %}
-<div class="mx-auto max-w-3xl space-y-5">
-    <div class="hidden lg:block">
-        {{ page_header("Konto", "", "Verwalte deine Identität, dein Passwort und aktive Sitzungen.") }}
-    </div>
-
-    <div class="{{ glass_panel('p-5') }}">
-        <div class="flex items-center gap-4">
-            <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl t-kpi-icon-emerald">{{ app_icon("user", "h-7 w-7") }}</div>
-            <div>
-                <h2 class="text-lg font-bold text-slate-950">{{ request.state.user.name }}</h2>
-                <p class="text-sm text-slate-500">{{ request.state.user.email }}</p>
-            </div>
-        </div>
-    </div>
-
-    <form method="post" action="/logout" class="lg:hidden" x-data="{ submitting: false }" @submit="submitting = true">
-        {{ csrf_field() }}
-        <button type="submit" :disabled="submitting" class="{{ button_class('secondary') }} w-full disabled:opacity-60">Abmelden</button>
-    </form>
-
-    <div class="{{ glass_panel('p-5') }}">
-        {{ section_title("Kontodaten", "edit") }}
-        {% if profile_error %}{{ form_error(profile_error) }}{% endif %}
-        <form method="post" action="/profile" class="space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
-            {{ csrf_field() }}
-            <div>
-                <label for="name" class="block text-sm font-medium text-slate-700">Name</label>
-                <input type="text" id="name" name="name" required value="{{ request.state.user.name }}" class="mt-1.5 {{ form_input_class() }}">
-            </div>
-            <div>
-                <label for="email" class="block text-sm font-medium text-slate-700">E-Mail</label>
-                <input type="email" id="email" name="email" required value="{{ request.state.user.email }}" class="mt-1.5 {{ form_input_class() }}">
-            </div>
-            <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} disabled:opacity-60">Änderungen speichern</button>
-        </form>
-    </div>
-
-    <div class="{{ glass_panel('p-5') }}">
-        {{ section_title("Passwort ändern", "lock") }}
-        {% if password_error %}{{ form_error(password_error) }}{% endif %}
-        <form method="post" action="/profile/change-password" class="space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
-            {{ csrf_field() }}
-            <div>
-                <label for="current_password" class="block text-sm font-medium text-slate-700">Aktuelles Passwort</label>
-                <input type="password" id="current_password" name="current_password" required autocomplete="current-password" class="mt-1.5 {{ form_input_class() }}">
-            </div>
-            <div>
-                <label for="new_password" class="block text-sm font-medium text-slate-700">Neues Passwort</label>
-                <input type="password" id="new_password" name="new_password" required minlength="8" autocomplete="new-password" class="mt-1.5 {{ form_input_class() }}">
-            </div>
-            <div>
-                <label for="new_password_confirm" class="block text-sm font-medium text-slate-700">Neues Passwort bestätigen</label>
-                <input type="password" id="new_password_confirm" name="new_password_confirm" required minlength="8" autocomplete="new-password" class="mt-1.5 {{ form_input_class() }}">
-            </div>
-            <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} disabled:opacity-60">Passwort aktualisieren</button>
-        </form>
-    </div>
-
-    <div class="{{ glass_panel('p-5') }}">
-        {{ section_title("Aktive Sitzungen", "device", "text-base font-bold text-slate-950") }}
-        <p class="mt-1 mb-4 text-sm text-slate-500">Melde Geräte ab, die du nicht mehr nutzt.</p>
-        {% if sessions %}
-        <ul class="mb-4 space-y-2">
-            {% for session in sessions %}
-            <li class="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-slate-100 bg-slate-50/80 p-3">
-                <div class="text-sm text-slate-700">
-                    Gestartet {{ format_datetime(session.created_at) }} UTC
-                    {% if session.id == current_session_id %}{{ status_chip("dieses Gerät", "success") }}{% endif %}
-                </div>
-                <form method="post" action="/profile/sessions/{{ session.id }}/revoke" x-data="{ submitting: false }" @submit="submitting = true">
-                    {{ csrf_field() }}
-                    <button type="submit" :disabled="submitting" class="text-sm font-semibold text-red-600 hover:text-red-800 disabled:opacity-60">Widerrufen</button>
-                </form>
-            </li>
-            {% endfor %}
-        </ul>
-        {% if sessions|length > 1 %}
-        <form method="post" action="/profile/sessions/revoke-all" x-data="{ submitting: false }" @submit="submitting = true">
-            {{ csrf_field() }}
-            <button type="submit" :disabled="submitting" class="{{ button_class('secondary') }} disabled:opacity-60">Alle anderen Geräte abmelden</button>
-        </form>
-        {% endif %}
-        {% else %}
-        <p class="text-sm text-slate-500">Keine aktiven Sitzungen.</p>
-        {% endif %}
-    </div>
-
-    <div class="{{ glass_panel('p-5') }}">
-        {{ section_title("Deine Daten", "download", "text-base font-bold text-slate-950") }}
-        <p class="mt-1 mb-4 text-sm text-slate-500">Lade eine Kopie deiner personenbezogenen Daten herunter (Profil, Betriebsmitgliedschaften, von dir erfasste Tank- und Wartungseinträge).</p>
-        <a href="/profile/export/data.json" class="{{ button_class('secondary') }}">Meine Daten herunterladen (JSON)</a>
-    </div>
-
-    <div class="{{ glass_panel('border border-red-200 p-5') }}">
-        {{ section_title("Konto löschen", "warning", "text-base font-bold text-red-800", "text-red-600") }}
-        <p class="mt-1 mb-4 text-sm text-slate-500">Löscht dein Konto dauerhaft. Name und E-Mail werden entfernt; Tank- und Wartungshistorie in geteilten Betrieben bleibt erhalten, ist aber anonymisiert.</p>
-        {% if delete_error %}{{ form_error(delete_error) }}{% endif %}
-        <form method="post" action="/profile/delete-account" class="space-y-4"
-              x-data="{ submitting: false, confirmed: false }"
-              @submit="if (!confirmed) { $event.preventDefault(); } else { submitting = true; }">
-            {{ csrf_field() }}
-            <div>
-                <label for="delete_password" class="block text-sm font-medium text-slate-700">Mit Passwort bestätigen</label>
-                <input type="password" id="delete_password" name="password" required autocomplete="current-password" class="mt-1.5 {{ form_input_class() }}">
-            </div>
-            <label class="flex items-start gap-2 text-sm text-slate-700">
-                <input type="checkbox" x-model="confirmed" class="mt-1 h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500">
-                <span>Ich verstehe, dass diese Aktion nicht rückgängig gemacht werden kann.</span>
-            </label>
-            <button type="submit" :disabled="submitting || !confirmed" class="{{ button_class('danger') }} disabled:opacity-60">Mein Konto löschen</button>
-        </form>
-    </div>
-</div>
-{% endblock %}
+{% extends "base.html" %}
+{% from "_macros.html" import button_class, csrf_field, form_error, form_input_class, mobile_header_bar, status_chip, app_icon with context %}
+
+{% block mobile_header %}
+{{ mobile_header_bar(title="Profil", back_href="/dashboard") }}
+{% endblock %}
+
+{% block title %}Profil – Tankly{% endblock %}
+
+{% block content %}
+<div class="t-lean mx-auto max-w-3xl space-y-4">
+    <header class="t-dashboard-header hidden lg:block">
+        <div class="min-w-0">
+            <h1 class="t-dashboard-header__title">Konto</h1>
+            <p class="t-dashboard-header__subtitle">Verwalte deine Identität, dein Passwort und aktive Sitzungen.</p>
+        </div>
+    </header>
+
+    <section class="t-dashboard-panel">
+        <div class="flex items-center gap-4">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-[8px] bg-slate-50 text-[#0d6b4f]">{{ app_icon("user", "h-6 w-6") }}</div>
+            <div>
+                <h2 class="text-lg font-bold text-slate-950">{{ request.state.user.name }}</h2>
+                <p class="text-sm text-slate-500">{{ request.state.user.email }}</p>
+            </div>
+        </div>
+    </section>
+
+    <form method="post" action="/logout" class="lg:hidden" x-data="{ submitting: false }" @submit="submitting = true">
+        {{ csrf_field() }}
+        <button type="submit" :disabled="submitting" class="{{ button_class('secondary') }} w-full disabled:opacity-60">Abmelden</button>
+    </form>
+
+    <section class="t-dashboard-panel t-lean-form space-y-4">
+        <h2 class="text-base font-bold text-slate-950">Kontodaten</h2>
+        {% if profile_error %}{{ form_error(profile_error) }}{% endif %}
+        <form method="post" action="/profile" class="space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
+            {{ csrf_field() }}
+            <div>
+                <label for="name" class="block text-sm font-medium text-slate-700">Name</label>
+                <input type="text" id="name" name="name" required value="{{ request.state.user.name }}" class="mt-1.5 {{ form_input_class() }}">
+            </div>
+            <div>
+                <label for="email" class="block text-sm font-medium text-slate-700">E-Mail</label>
+                <input type="email" id="email" name="email" required value="{{ request.state.user.email }}" class="mt-1.5 {{ form_input_class() }}">
+            </div>
+            <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} disabled:opacity-60">Änderungen speichern</button>
+        </form>
+    </section>
+
+    <section class="t-dashboard-panel t-lean-form space-y-4">
+        <h2 class="text-base font-bold text-slate-950">Passwort ändern</h2>
+        {% if password_error %}{{ form_error(password_error) }}{% endif %}
+        <form method="post" action="/profile/change-password" class="space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
+            {{ csrf_field() }}
+            <div>
+                <label for="current_password" class="block text-sm font-medium text-slate-700">Aktuelles Passwort</label>
+                <input type="password" id="current_password" name="current_password" required autocomplete="current-password" class="mt-1.5 {{ form_input_class() }}">
+            </div>
+            <div>
+                <label for="new_password" class="block text-sm font-medium text-slate-700">Neues Passwort</label>
+                <input type="password" id="new_password" name="new_password" required minlength="8" autocomplete="new-password" class="mt-1.5 {{ form_input_class() }}">
+            </div>
+            <div>
+                <label for="new_password_confirm" class="block text-sm font-medium text-slate-700">Neues Passwort bestätigen</label>
+                <input type="password" id="new_password_confirm" name="new_password_confirm" required minlength="8" autocomplete="new-password" class="mt-1.5 {{ form_input_class() }}">
+            </div>
+            <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} disabled:opacity-60">Passwort aktualisieren</button>
+        </form>
+    </section>
+
+    <section class="t-dashboard-panel">
+        <h2 class="text-base font-bold text-slate-950">Aktive Sitzungen</h2>
+        <p class="mt-1 mb-4 text-sm text-slate-500">Melde Geräte ab, die du nicht mehr nutzt.</p>
+        {% if sessions %}
+        <ul class="mb-4 space-y-2">
+            {% for session in sessions %}
+            <li class="flex flex-wrap items-center justify-between gap-3 rounded-[8px] border border-slate-100 bg-slate-50/80 p-3">
+                <div class="text-sm text-slate-700">
+                    Gestartet {{ format_datetime(session.created_at) }} UTC
+                    {% if session.id == current_session_id %}{{ status_chip("dieses Gerät", "success") }}{% endif %}
+                </div>
+                <form method="post" action="/profile/sessions/{{ session.id }}/revoke" x-data="{ submitting: false }" @submit="submitting = true">
+                    {{ csrf_field() }}
+                    <button type="submit" :disabled="submitting" class="text-sm font-semibold text-red-600 hover:text-red-800 disabled:opacity-60">Widerrufen</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% if sessions|length > 1 %}
+        <form method="post" action="/profile/sessions/revoke-all" x-data="{ submitting: false }" @submit="submitting = true">
+            {{ csrf_field() }}
+            <button type="submit" :disabled="submitting" class="{{ button_class('secondary') }} disabled:opacity-60">Alle anderen Geräte abmelden</button>
+        </form>
+        {% endif %}
+        {% else %}
+        <p class="text-sm text-slate-500">Keine aktiven Sitzungen.</p>
+        {% endif %}
+    </section>
+
+    <section class="t-dashboard-panel">
+        <h2 class="text-base font-bold text-slate-950">Deine Daten</h2>
+        <p class="mt-1 mb-4 text-sm text-slate-500">Lade eine Kopie deiner personenbezogenen Daten herunter (Profil, Betriebsmitgliedschaften, von dir erfasste Tank- und Wartungseinträge).</p>
+        <a href="/profile/export/data.json" class="{{ button_class('secondary') }}">Meine Daten herunterladen (JSON)</a>
+    </section>
+
+    <section class="t-dashboard-panel t-lean-form t-lean-danger space-y-4">
+        <h2 class="text-base font-bold text-red-800">Konto löschen</h2>
+        <p class="text-sm text-slate-500">Löscht dein Konto dauerhaft. Name und E-Mail werden entfernt; Tank- und Wartungshistorie in geteilten Betrieben bleibt erhalten, ist aber anonymisiert.</p>
+        {% if delete_error %}{{ form_error(delete_error) }}{% endif %}
+        <form method="post" action="/profile/delete-account" class="space-y-4"
+              x-data="{ submitting: false, confirmed: false }"
+              @submit="if (!confirmed) { $event.preventDefault(); } else { submitting = true; }">
+            {{ csrf_field() }}
+            <div>
+                <label for="delete_password" class="block text-sm font-medium text-slate-700">Mit Passwort bestätigen</label>
+                <input type="password" id="delete_password" name="password" required autocomplete="current-password" class="mt-1.5 {{ form_input_class() }}">
+            </div>
+            <label class="flex items-start gap-2 text-sm text-slate-700">
+                <input type="checkbox" x-model="confirmed" class="mt-1 h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500">
+                <span>Ich verstehe, dass diese Aktion nicht rückgängig gemacht werden kann.</span>
+            </label>
+            <button type="submit" :disabled="submitting || !confirmed" class="{{ button_class('danger') }} disabled:opacity-60">Mein Konto löschen</button>
+        </form>
+    </section>
+</div>
+{% endblock %}

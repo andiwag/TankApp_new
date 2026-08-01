@@ -130,7 +130,7 @@ class TestFlashMessages:
 
         assert response.status_code == 200
         assert "E-Mail wird bereits verwendet" in response.text
-        assert "bg-red-50" in response.text
+        assert "t-form-alert--fault" in response.text or "bg-red-50" in response.text
 
 
 class TestQueryCounts:

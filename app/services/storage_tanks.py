@@ -10,6 +10,15 @@ from app.services.tank_ledger import current_stock_l
 from app.time_utils import utc_now
 
 
+def tank_fill_percent(stock_l: float, capacity_l: float | None) -> int | None:
+    """Return 0–100 fill for gauge display, or None when capacity is unknown."""
+    if capacity_l is None or capacity_l <= 0:
+        return None
+    if stock_l <= 0:
+        return 0
+    return min(100, int(round((stock_l / capacity_l) * 100)))
+
+
 def list_storage_tanks_for_group(db: Session, group_id: int) -> list[StorageTank]:
     return (
         db.query(StorageTank)
@@ -52,13 +61,17 @@ def list_storage_tanks_for_fuel_form(db: Session, group_id: int) -> list[dict]:
 
 def tanks_page_context(db: Session, user: User, group_id: int) -> dict:
     tanks = list_storage_tanks_for_group(db, group_id)
-    tank_rows = [
-        {
-            "tank": tank,
-            "current_stock_l": current_stock_l(db, tank),
-        }
-        for tank in tanks
-    ]
+    tank_rows = []
+    for tank in tanks:
+        stock = current_stock_l(db, tank)
+        tank_rows.append(
+            {
+                "tank": tank,
+                "current_stock_l": stock,
+                "fill_percent": tank_fill_percent(stock, tank.capacity_l),
+                "negative_stock": stock < 0,
+            }
+        )
     return {
         "tank_rows": tank_rows,
         **group_page_capabilities(db, user, group_id),
@@ -75,6 +88,7 @@ def tank_detail_context(
         "tank": tank,
         "current_stock_l": stock,
         "negative_stock": stock < 0,
+        "fill_percent": tank_fill_percent(stock, tank.capacity_l),
         "ledger_entries": list_ledger_entries_for_tank(db, tank.id),
         **group_page_capabilities(db, user, group_id),
     }

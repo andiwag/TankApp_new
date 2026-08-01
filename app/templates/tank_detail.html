@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% from "_macros.html" import button_class, csrf_field, glass_panel, mobile_header_bar, page_header, status_chip, table_scroll_panel with context %}
+{% from "_macros.html" import button_class, csrf_field, lean_export_link, mobile_header_bar, table_scroll_panel, tank_gauge with context %}
 
 {% block mobile_header %}
 {{ mobile_header_bar(title=tank.name, back_href="/tanks") }}
@@ -9,41 +9,86 @@
 {% block title %}{{ tank.name }} – Tanklager – Tankly{% endblock %}
 
 {% block content %}
-<div>
-    <div class="hidden lg:block">
-        {{ page_header(tank.name, "Tanklager", fuel_type_label(tank.fuel_type) ~ " · Bestand und Bewegungen", "", "", "/export/tank-ledger.csv" if can_export else "", "CSV exportieren") }}
-    </div>
+<div class="t-lean space-y-4">
+    <header class="t-dashboard-header hidden lg:flex">
+        <div class="min-w-0">
+            <h1 class="t-dashboard-header__title">{{ tank.name }}</h1>
+            <p class="t-dashboard-header__subtitle">{{ fuel_type_label(tank.fuel_type) }} · Bestand und Bewegungen</p>
+        </div>
+        <div class="t-dashboard-actions">
+            {% if can_export %}
+            <a href="/export/tank-ledger.csv" class="t-dashboard-action-menu__trigger">CSV exportieren</a>
+            {% endif %}
+        </div>
+    </header>
 
-    <div class="mb-8 grid gap-4 sm:grid-cols-2">
-        <div class="{{ glass_panel('p-5') }}">
-            <p class="text-sm font-medium text-slate-500">Aktueller Bestand</p>
-            <p class="mt-2 text-3xl font-bold {% if negative_stock %}text-red-800{% else %}text-emerald-800{% endif %}">{{ format_number(current_stock_l) }} L</p>
+    {% if can_export %}
+    <div class="lg:hidden">{{ lean_export_link("/export/tank-ledger.csv") }}</div>
+    {% endif %}
+
+    <section class="t-dashboard-panel t-tank-cockpit" aria-label="Bestand">
+        <div class="t-tank-cockpit__stock">
+            <p class="t-tank-cockpit__label">Aktueller Bestand</p>
+            <p class="t-tank-cockpit__value{% if negative_stock %} t-tank-cockpit__value--fault{% endif %}">
+                {{ format_number(current_stock_l) }}<span class="t-tank-cockpit__unit"> L</span>
+            </p>
             {% if negative_stock %}
-            <p class="mt-2 text-sm font-medium text-red-700">Bestand ist negativ — bitte Lieferung oder Korrektur erfassen.</p>
+            <p class="t-tank-cockpit__warn">Negativ — Lieferung oder Korrektur erfassen</p>
             {% endif %}
         </div>
-        <div class="{{ glass_panel('p-5') }}">
-            <p class="text-sm font-medium text-slate-500">Anfangsbestand</p>
-            <p class="mt-2 text-xl font-semibold text-slate-900">{{ format_number(tank.opening_balance_l) }} L</p>
+
+        {% if fill_percent is not none %}
+        <div class="t-tank-cockpit__gauge">
+            <div class="t-tank-cockpit__gauge-meta">
+                <span class="t-tank-cockpit__gauge-label">Füllstand</span>
+                <span class="t-tank-cockpit__gauge-value">{{ fill_percent }} %</span>
+            </div>
+            {{ tank_gauge(fill_percent, negative=negative_stock, size="lg", label=tank.name ~ " · " ~ fill_percent ~ " %") }}
+        </div>
+        {% endif %}
+
+        <p class="t-tank-cockpit__meta">
+            Anfangsbestand {{ format_number(tank.opening_balance_l) }} L
             {% if tank.capacity_l is not none %}
-            <p class="mt-2 text-sm text-slate-600">Kapazität: {{ format_number(tank.capacity_l) }} L</p>
+            · Kapazität {{ format_number(tank.capacity_l) }} L
             {% endif %}
-        </div>
-    </div>
+        </p>
+    </section>
 
     {% if can_edit %}
-    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-        <a href="/tanks/{{ tank.id }}/delivery/new" class="{{ button_class('primary') }} min-h-[48px]">Lieferung erfassen</a>
-        <a href="/tanks/{{ tank.id }}/external/new" class="{{ button_class('secondary') }} min-h-[48px]">Externe Abgabe</a>
-        {% if can_delete %}
-        <a href="/tanks/{{ tank.id }}/adjustment/new" class="{{ button_class('secondary') }} min-h-[48px]">Bestandskorrektur</a>
-        {% endif %}
-        <a href="/tanks/{{ tank.id }}/edit" class="{{ button_class('secondary') }} min-h-[48px]">Tank bearbeiten</a>
+    <div class="t-tank-cockpit__actions">
+        <a href="/tanks/{{ tank.id }}/delivery/new" class="t-tank-cockpit__primary {{ button_class('primary') }}">Lieferung erfassen</a>
+        <div class="t-dashboard-action-menu relative" x-data="{ open: false }" @keydown.escape.window="if (open) { open = false; $refs.menuTrigger.focus() }">
+            <button type="button"
+                class="t-dashboard-action-menu__trigger"
+                x-ref="menuTrigger"
+                @click="open = !open"
+                :aria-expanded="open.toString()"
+                aria-haspopup="menu"
+                aria-controls="tank-secondary-menu">
+                Weitere Aktionen
+                <span aria-hidden="true">▾</span>
+            </button>
+            <div id="tank-secondary-menu"
+                class="t-dashboard-action-menu__panel"
+                role="menu"
+                x-show="open"
+                x-cloak
+                @click.outside="open = false">
+                <a href="/tanks/{{ tank.id }}/external/new" role="menuitem" class="t-dashboard-action-menu__item" @click="open = false">Externe Abgabe</a>
+                {% if can_delete %}
+                <a href="/tanks/{{ tank.id }}/adjustment/new" role="menuitem" class="t-dashboard-action-menu__item" @click="open = false">Bestandskorrektur</a>
+                {% endif %}
+                <a href="/tanks/{{ tank.id }}/edit" role="menuitem" class="t-dashboard-action-menu__item" @click="open = false">Tank bearbeiten</a>
+            </div>
+        </div>
     </div>
     {% endif %}
 
-    <section>
-        <h2 class="mb-3 text-lg font-bold text-slate-950 lg:px-1">Bewegungen</h2>
+    <section class="t-dashboard-panel" aria-label="Bewegungen">
+        <div class="t-dashboard-panel__header">
+            <h2>Bewegungen</h2>
+        </div>
         {% if ledger_entries %}
         {% call table_scroll_panel() %}
         <table class="t-data-table min-w-[560px] w-full sm:min-w-full">
@@ -62,22 +107,22 @@
                 {% for e in ledger_entries %}
                 <tr>
                     <td>{{ format_date(e.entry_date) }}</td>
-                    <td>{{ status_chip(tank_movement_type_label(e.movement_type), "info") }}</td>
-                    <td class="text-right font-semibold {% if e.amount_l < 0 %}text-amber-800{% else %}text-emerald-800{% endif %}">{{ format_number(e.amount_l) }}</td>
-                    <td class="text-slate-600">{{ e.notes or e.recipient_name or '—' }}</td>
+                    <td class="t-tank-ledger-type">{{ tank_movement_type_label(e.movement_type) }}</td>
+                    <td class="text-right t-tank-ledger-amount{% if e.amount_l < 0 %} t-tank-ledger-amount--out{% else %} t-tank-ledger-amount--in{% endif %}">{{ format_number(e.amount_l) }}</td>
+                    <td class="text-[var(--mist)]">{{ e.notes or e.recipient_name or '—' }}</td>
                     {% if can_edit or can_delete %}
                     <td class="text-right">
                         {% if e.movement_type == 'vehicle_withdrawal' %}
-                        <span class="text-slate-500">über Tankvorgang</span>
+                        <span class="text-[var(--mist)]">über Tankvorgang</span>
                         {% else %}
                         <div class="flex flex-col items-end gap-2 sm:flex-row sm:justify-end">
                             {% if can_edit %}
-                            <a href="/tanks/ledger/{{ e.id }}/edit" class="font-semibold text-emerald-800 hover:text-emerald-950">Bearbeiten</a>
+                            <a href="/tanks/ledger/{{ e.id }}/edit" class="font-semibold text-[var(--enamel)] hover:text-[var(--enamel-hover)]">Bearbeiten</a>
                             {% endif %}
                             {% if can_delete %}
                             <form method="post" action="/tanks/ledger/{{ e.id }}/delete" class="inline" @submit="if (!confirm('Diese Bewegung entfernen?')) $event.preventDefault()">
                                 {{ csrf_field() }}
-                                <button type="submit" class="font-semibold text-red-700 hover:text-red-900">Entfernen</button>
+                                <button type="submit" class="font-semibold text-[var(--fault)] hover:opacity-90">Entfernen</button>
                             </form>
                             {% endif %}
                         </div>
@@ -90,16 +135,14 @@
         </table>
         {% endcall %}
         {% else %}
-        <div class="{{ glass_panel('p-5') }}">
-            <p class="text-sm text-slate-600">Noch keine Bewegungen erfasst.</p>
-        </div>
+        <p class="t-dashboard-panel__empty">Noch keine Bewegungen erfasst.</p>
         {% endif %}
     </section>
 
     {% if can_delete %}
-    <form method="post" action="/tanks/{{ tank.id }}/delete" class="mt-8" x-data="{ submitting: false }" @submit="if (!confirm('Diesen Tank entfernen?')) { $event.preventDefault(); return; } submitting = true">
+    <form method="post" action="/tanks/{{ tank.id }}/delete" class="mt-2" x-data="{ submitting: false }" @submit="if (!confirm('Diesen Tank entfernen?')) { $event.preventDefault(); return; } submitting = true">
         {{ csrf_field() }}
-        <button type="submit" class="{{ button_class('secondary') }} min-h-[48px] text-red-700">Tank entfernen</button>
+        <button type="submit" class="{{ button_class('secondary') }} min-h-[48px] text-[var(--fault)]">Tank entfernen</button>
     </form>
     {% endif %}
 </div>

@@ -38,6 +38,21 @@ class TestDashboardAffordances:
         response = await client.get("/dashboard")
         assert response.status_code == 200
         assert 'href="/fuel/new"' not in response.text
+        assert "t-dashboard-primary-action" not in response.text
+        assert 'href="/vehicles/new"' not in response.text
+
+    async def test_editor_desktop_has_single_primary_fuel_action(
+        self, client, auth_group
+    ):
+        auth_group(role="admin")
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        desktop = response.text.split("t-dashboard-desktop", 1)[1].split(
+            'id="dashboard-consumption-data"', 1
+        )[0]
+        assert desktop.count("t-dashboard-primary-action") == 1
+        assert 'class="t-dashboard-primary-action' in desktop
+        assert desktop.count("t-dashboard-primary-action") == 1
 
 
 class TestNavigationAffordances:
@@ -60,12 +75,22 @@ class TestNavigationAffordances:
         assert 'href="/summary"' in response.text
         assert "Zusammenfassung" in response.text
 
+    async def test_desktop_nav_orders_fuel_tanks_before_vehicles(self, client, auth_group):
+        auth_group()
+        response = await client.get("/dashboard")
+        assert response.status_code == 200
+        aside = response.text.split("<aside", 1)[1].split("</aside>", 1)[0]
+        fuel_pos = aside.find('href="/fuel"')
+        tanks_pos = aside.find('href="/tanks"')
+        vehicles_pos = aside.find('href="/vehicles"')
+        assert fuel_pos != -1 and tanks_pos != -1 and vehicles_pos != -1
+        assert fuel_pos < tanks_pos < vehicles_pos
+
     async def test_mobile_profile_includes_logout(self, client, auth_group):
         auth_group(role="contributor")
         response = await client.get("/profile")
         assert response.status_code == 200
         assert 'action="/logout"' in response.text
-
 
 class TestReaderPermissionAffordances:
     async def test_reader_vehicle_card_has_no_quick_create_links(

@@ -1,55 +1,55 @@
 {% extends "base.html" %}
-{% from "_macros.html" import brand_lockup, button_class, csrf_field, form_error, form_input_class, glass_panel with context %}
+{% from "_macros.html" import brand_lockup, button_class, csrf_field, form_error, form_input_class with context %}
 
 {% block title %}Registrieren – Tankly{% endblock %}
 
 {% block content %}
-<div class="mx-auto grid w-full max-w-5xl items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-    <section class="hidden lg:block">
-        <p class="text-sm font-semibold text-[#0d6b4f]">🚀 Erfassung starten</p>
-        <h1 class="mt-4 text-4xl font-bold tracking-tight text-slate-950">Schaffe dir eine klare Kraftstoff- und Wartungsroutine.</h1>
-        <p class="mt-4 max-w-xl text-slate-500">Richte dein Konto ein, erstelle oder tritt einem Betrieb bei und bündle deine Fuhrparkhistorie an einem Ort.</p>
+<div class="t-auth">
+    <section class="t-auth__aside" aria-hidden="true">
+        <p class="t-auth__eyebrow">Tankly</p>
+        <p class="t-auth__aside-title">Schaffe dir eine klare Kraftstoff- und Wartungsroutine.</p>
+        <p class="t-auth__aside-copy">Richte dein Konto ein, erstelle oder tritt einem Betrieb bei und bündle die Fuhrparkhistorie an einem Ort.</p>
     </section>
 
-    <section class="{{ glass_panel('w-full p-6 sm:p-8') }}">
-        <div class="mb-6 flex justify-center lg:justify-start">
-            {{ brand_lockup("/", size="hero", show_name=false, centered=true) }}
+    <section class="t-auth-panel t-motion-enter">
+        <div class="t-auth-panel__brand">
+            {{ brand_lockup("/", size="lg", centered=true) }}
         </div>
-        <h1 class="mb-1 text-2xl font-bold text-slate-950">✨ Registrieren</h1>
-        <p class="mb-6 text-sm text-slate-500">Erstelle dein Tankly-Konto.</p>
+        <h1 class="t-auth-panel__title">Registrieren</h1>
+        <p class="t-auth-panel__subtitle">Erstelle dein Tankly-Konto.</p>
 
         {% if error %}{{ form_error(error) }}{% endif %}
 
-        <form method="post" action="/register" class="space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
+        <form method="post" action="/register" class="t-auth-form" x-data="{ submitting: false }" @submit="submitting = true">
             {{ csrf_field() }}
             {% if registration_invite_required() %}
             <div>
-                <label for="invite_code" class="block text-sm font-medium text-slate-700">Einladungscode</label>
+                <label for="invite_code" class="t-auth-label">Einladungscode</label>
                 <input type="text" id="invite_code" name="invite_code" required autocomplete="off" class="mt-1.5 {{ form_input_class() }}">
-                <p class="mt-1 text-xs text-slate-500">Private Beta — gib den Einladungscode ein, den du erhalten hast.</p>
+                <p class="t-auth-hint">Private Beta — gib den Einladungscode ein, den du erhalten hast.</p>
             </div>
             {% endif %}
             <div>
-                <label for="name" class="block text-sm font-medium text-slate-700">Name</label>
+                <label for="name" class="t-auth-label">Name</label>
                 <input type="text" id="name" name="name" required class="mt-1.5 {{ form_input_class() }}">
             </div>
             <div>
-                <label for="email" class="block text-sm font-medium text-slate-700">E-Mail</label>
+                <label for="email" class="t-auth-label">E-Mail</label>
                 <input type="email" id="email" name="email" required class="mt-1.5 {{ form_input_class() }}">
             </div>
             <div>
-                <label for="password" class="block text-sm font-medium text-slate-700">Passwort</label>
+                <label for="password" class="t-auth-label">Passwort</label>
                 <input type="password" id="password" name="password" required minlength="8" class="mt-1.5 {{ form_input_class() }}">
             </div>
             <div>
-                <label for="password_confirm" class="block text-sm font-medium text-slate-700">Passwort bestätigen</label>
+                <label for="password_confirm" class="t-auth-label">Passwort bestätigen</label>
                 <input type="password" id="password_confirm" name="password_confirm" required minlength="8" class="mt-1.5 {{ form_input_class() }}">
             </div>
             <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} w-full disabled:opacity-60">Registrieren</button>
         </form>
 
-        <p class="mt-4 text-center text-sm text-slate-500">
-            Bereits ein Konto? <a href="/login" class="font-semibold text-[#0d6b4f] hover:text-[#0a5840]">Anmelden</a>
+        <p class="t-auth-footer">
+            Bereits ein Konto? <a href="/login" class="t-auth-link">Anmelden</a>
         </p>
     </section>
 </div>

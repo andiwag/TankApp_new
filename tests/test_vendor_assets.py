@@ -17,6 +17,11 @@ class TestVendorAssets:
         assert response.status_code == 200
         assert "javascript" in response.headers["content-type"]
 
+    async def test_dashboard_js_accessible(self, client):
+        response = await client.get("/static/dashboard.js")
+        assert response.status_code == 200
+        assert "javascript" in response.headers["content-type"]
+
     async def test_login_page_uses_self_hosted_scripts(self, client):
         response = await client.get("/login")
         assert response.status_code == 200

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import button_class, csrf_field, form_error, form_input_class, glass_panel, mobile_header_bar, page_header, status_chip with context %}
+{% from "_macros.html" import button_class, csrf_field, form_actions_footer, form_error, form_input_class, mobile_header_bar, status_chip with context %}
 
 {% block mobile_header %}
 {{ mobile_header_bar(title=("Fahrzeug" if mode == "create" else "Bearbeiten"), back_href="/vehicles") }}
@@ -8,18 +8,21 @@
 {% block title %}{% if mode == 'create' %}Neues Fahrzeug{% else %}Fahrzeug bearbeiten{% endif %} – Tankly{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-2xl">
-    <div class="hidden lg:block">
-        {{ page_header(("Neues Fahrzeug" if mode == "create" else "Fahrzeug bearbeiten"), "", "Füge die Fahrzeuge und Maschinen hinzu, die dein Team betankt oder wartet.", icon="vehicle") }}
-    </div>
+<div class="t-lean mx-auto max-w-2xl space-y-4">
+    <header class="t-dashboard-header hidden lg:block">
+        <div class="min-w-0">
+            <h1 class="t-dashboard-header__title">{% if mode == "create" %}Neues Fahrzeug{% else %}Fahrzeug bearbeiten{% endif %}</h1>
+            <p class="t-dashboard-header__subtitle">Füge die Fahrzeuge und Maschinen hinzu, die dein Team betankt oder wartet.</p>
+        </div>
+    </header>
 
     {% if error %}{{ form_error(error) }}{% endif %}
 
-    <form method="post" action="{% if mode == 'create' %}/vehicles/new{% else %}/vehicles/{{ vehicle.id }}/edit{% endif %}" class="{{ glass_panel('space-y-5 p-5 sm:p-6') }}" x-data="{ submitting: false }" @submit="submitting = true">
+    <form method="post" action="{% if mode == 'create' %}/vehicles/new{% else %}/vehicles/{{ vehicle.id }}/edit{% endif %}" class="t-dashboard-panel t-lean-form space-y-5" x-data="{ submitting: false }" @submit="submitting = true">
         {{ csrf_field() }}
 
         <section class="t-form-section">
-            <h2 class="mb-3 text-sm font-semibold text-slate-900"><span aria-hidden="true">🏷️</span> Identität</h2>
+            <h2 class="mb-3 text-sm font-semibold text-slate-900">Identität</h2>
             <label for="name" class="block text-sm font-medium text-slate-700">Name</label>
             <input type="text" name="name" id="name" required
                    value="{% if vehicle %}{{ vehicle.name }}{% else %}{{ form_name }}{% endif %}"
@@ -27,7 +30,7 @@
         </section>
 
         <section class="t-form-section">
-            <h2 class="mb-3 text-sm font-semibold text-slate-900"><span aria-hidden="true">⚙️</span> Eigenschaften</h2>
+            <h2 class="mb-3 text-sm font-semibold text-slate-900">Eigenschaften</h2>
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     {% if mode == 'create' %}
@@ -55,12 +58,12 @@
             </div>
         </section>
 
-        <div class="flex flex-col gap-3 sm:flex-row">
+        {% call form_actions_footer() %}
             <button type="submit" :disabled="submitting" class="{{ button_class('primary') }} min-h-[48px] flex-1">
                 {% if mode == 'create' %}Erstellen{% else %}Speichern{% endif %}
             </button>
             <a href="/vehicles" class="{{ button_class('secondary') }} min-h-[48px]">Abbrechen</a>
-        </div>
+        {% endcall %}
     </form>
 </div>
 {% endblock %}

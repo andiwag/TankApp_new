@@ -15,6 +15,7 @@ Phased plan for **Tankly** (product name; GitHub folder may still be `TankApp_ne
 | [STRIPE_BILLING.md](./STRIPE_BILLING.md) | Stripe billing per group — implemented (Phase 23) |
 | [STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md) | Production Stripe go-live checklist |
 | [TANK_INVENTORY_AND_ADBLUE.md](./TANK_INVENTORY_AND_ADBLUE.md) | Farm tank inventory, fill sources, AdBlue — implemented (Phases 24–28) |
+| [DASHBOARD_REDESIGN.md](./DASHBOARD_REDESIGN.md) | Dashboard redesign — implemented |
 
 All development follows a strict **Red → Green → Refactor** TDD cycle:
 1. **Red:** Write a failing test that defines expected behavior.
@@ -1235,6 +1236,48 @@ test_soft_deleted_records_excluded_from_statistics
 
 ---
 
+## Dashboard Redesign
+
+**Status:** ✅ Complete  
+**Spec:** [DASHBOARD_REDESIGN.md](./DASHBOARD_REDESIGN.md)
+
+### Tasks
+- [x] Behavioral contract tests (roles, entitlements, attention, metric IDs)
+- [x] Service cleanup: vehicle count query; remove `vehicles_preview`
+- [x] Desktop header with primary fuel action + Alpine secondary menu
+- [x] Attention strip (negative stock, overdue/upcoming maintenance)
+- [x] Shared metric band with stable `stat-*` IDs
+- [x] Activity / inventory / maintenance composition; no vehicle preview
+- [x] Tabbed Chart.js panel via `app/static/dashboard.js` (desktop only)
+- [x] Scoped dashboard CSS tokens and responsive layout
+- [x] Mobile lean alignment (same primitives as desktop)
+
+### Acceptance Criteria
+- [x] Existing data, auth, entitlements, and mobile nav preserved
+- [x] Attention ordered and omitted when empty
+- [x] Charts lazy-initialized on desktop; absent from mobile paint
+- [x] Full suite green; no migration or remote asset added
+
+---
+
+## Lean UI page migration (mobile-first)
+
+**Status:** ✅ Complete (authenticated farm app)  
+**Shared system:** `.t-lean` / `.t-dashboard` tokens + `t-dashboard-panel` / `t-lean-list-row` / `t-lean-form` primitives
+
+### Order
+- [x] Fuel list (`/fuel`)
+- [x] Fuel form
+- [x] Vehicles list + form
+- [x] Tanks list + detail + tank forms
+- [x] Maintenance list + form
+- [x] Shared form shell (vehicle/tank/maintenance/external…)
+- [x] Analytics + summary
+- [x] Profile / groups / settings / billing / audit
+- [ ] Auth/marketing/platform shells (out of scope — still use `glass_panel`)
+
+---
+
 ## Test Infrastructure Summary
 
 | Category          | Approx. Test Count |
@@ -1266,8 +1309,9 @@ test_soft_deleted_records_excluded_from_statistics
 | Fill source (Phase 26) | ~15 |
 | External withdrawal (Phase 27) | ~8 |
 | Tank dashboard & export (Phase 28) | ~5 |
-| **Total (current)** | **~479**         |
-| **Total (with Phases 24–28)** | **~479**         |
+| Dashboard redesign | ~20 |
+| **Total (current)** | **~635**         |
+| **Total (with Phases 24–28)** | **~635**         |
 
 ---
 

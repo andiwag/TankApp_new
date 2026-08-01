@@ -323,7 +323,7 @@ class TestExternalWithdrawalPickerRoutes:
             },
         )
         assert response.status_code == 200
-        assert "bg-red-50" in response.text
+        assert "t-form-alert--fault" in response.text or "bg-red-50" in response.text
         assert db.query(TankLedgerEntry).count() == 0
 
     async def test_external_new_post_foreign_tank_rejected(
@@ -357,7 +357,7 @@ class TestExternalWithdrawalPickerRoutes:
             },
         )
         assert response.status_code == 200
-        assert "bg-red-50" in response.text
+        assert "t-form-alert--fault" in response.text or "bg-red-50" in response.text
         assert db.query(TankLedgerEntry).count() == 0
 
     async def test_external_new_requires_contributor(
@@ -420,7 +420,10 @@ class TestExternalWithdrawalPickerRoutes:
         assert 'href="/tanks/external/new"' in response.text
         assert 'aria-label="Externe Abgabe"' in response.text
         assert 'aria-label="Hinzufügen"' in response.text
-        assert "min-h-[48px] items-center justify-center rounded-[12px] border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800" not in response.text
+        assert (
+            "min-h-[48px] items-center justify-center rounded-[12px] border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800"
+            not in response.text
+        )
 
 
 class TestExternalWithdrawalRoutes:
@@ -505,5 +508,5 @@ class TestExternalWithdrawalRoutes:
             },
         )
         assert response.status_code == 200
-        assert "bg-red-50" in response.text
+        assert "t-form-alert--fault" in response.text or "bg-red-50" in response.text
         assert db.query(TankLedgerEntry).count() == 0

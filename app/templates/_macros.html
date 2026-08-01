@@ -21,7 +21,7 @@ t-card max-w-full min-w-0 {{ class }}
 
 {% macro table_scroll_panel() -%}
 <div class="-mx-4 sm:mx-0">
-<div class="{{ glass_panel('t-table-scroll max-w-full overflow-x-auto') }}">
+<div class="t-dashboard-panel t-table-scroll max-w-full overflow-x-auto">
 {{ caller() }}
 </div>
 </div>
@@ -41,12 +41,13 @@ inline-flex min-h-[38px] items-center justify-center gap-2 rounded-[10px] px-4 p
 {%- endmacro %}
 
 {% macro status_chip(label, tone="neutral") -%}
-<span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide
+<span class="t-status-chip inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium
     {% if tone == 'success' %}bg-emerald-50 text-emerald-700
     {% elif tone == 'warning' %}bg-amber-50 text-amber-700
     {% elif tone == 'danger' %}bg-red-50 text-red-700
     {% elif tone == 'info' %}bg-sky-50 text-sky-700
     {% elif tone == 'purple' %}bg-violet-50 text-violet-700
+    {% elif tone == 'sky' %}bg-sky-50 text-sky-700
     {% else %}bg-slate-100 text-slate-600{% endif %}
 ">{{ label }}</span>
 {%- endmacro %}
@@ -79,7 +80,7 @@ inline-flex min-h-[38px] items-center justify-center gap-2 rounded-[10px] px-4 p
 {% macro form_input_class() -%}t-form-input{%- endmacro %}
 
 {% macro form_error(message) -%}
-<div class="mb-4 rounded-[12px] border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">{{ message }}</div>
+<div class="t-form-alert t-form-alert--fault" role="alert">{{ message }}</div>
 {%- endmacro %}
 
 {% macro form_section(title, icon="") -%}
@@ -89,71 +90,124 @@ inline-flex min-h-[38px] items-center justify-center gap-2 rounded-[10px] px-4 p
 </section>
 {%- endmacro %}
 
+{% macro form_actions_footer() -%}
+<div class="t-lean-form-footer">
+    <div class="t-lean-form-footer__inner">
+        {{ caller() }}
+    </div>
+</div>
+{%- endmacro %}
+
+{% macro lean_export_link(href, label="CSV exportieren") -%}
+<a href="{{ href }}" class="t-lean-export-btn">{{ label }}</a>
+{%- endmacro %}
+
 {% macro row_actions(edit_href="", delete_action="", delete_confirm="", can_edit=false, can_delete=false) -%}
 {% if can_edit or can_delete %}
-<div class="t-row-actions flex w-full gap-2 sm:w-auto sm:shrink-0 sm:flex-wrap sm:justify-end">
-    {% if can_edit and edit_href %}<a href="{{ edit_href }}" class="text-[#0d6b4f] hover:bg-[#ecfdf5]">Bearbeiten</a>{% endif %}
+<div class="t-row-actions t-row-actions--desktop hidden sm:flex sm:w-auto sm:shrink-0 sm:flex-wrap sm:justify-end sm:gap-2">
+    {% if can_edit and edit_href %}<a href="{{ edit_href }}" class="t-row-actions__link">Bearbeiten</a>{% endif %}
     {% if can_delete and delete_action %}
     <form method="post" action="{{ delete_action }}" class="inline" x-data="{ submitting: false }" @submit="if (!confirm('{{ delete_confirm }}')) { $event.preventDefault(); return; } submitting = true">
         {{ csrf_field() }}
-        <button type="submit" :disabled="submitting" class="text-red-600 hover:bg-red-50 disabled:opacity-60">Löschen</button>
+        <button type="submit" :disabled="submitting" class="t-row-actions__danger disabled:opacity-60">Löschen</button>
     </form>
     {% endif %}
+</div>
+<div class="t-row-actions t-row-actions--mobile relative sm:hidden" x-data="{ open: false }" @keydown.escape.window="if (open) { open = false; $refs.rowMenuTrigger.focus() }">
+    <button type="button"
+        class="t-row-actions__menu-trigger"
+        x-ref="rowMenuTrigger"
+        @click="open = !open"
+        :aria-expanded="open.toString()"
+        aria-haspopup="menu"
+        aria-label="Aktionen">⋯</button>
+    <div class="t-row-actions__menu" role="menu" x-show="open" x-cloak @click.outside="open = false">
+        {% if can_edit and edit_href %}
+        <a href="{{ edit_href }}" role="menuitem" class="t-row-actions__menu-item" @click="open = false">Bearbeiten</a>
+        {% endif %}
+        {% if can_delete and delete_action %}
+        <form method="post" action="{{ delete_action }}" role="none" x-data="{ submitting: false }" @submit="if (!confirm('{{ delete_confirm }}')) { $event.preventDefault(); return; } submitting = true">
+            {{ csrf_field() }}
+            <button type="submit" role="menuitem" :disabled="submitting" class="t-row-actions__menu-item t-row-actions__menu-item--danger disabled:opacity-60">Löschen</button>
+        </form>
+        {% endif %}
+    </div>
 </div>
 {% endif %}
 {%- endmacro %}
 
 {% macro fuel_entry_list_item(entry, can_edit=false, can_delete=false) -%}
-<div class="flex flex-col gap-3 border-b border-slate-100 py-3.5 last:border-b-0 sm:grid sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-start">
-    <div class="flex items-start gap-3">
-        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] t-kpi-icon-emerald">{{ app_icon("fuel", "h-5 w-5") }}</div>
-        <div class="min-w-0 flex-1">
-            <div class="flex flex-wrap items-center gap-2">
-                <p class="text-sm font-semibold text-slate-900">{{ entry.vehicle.name }}</p>
-                {% if entry.full_tank %}{{ status_chip("Voller Tank", "success") }}{% else %}{{ status_chip("Teilbefüllung", "warning") }}{% endif %}
-                {% if entry.fill_source == 'farm' %}{{ status_chip(fill_source_label(entry.fill_source), "info") }}{% endif %}
-                {% if entry.adblue_amount_l is not none %}{{ status_chip("AdBlue " ~ format_number(entry.adblue_amount_l, 2) ~ " L", "sky") }}{% endif %}
-            </div>
-            <p class="mt-0.5 text-xs text-slate-500">{{ format_date(entry.entry_date) }} · {{ entry.user.name }}</p>
-            <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs font-medium text-slate-600">
-                <span>{{ format_number(entry.fuel_amount_l, 2) }} L</span>
-                <span>Stand {{ format_number(entry.usage_reading, 2) }}</span>
-                {% if entry.total_cost_eur is not none %}<span>{{ format_number(entry.total_cost_eur, 2) }} €</span>{% endif %}
-            </div>
-            {% if entry.notes %}<p class="mt-2 text-xs text-slate-500">{{ entry.notes }}</p>{% endif %}
+<article class="t-lean-list-row">
+    <div class="t-lean-list-row__main min-w-0">
+        <div class="flex flex-wrap items-center gap-1.5">
+            <p class="t-lean-list-row__title truncate" title="{{ entry.vehicle.name }}">{{ entry.vehicle.name }}</p>
+            {% if not entry.full_tank %}{{ status_chip("Teilbefüllung", "warning") }}{% endif %}
         </div>
+        <p class="t-lean-list-row__meta">
+            {{ format_date(entry.entry_date) }} · {{ entry.user.name }}
+            {% if entry.fill_source == 'farm' %} · {{ fill_source_label(entry.fill_source) }}{% endif %}
+            {% if entry.full_tank %} · Voller Tank{% endif %}
+            {% if entry.adblue_amount_l is not none %} · AdBlue {{ format_number(entry.adblue_amount_l, 2) }} L{% endif %}
+        </p>
+        {% if entry.notes %}<p class="t-lean-list-row__notes">{{ entry.notes }}</p>{% endif %}
     </div>
-    <div class="pl-[52px] sm:col-start-3 sm:pl-0">
+    <div class="t-lean-list-row__stats">
+        <span>{{ format_number(entry.fuel_amount_l, 2) }} L</span>
+        <span>Stand {{ format_number(entry.usage_reading, 2) }}</span>
+        {% if entry.total_cost_eur is not none %}<span>{{ format_number(entry.total_cost_eur, 2) }} €</span>{% endif %}
+    </div>
+    {% if can_edit or can_delete %}
+    <div class="t-lean-list-row__actions">
         {{ row_actions("/fuel/" ~ entry.id ~ "/edit", "/fuel/" ~ entry.id ~ "/delete", "Diesen Tankvorgang entfernen?", can_edit, can_delete) }}
     </div>
-</div>
+    {% endif %}
+</article>
 {%- endmacro %}
 
 {% macro maintenance_list_item(log, can_edit=false, can_delete=false) -%}
-<div class="flex flex-col gap-3 border-b border-slate-100 py-3.5 last:border-b-0 sm:grid sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-start">
-    <div class="flex items-start gap-3">
-        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] t-kpi-icon-amber">{{ app_icon("wrench", "h-5 w-5") }}</div>
-        <div class="min-w-0 flex-1">
-            <div class="flex flex-wrap items-center gap-2">
-                <p class="text-sm font-semibold text-slate-900">{{ log.description }}</p>
-            </div>
-            <p class="mt-0.5 text-xs text-slate-500">{{ log.vehicle.name }} · {{ format_date(log.service_date) }}</p>
-            <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs font-medium text-slate-600">
-                {% if log.usage_reading is not none %}<span>Stand {{ format_number(log.usage_reading, 2) }}</span>{% endif %}
-                {% if log.cost_eur is not none %}<span>{{ format_number(log.cost_eur, 2) }} €</span>{% endif %}
-                <span>{{ log.user.name }}</span>
-            </div>
-            {% if log.next_service_date or log.next_service_usage is not none %}
-            <p class="mt-2 text-xs font-semibold text-amber-700">Nächster Termin: {% if log.next_service_date %}{{ format_date(log.next_service_date) }}{% endif %}{% if log.next_service_usage is not none %} · bei {{ format_number(log.next_service_usage, 2) }}{% endif %}</p>
-            {% endif %}
-        </div>
+<article class="t-lean-list-row">
+    <div class="t-lean-list-row__main min-w-0">
+        <p class="t-lean-list-row__title truncate" title="{{ log.description }}">{{ log.description }}</p>
+        <p class="t-lean-list-row__meta">{{ log.vehicle.name }} · {{ format_date(log.service_date) }} · {{ log.user.name }}</p>
+        {% if log.next_service_date or log.next_service_usage is not none %}
+        <p class="t-lean-list-row__notes">Nächster Termin: {% if log.next_service_date %}{{ format_date(log.next_service_date) }}{% endif %}{% if log.next_service_usage is not none %} · bei {{ format_number(log.next_service_usage, 2) }}{% endif %}</p>
+        {% endif %}
     </div>
-    <div class="pl-[52px] sm:col-start-3 sm:pl-0">
+    <div class="t-lean-list-row__stats">
+        {% if log.usage_reading is not none %}<span>Stand {{ format_number(log.usage_reading, 2) }}</span>{% endif %}
+        {% if log.cost_eur is not none %}<span>{{ format_number(log.cost_eur, 2) }} €</span>{% endif %}
+    </div>
+    {% if can_edit or can_delete %}
+    <div class="t-lean-list-row__actions">
         {{ row_actions("/maintenance/" ~ log.id ~ "/edit", "/maintenance/" ~ log.id ~ "/delete", "Diesen Wartungseintrag entfernen?", can_edit, can_delete) }}
     </div>
-</div>
+    {% endif %}
+</article>
 {%- endmacro %}
 
+{% macro vehicle_list_item(vehicle, stats=none, can_edit=false, can_delete=false) -%}
+<article class="t-lean-list-row">
+    <div class="t-lean-list-row__main min-w-0">
+        <p class="t-lean-list-row__title truncate" title="{{ vehicle.name }}">{{ vehicle.name }}</p>
+        <p class="t-lean-list-row__meta">{{ vehicle_type_label(vehicle.vtype) }} · {{ fuel_type_label(vehicle.fuel_type) }}</p>
+    </div>
+    {% if stats %}
+    <div class="t-lean-list-row__stats">
+        {% if stats.avg_consumption is not none %}
+        <span>{{ format_number(stats.avg_consumption, 1) }} {{ stats.consumption_label }}</span>
+        {% endif %}
+        {% if stats.next_maintenance_days is not none %}
+        <span>{% if stats.next_maintenance_days < 0 %}Wartung überfällig{% elif stats.next_maintenance_days == 0 %}Wartung heute{% else %}Wartung in {{ stats.next_maintenance_days }} Tagen{% endif %}</span>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% if can_edit or can_delete %}
+    <div class="t-lean-list-row__actions">
+        {{ row_actions("/vehicles/" ~ vehicle.id ~ "/edit", "/vehicles/" ~ vehicle.id ~ "/delete", "Dieses Fahrzeug entfernen?", can_edit, can_delete) }}
+    </div>
+    {% endif %}
+</article>
+{%- endmacro %}
 {% macro vehicle_card(vehicle, can_edit=false, can_delete=false) -%}
 <article class="{{ glass_panel('p-4') }}">
     <div class="flex max-sm:flex-col max-sm:gap-3 sm:items-start sm:gap-3">
@@ -226,13 +280,13 @@ inline-flex min-h-[38px] items-center justify-center gap-2 rounded-[10px] px-4 p
 {%- endmacro %}
 
 {% macro empty_state(title, message, action_href="", action_label="", icon="fuel") -%}
-<div class="py-8 text-center">
-    <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-[#0d6b4f]">
+<div class="t-empty-state">
+    <div class="t-empty-state__icon" aria-hidden="true">
         {{ app_icon(icon, "h-6 w-6") }}
     </div>
-    <h2 class="text-base font-semibold text-slate-950">{{ title }}</h2>
-    <p class="mx-auto mt-2 max-w-md text-sm text-slate-500">{{ message }}</p>
-    {% if action_href %}<div class="mt-5">{{ action_button(action_label, action_href, "primary") }}</div>{% endif %}
+    <h2 class="t-empty-state__title">{{ title }}</h2>
+    <p class="t-empty-state__message">{{ message }}</p>
+    {% if action_href %}<div class="t-empty-state__action">{{ action_button(action_label, action_href, "primary") }}</div>{% endif %}
 </div>
 {%- endmacro %}
 
@@ -242,16 +296,16 @@ inline-flex min-h-[38px] items-center justify-center gap-2 rounded-[10px] px-4 p
 
 {% macro section_heading(title, meta="") -%}
 <div class="mb-3 flex items-baseline justify-between gap-2">
-    <h2 class="text-base font-bold text-slate-950">{{ title }}</h2>
-    {% if meta %}<span class="text-xs text-slate-400">{{ meta }}</span>{% endif %}
+    <h2 class="text-base font-bold text-[var(--ink)]">{{ title }}</h2>
+    {% if meta %}<span class="text-xs text-[var(--mist)]">{{ meta }}</span>{% endif %}
 </div>
 {%- endmacro %}
 
 {% macro group_card(item, active_group_id) -%}
-<article class="{{ glass_panel('p-4') }}">
+<article class="t-dashboard-panel t-lean-group-card">
     <div class="flex max-sm:flex-col max-sm:gap-4 sm:items-start sm:justify-between sm:gap-4">
         <div class="flex min-w-0 items-start gap-3">
-            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] t-kpi-icon-emerald">{{ app_icon("farm", "h-5 w-5") }}</div>
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[8px] bg-slate-50 text-[#0d6b4f]">{{ app_icon("farm", "h-5 w-5") }}</div>
             <div class="min-w-0">
                 <h2 class="truncate text-base font-semibold text-slate-950">{{ item.group.name }}</h2>
                 <div class="mt-2 flex flex-wrap gap-1.5">
@@ -277,16 +331,15 @@ inline-flex min-h-[38px] items-center justify-center gap-2 rounded-[10px] px-4 p
 {%- endmacro %}
 
 {% macro audit_log_item(row) -%}
-<div class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 border-b border-slate-100 py-3.5 last:border-b-0">
-    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] t-kpi-icon-sky">{{ app_icon("audit", "h-5 w-5") }}</div>
+<article class="t-lean-list-row">
     <div class="min-w-0">
         <div class="flex flex-wrap items-center gap-2">
             {{ status_chip(row.action, "info") }}
-            <span class="text-xs text-slate-500">{{ format_datetime(row.created_at) }}</span>
+            <span class="t-lean-list-row__meta">{{ format_datetime(row.created_at) }}</span>
         </div>
-        <p class="mt-1.5 text-sm text-slate-700"><span class="font-semibold text-slate-950">{{ row.user_name }}</span> hat {{ row.entity_type }} #{{ row.entity_id }} geändert</p>
+        <p class="t-lean-list-row__title mt-1"><span class="font-semibold">{{ row.user_name }}</span> hat {{ row.entity_type }} #{{ row.entity_id }} geändert</p>
     </div>
-</div>
+</article>
 {%- endmacro %}
 {% macro nav_link(href, label, icon, active=false) -%}
 <a href="{{ href }}" class="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium transition
@@ -314,8 +367,12 @@ inline-flex min-h-[38px] items-center justify-center gap-2 rounded-[10px] px-4 p
 <svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 3.75h8.25A1.5 1.5 0 0115.75 5.25v13.5A1.5 1.5 0 0114.25 20.25H6A1.5 1.5 0 014.5 18.75V5.25A1.5 1.5 0 016 3.75z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 8.25h1.125a1.125 1.125 0 011.125 1.125v4.5a1.5 1.5 0 01-1.5 1.5H15.75"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 6.75V5.25"/></svg>
 {%- endmacro %}
 
+{% macro icon_tank(class="h-5 w-5") -%}
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 6.75h9A1.5 1.5 0 0118 8.25v9a3 3 0 01-3 3H9a3 3 0 01-3-3v-9a1.5 1.5 0 011.5-1.5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V5.25A1.5 1.5 0 0110.5 3.75h3A1.5 1.5 0 0115 5.25v1.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 12.75h9"/></svg>
+{%- endmacro %}
+
 {% macro icon_wrench(class="h-5 w-5") -%}
-<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M9.879 16.121A3 3 0 1012.015 11L11 9.984a4.5 4.5 0 10-1.06 6.137l.94-.001z"/></svg>
+<svg class="{{ class }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94L14.7 6.3z"/></svg>
 {%- endmacro %}
 
 {% macro icon_chart(class="h-5 w-5") -%}
@@ -392,6 +449,7 @@ inline-flex min-h-[38px] items-center justify-center gap-2 rounded-[10px] px-4 p
 {% macro app_icon(name, class="h-5 w-5") -%}
 {% if name == "home" %}{{ icon_home(class) }}
 {% elif name == "fuel" %}{{ icon_fuel(class) }}
+{% elif name == "tank" %}{{ icon_tank(class) }}
 {% elif name == "vehicle" %}{{ icon_vehicle(class) }}
 {% elif name == "wrench" %}{{ icon_wrench(class) }}
 {% elif name == "chart" %}{{ icon_chart(class) }}
@@ -529,21 +587,21 @@ inline-flex min-h-[38px] items-center justify-center gap-2 rounded-[10px] px-4 p
 
 {% macro trend_chip(delta, unit_label="", period_label="vs. letzten 30 Tagen") -%}
 {% if delta is not none %}
-<span class="t-trend-chip inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold {% if delta <= 0 %}bg-emerald-50 text-emerald-700{% else %}bg-red-50 text-red-700{% endif %}">
-    {% if delta <= 0 %}↓{% else %}↑{% endif %}
+<span class="t-trend-delta{% if delta <= 0 %} t-trend-delta--down{% else %} t-trend-delta--up{% endif %}">
+    <span aria-hidden="true">{% if delta <= 0 %}↓{% else %}↑{% endif %}</span>
     {{ format_number(delta|abs, 1) }}{% if unit_label %} {{ unit_label }}{% endif %}
-    <span class="font-medium opacity-80">{{ period_label }}</span>
+    <span class="t-trend-delta__period">{{ period_label }}</span>
 </span>
 {% endif %}
 {%- endmacro %}
 
 {% macro segmented_control(tabs, active) -%}
-<div class="t-segmented-control flex rounded-[12px] bg-slate-100 p-1" role="tablist">
+<div class="t-segmented-control" role="tablist">
     {% for tab in tabs %}
     <button type="button" role="tab"
         :class="activeTab === '{{ tab.id }}' ? 't-segmented-control__tab--active' : ''"
         @click="activeTab = '{{ tab.id }}'"
-        class="t-segmented-control__tab flex-1 rounded-[10px] px-3 py-2 text-center text-sm font-semibold text-slate-600 transition">
+        class="t-segmented-control__tab">
         {{ tab.label }}
     </button>
     {% endfor %}
@@ -626,6 +684,141 @@ inline-flex min-h-[38px] items-center justify-center gap-2 rounded-[10px] px-4 p
     </div>
     {% if reminder.days_until is not none %}
     <p class="text-xs font-semibold text-amber-700">{% if reminder.days_until < 0 %}überfällig{% elif reminder.days_until == 0 %}heute{% else %}in {{ reminder.days_until }} Tag{% if reminder.days_until != 1 %}en{% endif %}{% endif %}</p>
+    {% endif %}
+</div>
+{%- endmacro %}
+
+{% macro dashboard_status_row(title, subtitle, href) -%}
+<a href="{{ href }}" class="t-dashboard-status t-mobile-status-row">
+    <span class="t-dashboard-status__body min-w-0">
+        <span class="t-dashboard-status__title truncate" title="{{ title }}">{{ title }}</span>
+        {% if subtitle %}<span class="t-dashboard-status__detail truncate" title="{{ subtitle }}">{{ subtitle }}</span>{% endif %}
+    </span>
+    <span class="t-dashboard-status__chevron" aria-hidden="true">→</span>
+</a>
+{%- endmacro %}
+
+{% macro dashboard_metric(label, value, helper="", stat_id="", href="", suffix="") -%}
+{% if href %}
+<a href="{{ href }}" class="t-dashboard-metric t-dashboard-metric--link">
+{% else %}
+<div class="t-dashboard-metric">
+{% endif %}
+    <p class="t-dashboard-metric__value">{% if stat_id %}<span id="{{ stat_id }}">{{ value }}</span>{% else %}{{ value }}{% endif %}{% if suffix %} <span class="t-dashboard-metric__suffix">{{ suffix }}</span>{% endif %}</p>
+    <p class="t-dashboard-metric__label">{{ label }}</p>
+    {% if helper %}<p class="t-dashboard-metric__helper">{{ helper }}</p>{% endif %}
+{% if href %}
+</a>
+{% else %}
+</div>
+{% endif %}
+{%- endmacro %}
+
+{% macro dashboard_attention_item(severity, icon, title, detail, href, extra_class="") -%}
+<a href="{{ href }}" class="t-dashboard-attention-item t-dashboard-attention-item--{{ severity }} {{ extra_class }}">
+    <span class="t-dashboard-attention-item__icon" aria-hidden="true">{{ app_icon(icon, "h-5 w-5") }}</span>
+    <span class="t-dashboard-attention-item__body min-w-0">
+        <span class="t-dashboard-attention-item__title truncate" title="{{ title }}">{{ title }}</span>
+        {% if detail %}<span class="t-dashboard-attention-item__detail truncate" title="{{ detail }}">{{ detail }}</span>{% endif %}
+    </span>
+</a>
+{%- endmacro %}
+
+{% macro tank_gauge(fill_percent, negative=false, size="md", label="") -%}
+{% set aria = label if label else ("Füllstand " ~ fill_percent ~ " %") %}
+<div class="t-tank-gauge t-tank-gauge--{{ size }}{% if negative %} t-tank-gauge--fault{% endif %}"
+     role="img"
+     aria-label="{{ aria }}">
+    <div class="t-tank-gauge__track">
+        <div class="t-tank-gauge__fill" style="width: {{ fill_percent }}%;"></div>
+    </div>
+</div>
+{%- endmacro %}
+
+{% macro dashboard_inventory_row(name, fuel_label, quantity, negative=false, fill_percent=none) -%}
+<div class="t-dashboard-inventory-row{% if negative %} negative-stock-warning t-dashboard-inventory-row--warning{% endif %}">
+    <div class="min-w-0">
+        <p class="t-dashboard-inventory-row__name truncate" title="{{ name }}">{{ name }}</p>
+        <p class="t-dashboard-inventory-row__fuel truncate" title="{{ fuel_label }}">{{ fuel_label }}</p>
+    </div>
+    <div class="t-dashboard-inventory-row__aside">
+        <p class="t-dashboard-inventory-row__qty{% if negative %} t-dashboard-inventory-row__qty--warning{% endif %}">{{ quantity }} L</p>
+        {% if fill_percent is not none %}
+        {{ tank_gauge(fill_percent, negative=negative, size="sm", label=name ~ " · " ~ fill_percent ~ " %") }}
+        {% endif %}
+    </div>
+    {% if negative %}
+    <p class="t-dashboard-inventory-row__warn">Negativer Bestand — Inventur prüfen</p>
+    {% endif %}
+</div>
+{%- endmacro %}
+
+{% macro dashboard_action_menu(can_edit=false, can_maintenance=false, can_export=false) -%}
+{% if (can_edit and can_maintenance) or can_edit or can_export %}
+<div class="t-dashboard-action-menu relative" x-data="{ open: false }" @keydown.escape.window="if (open) { open = false; $refs.menuTrigger.focus() }">
+    <button type="button"
+        class="t-dashboard-action-menu__trigger"
+        x-ref="menuTrigger"
+        @click="open = !open"
+        :aria-expanded="open.toString()"
+        aria-haspopup="menu"
+        aria-controls="dashboard-secondary-menu">
+        Weitere Aktionen
+        <span aria-hidden="true">▾</span>
+    </button>
+    <div id="dashboard-secondary-menu"
+        class="t-dashboard-action-menu__panel"
+        role="menu"
+        x-show="open"
+        x-cloak
+        @click.outside="open = false">
+        {% if can_edit and can_maintenance %}
+        <a href="/maintenance/new" role="menuitem" class="t-dashboard-action-menu__item" @click="open = false">
+            <span aria-hidden="true">{{ app_icon("wrench", "h-4 w-4") }}</span>
+            Wartung erfassen
+        </a>
+        {% endif %}
+        {% if can_edit %}
+        <a href="/vehicles/new" role="menuitem" class="t-dashboard-action-menu__item" @click="open = false">
+            <span aria-hidden="true">{{ app_icon("vehicle", "h-4 w-4") }}</span>
+            Fahrzeug hinzufügen
+        </a>
+        {% endif %}
+        {% if can_export %}
+        <a href="/export/fuel-entries.csv" role="menuitem" class="t-dashboard-action-menu__item" @click="open = false">
+            CSV exportieren
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{%- endmacro %}
+
+{% macro dashboard_activity_row(entry, consumption=none, consumption_label=none) -%}
+<div class="t-dashboard-activity-row">
+    <div class="min-w-0">
+        <p class="t-dashboard-activity-row__vehicle truncate" title="{{ entry.vehicle.name }}">{{ entry.vehicle.name }}</p>
+        <p class="t-dashboard-activity-row__meta">{{ format_date(entry.entry_date) }} · {{ format_number(entry.fuel_amount_l, 2) }} L</p>
+    </div>
+    <div class="t-dashboard-activity-row__right shrink-0 text-right">
+        {% if entry.total_cost_eur is not none %}
+        <p class="t-dashboard-activity-row__cost">{{ format_number(entry.total_cost_eur, 2) }} €</p>
+        {% endif %}
+        {% if consumption is not none %}
+        <p class="t-dashboard-activity-row__consumption">{{ format_number(consumption, 1) }} {{ consumption_label }}</p>
+        {% endif %}
+    </div>
+</div>
+{%- endmacro %}
+
+{% macro dashboard_maintenance_row(reminder) -%}
+<div class="t-dashboard-maintenance-row">
+    <div class="min-w-0">
+        <p class="t-dashboard-maintenance-row__title truncate" title="{{ reminder.description }}">{{ reminder.description }}</p>
+        <p class="t-dashboard-maintenance-row__meta truncate" title="{{ reminder.vehicle_name }}">{{ reminder.vehicle_name }}</p>
+    </div>
+    {% if reminder.days_until is not none %}
+    <p class="t-dashboard-maintenance-row__due{% if reminder.days_until < 0 %} t-dashboard-maintenance-row__due--overdue{% endif %}">{% if reminder.days_until < 0 %}überfällig{% elif reminder.days_until == 0 %}heute{% else %}in {{ reminder.days_until }} Tag{% if reminder.days_until != 1 %}en{% endif %}{% endif %}</p>
     {% endif %}
 </div>
 {%- endmacro %}

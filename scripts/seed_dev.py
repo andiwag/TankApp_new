@@ -442,7 +442,7 @@ def seed_demo_data(db: Session) -> dict:
         StorageTankCreate(
             name="Diesel Haupttank",
             fuel_type=FuelType.diesel,
-            capacity_l=5000.0,
+            capacity_l=8000.0,
             opening_balance_l=2200.0,
             notes="Hofzapfsäule Diesel",
         ),
@@ -690,7 +690,9 @@ def seed_demo_data(db: Session) -> dict:
         "farm_fills": farm_fills,
         "adblue_fills": adblue_fills,
         "diesel_stock_l": diesel_stock,
+        "diesel_capacity_l": diesel_tank.capacity_l,
         "petrol_stock_l": petrol_stock,
+        "petrol_capacity_l": petrol_tank.capacity_l,
         "audi_avg_l_per_100km": audi_avg,
         "tractor_avg_l_per_h": tractor_avg,
     }

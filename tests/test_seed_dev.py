@@ -97,7 +97,8 @@ class TestSeedDev:
         assert db.query(User).filter(User.email == DEMO_READER_EMAIL).one()
 
         types = {
-            v.vtype for v in db.query(Vehicle).filter(Vehicle.group_id == group.id).all()
+            v.vtype
+            for v in db.query(Vehicle).filter(Vehicle.group_id == group.id).all()
         }
         assert types == {
             VehicleType.car.value,
@@ -198,9 +199,7 @@ class TestSeedDev:
                 .all()
             )
             withdrawal_liters = -sum(
-                e.amount_l
-                for e in ledger
-                if e.movement_type == "vehicle_withdrawal"
+                e.amount_l for e in ledger if e.movement_type == "vehicle_withdrawal"
             )
             assert abs(farm_liters - withdrawal_liters) < 0.01
 

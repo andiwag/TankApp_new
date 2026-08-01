@@ -823,3 +823,77 @@ Architectural and design decisions for **Tankly**. Cookie names in older entries
 **Rationale:** Keeps vehicle fills and non-fleet withdrawals as separate models; avoids confusing “Externe Tankstelle” with “Externe Abgabe”; `x-show` on options breaks selection in common browsers.
 
 **Trade-off:** Two “add liters” actions in the + sheet instead of one mega-form.
+
+---
+
+## D-063: Dashboard redesign — count query, no vehicle preview, external chart script
+
+**Decision:** (1) Dashboard vehicle totals use a scoped `COUNT` query instead of loading vehicle rows for a preview list. (2) Remove `vehicles_preview` from dashboard context and UI; vehicle navigation stays via the metric link. (3) Move Chart.js setup into `app/static/dashboard.js` with escaped JSON payloads, defer-loaded after local `chart.umd.min.js`, desktop-only lazy tab init. (4) Scope new visual tokens/selectors under `.t-dashboard` / `t-dashboard-*` without changing shared `glass_panel` / `kpi_card` macros globally.
+
+**Context:** [DASHBOARD_REDESIGN.md](./DASHBOARD_REDESIGN.md) — lean operational cockpit; presentation-only change.
+
+**Rationale:** Fewer unused vehicle loads; one chart panel avoids dual-canvas sizing issues; scoped CSS prevents unrelated page restyles.
+
+**Trade-off:** Mobile/desktop still duplicate some markup (CSS show/hide); chart empty states for all-zero cost months are stricter than the previous always-render bars.
+
+---
+
+## D-064: Lean UI primitives for authenticated farm pages
+
+**Decision:** Extend the dashboard visual system to all authenticated farm pages via a shared `.t-lean` token scope plus `t-dashboard-panel` / `t-lean-list-row` / `t-lean-form`. Do not mutate global `glass_panel` / `.t-card` (auth, marketing, platform keep the older shell). Page migration is mobile-first; desktop uses the same primitives with sidebar chrome unchanged.
+
+**Context:** After the dashboard redesign, other farm pages still used heavy card tiles and `page_header` chrome.
+
+**Rationale:** One operational visual language without a risky global restyle of login/marketing.
+
+**Trade-off:** Unused legacy macros (`vehicle_hero_card`, `kpi_card`) remain until a cleanup pass; platform admin UI is intentionally unchanged.
+
+---
+
+## D-065: Interface craft — domain tokens + tank gauge signature
+
+**Decision:** Lock authenticated farm UI to a domain token set (`--yard`, `--plate`, `--seam`, `--ink`, `--mist`, `--enamel`, `--diesel`, `--fault`) with IBM Plex Sans, borders-only depth, and a shared `t-tank-gauge` fill bar wherever capacity is known (dashboard stock, tanks list, tank detail hero). Capture-first fuel flow and nav IA follow in later craft phases. Source of truth: `.interface-design/system.md`.
+
+**Rationale:** Lean migration fixed structure but left a generic Inter/slate look; tank inventory is the product signature and was rendered as plain numbers.
+
+**Trade-off:** Auth/marketing/platform shells still use older chrome until a later alignment pass; gauges omit when `capacity_l` is unset.
+
+---
+
+## D-066: Capture-first fuel + Tanklager nav elevation
+
+**Decision:** (1) `/fuel/new` uses a mobile 3-step capture flow (Fahrzeug → Liter → Fertig) with hero liter/stand inputs; desktop create shows all steps; edit stays single-scroll. (2) Mobile bottom nav primary destinations are Dashboard · Tanken · + · Tanks · Mehr; Fahrzeuge moves into Mehr; desktop sidebar orders Tankvorgänge then Tanklager before Fahrzeuge.
+
+**Rationale:** Yard capture and inventory are the daily jobs; vehicle management is secondary.
+
+**Trade-off:** Vehicles one tap deeper on mobile; short bottom label `Tanks` instead of `Tanklager`.
+
+---
+
+## D-067: Craft polish — chips, capture surface, seed capacity
+
+**Decision:** (1) List rows keep at most one status chip (`Teilbefüllung` or `Negativer Bestand`); type/source/AdBlue move to meta text. (2) Fuel create uses flat `.t-capture-surface` / `.t-capture-block` with hero liter inputs instead of nested `t-form-section` cards. (3) Demo Diesel Haupttank capacity raised to 8000 L so seeded stock stays within capacity. (4) Wrench icon path replaced with a clearer open-ended wrench glyph.
+
+**Rationale:** Visual review showed chip spam, office-like nested forms, over-capacity gauge, and ambiguous attention icons.
+
+**Trade-off:** Existing local DBs need `python scripts/seed_dev.py --reset` to pick up the new capacity.
+
+---
+
+## D-068: Analytics narrative — one hero insight per view
+
+**Decision:** `/analytics` leads with one `.t-analytics-story` (desktop: 12-month liters; mobile: one story per Verbrauch/Kosten/Tankungen tab). Equal KPI metric strip removed in favor of `.t-analytics-facts`. Charts stay secondary. Trends use instrument `.t-trend-delta` (not pill chips). Chart.js uses IBM Plex Sans and enamel/diesel colors. Page title copy is **Auswertung** (not “Einblicke”).
+
+**Rationale:** Phase-7 craft goal — one insight leads, charts support — and align analytics with the yard instrument language.
+
+**Trade-off:** Desktop loses the four equal KPI cards; supporting numbers live as fact rows under the hero.
+
+---
+
+## D-069: Auth shell + motion — landing/legal frozen
+
+**Decision:** Align login/register/forgot/reset and `error.html` to the yard instrument shell (`.t-auth` / `.t-auth-panel`), remove emoji chrome, and add short enter/menu/capture motion with `prefers-reduced-motion` kill-switch. Landing and legal pages stay on `marketing_base` unchanged.
+
+**Rationale:** Auth is the bridge into the farm app and should match craft language; marketing/legal remain a separate surface per product choice.
+
+**Trade-off:** Marketing and app still look different until a dedicated landing craft pass.

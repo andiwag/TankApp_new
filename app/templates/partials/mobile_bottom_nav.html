@@ -1,5 +1,5 @@
-{% from "_macros.html" import icon_home, icon_fuel, icon_more, icon_vehicle, mobile_nav_button, mobile_nav_tab with context %}
-{% set more_active = current_path in ('/profile', '/summary', '/groups') or current_path.startswith('/analytics') or current_path.startswith('/settings') or current_path.startswith('/maintenance') %}
+{% from "_macros.html" import icon_home, icon_fuel, icon_more, icon_tank, mobile_nav_button, mobile_nav_tab with context %}
+{% set more_active = current_path in ('/profile', '/summary', '/groups') or current_path.startswith('/analytics') or current_path.startswith('/settings') or current_path.startswith('/maintenance') or current_path.startswith('/vehicles') %}
 <nav class="t-mobile-bottom-nav grid grid-cols-5 items-center bg-white px-2 pb-[calc(env(safe-area-inset-bottom)+0.375rem)] pt-1.5">
     {{ mobile_nav_tab("/dashboard", "Dashboard", icon_home, current_path == "/dashboard") }}
     {{ mobile_nav_tab("/fuel", "Tanken", icon_fuel, current_path.startswith("/fuel")) }}
@@ -8,6 +8,6 @@
     {% else %}
     <span class="mx-auto flex h-[3.25rem] w-[3.25rem] items-center justify-center rounded-full bg-slate-100 text-lg text-slate-300">+</span>
     {% endif %}
-    {{ mobile_nav_tab("/vehicles", "Fahrzeuge", icon_vehicle, current_path.startswith("/vehicles")) }}
+    {{ mobile_nav_tab("/tanks", "Tanks", icon_tank, current_path.startswith("/tanks")) }}
     {{ mobile_nav_button("Mehr", icon_more, more_active, "moreOpen = !moreOpen; addSheetOpen = false") }}
 </nav>

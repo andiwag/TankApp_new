@@ -13,7 +13,7 @@ class TestPhase1Guardrails:
     async def test_base_template_links_app_css_v10(self, client):
         response = await client.get("/login")
         assert response.status_code == 200
-        assert "/static/app.css?v=12" in response.text
+        assert "/static/app.css?v=23" in response.text
 
     async def test_main_content_wrapper_has_min_w_0(self, client, auth_group):
         auth_group()
@@ -40,8 +40,8 @@ class TestPhase2ShellLayout:
         auth_group()
         response = await client.get("/fuel")
         assert response.status_code == 200
-        assert "text-2xl" in response.text
-        assert "sm:text-[28px]" in response.text
+        assert "t-dashboard-header__title" in response.text
+        assert "t-lean" in response.text
 
 
 class TestPhase3ListAndDashboard:
@@ -59,7 +59,8 @@ class TestPhase3ListAndDashboard:
         )
         response = await client.get("/fuel")
         assert response.status_code == 200
-        assert "sm:grid sm:grid-cols-[auto_minmax(0,1fr)_auto]" in response.text
+        assert "t-lean-list-row" in response.text
+        assert "t-lean" in response.text
 
     async def test_maintenance_list_item_stacks_actions_on_mobile(
         self, client, auth_group, create_test_vehicle, db, set_group_tier
@@ -83,29 +84,32 @@ class TestPhase3ListAndDashboard:
         db.commit()
         response = await client.get("/maintenance")
         assert response.status_code == 200
-        assert "sm:grid sm:grid-cols-[auto_minmax(0,1fr)_auto]" in response.text
+        assert "t-lean" in response.text
+        assert "t-lean-list-row" in response.text
+        assert "t-dashboard-panel" in response.text
 
-    async def test_dashboard_hides_quick_actions_below_sm(self, client, auth_group):
+    async def test_dashboard_desktop_actions_use_stable_hooks(self, client, auth_group):
         auth_group(role="admin")
         response = await client.get("/dashboard")
         assert response.status_code == 200
-        assert "hidden sm:flex" in response.text
+        assert "t-dashboard-desktop" in response.text
+        assert "t-dashboard-actions" in response.text
+        assert "t-dashboard-primary-action" in response.text
 
-    async def test_dashboard_fuel_card_has_no_unconditional_min_width(
+    async def test_dashboard_has_no_unconditional_min_width_cards(
         self, client, auth_group
     ):
         auth_group()
         response = await client.get("/dashboard")
         assert response.status_code == 200
-        assert " flex min-w-[280px]" not in response.text
-        assert "xl:min-w-[280px]" in response.text
+        assert "min-w-[280px]" not in response.text
 
-    async def test_kpi_card_uses_responsive_value_typography(self, client, auth_group):
+    async def test_dashboard_metrics_use_tabular_nums_hook(self, client, auth_group):
         auth_group()
         response = await client.get("/dashboard")
         assert response.status_code == 200
-        assert "text-2xl" in response.text
-        assert "sm:text-[32px]" in response.text
+        assert "t-dashboard-metrics" in response.text
+        assert "t-dashboard-metric__value" in response.text
 
     async def test_vehicle_card_stacks_actions_on_mobile(
         self, client, auth_group, create_test_vehicle
@@ -114,7 +118,9 @@ class TestPhase3ListAndDashboard:
         create_test_vehicle(group_id=group.id, name="Stack Test Tractor")
         response = await client.get("/vehicles")
         assert response.status_code == 200
-        assert "max-sm:flex-col" in response.text
+        assert "t-lean" in response.text
+        assert "t-lean-list-row" in response.text
+        assert "t-dashboard-panel" in response.text
 
 
 class TestPhase4Tables:
@@ -166,7 +172,7 @@ class TestPhase5FormsSettings:
         auth_group(role="admin")
         response = await client.get("/fuel/new")
         assert response.status_code == 200
-        assert "sticky bottom-24" in response.text
+        assert "t-lean-form-footer" in response.text
         assert "-mx-1" not in response.text
 
     async def test_group_card_stacks_actions_on_mobile(

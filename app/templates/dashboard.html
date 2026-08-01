@@ -5,297 +5,255 @@
 {{ mobile_header_bar(show_brand=true, notification_href="/maintenance" if service_reminders else "") }}
 {% endblock %}
 
-{% from "_macros.html" import empty_state, fuel_entry_row, glass_panel, kpi_card, kpi_tile, maintenance_reminder_compact, mobile_status_row, section_link_header, status_chip, vehicle_thumb, app_icon with context %}
+{% from "_macros.html" import empty_state, app_icon, dashboard_metric, dashboard_attention_item, dashboard_inventory_row, dashboard_action_menu, dashboard_activity_row, dashboard_maintenance_row, dashboard_status_row with context %}
 
 {% block title %}Dashboard – Tankly{% endblock %}
 
 {% block content %}
-<div class="space-y-5">
+{% set negative_tanks = tank_stock_rows | selectattr('negative_stock') | list %}
+{% set overdue_reminders = service_reminders | selectattr('status', 'equalto', 'overdue') | list %}
+{% set upcoming_reminders = service_reminders | selectattr('status', 'equalto', 'due_soon') | list %}
+{% set has_attention = negative_tanks or overdue_reminders or upcoming_reminders %}
+{% set cost_href = "/analytics" if group_feature_enabled(request, "analytics") else "/fuel" %}
+{% set maintenance_href = "/maintenance" if group_feature_enabled(request, "maintenance") else "" %}
+{% set default_chart_tab = "consumption" if consumption_chart else "cost" %}
 
-    <div class="t-mobile-page lg:hidden">
-        <section>
-            <h1 id="dashboard-greeting" class="t-mobile-greeting">{{ greeting }}, {{ user_first_name }}</h1>
-            <p class="mt-1.5 text-sm text-slate-500">Hier ist dein Überblick für heute.</p>
-        </section>
+<div class="t-dashboard space-y-5">
+
+    <div class="t-mobile-page t-dashboard-mobile lg:hidden">
+        <header class="t-dashboard-header t-dashboard-header--mobile">
+            <div class="min-w-0">
+                <h1 id="dashboard-greeting" class="t-dashboard-header__title">{{ greeting }}, {{ user_first_name }}</h1>
+                <p class="t-dashboard-header__subtitle">Hier ist dein Überblick für heute.</p>
+            </div>
+        </header>
 
         {% if today_fuel_count > 0 %}
-        {{ mobile_status_row("fuel", today_fuel_count ~ " Tankung" ~ ("en" if today_fuel_count != 1 else "") ~ " heute", "Dein Protokoll wächst weiter.", "/fuel") }}
+        {{ dashboard_status_row(today_fuel_count ~ " Tankung" ~ ("en" if today_fuel_count != 1 else "") ~ " heute", "Dein Protokoll wächst weiter.", "/fuel") }}
         {% else %}
-        {{ mobile_status_row("fuel", "Noch keine Tankungen heute", "Erfasse deinen ersten Eintrag des Tages." if can_edit else "Heute wurden noch keine Tankungen erfasst.", "/fuel/new" if can_edit else "/fuel") }}
+        {{ dashboard_status_row("Noch keine Tankungen heute", "Erfasse deinen ersten Eintrag des Tages." if can_edit else "Heute wurden noch keine Tankungen erfasst.", "/fuel/new" if can_edit else "/fuel") }}
         {% endif %}
 
-        <section>
-            <h2 class="t-mobile-section-title mb-3">Überblick</h2>
-            <div class="grid grid-cols-2 gap-3">
-                {{ kpi_tile("vehicle", vehicle_count, "Fahrzeuge", "Alle aktiv", "emerald", "/vehicles") }}
-                {{ kpi_tile("fuel", month_fuel_count, "Tankvorgänge", "Diesen Monat", "sky", "/fuel") }}
-                {{ kpi_tile("coin", format_number(month_cost_eur, 2) ~ " €", "Kosten", "Diesen Monat", "amber", "/analytics" if group_feature_enabled(request, "analytics") else "/fuel") }}
-                {{ kpi_tile("wrench", service_reminders|length, "Wartung fällig", "In 30 Tagen", "violet", "/maintenance" if group_feature_enabled(request, "maintenance") else "") }}
-            </div>
+        {% if has_attention %}
+        <section id="dashboard-attention-mobile" class="t-dashboard-attention" aria-label="Aufmerksamkeit erforderlich">
+            {% for row in negative_tanks %}
+            {{ dashboard_attention_item("danger", "fuel", row.tank.name, "Negativer Bestand — Inventur prüfen", "/tanks", "negative-stock-warning") }}
+            {% endfor %}
+            {% for reminder in overdue_reminders %}
+            {{ dashboard_attention_item("danger", "wrench", reminder.description, reminder.vehicle_name ~ " · überfällig", "/maintenance") }}
+            {% endfor %}
+            {% for reminder in upcoming_reminders %}
+            {{ dashboard_attention_item(
+                "warning",
+                "wrench",
+                reminder.description,
+                reminder.vehicle_name ~ (
+                    " · heute" if reminder.days_until == 0 else (
+                        (" · in " ~ reminder.days_until ~ " Tag" ~ ("en" if reminder.days_until != 1 else ""))
+                        if reminder.days_until is not none else " · bald fällig"
+                    )
+                ),
+                "/maintenance",
+            ) }}
+            {% endfor %}
+        </section>
+        {% endif %}
+
+        <section class="t-dashboard-metrics t-dashboard-metrics--compact" aria-label="Kennzahlen">
+            {{ dashboard_metric("Fahrzeuge", vehicle_count, "Alle aktiv", "", "/vehicles") }}
+            {{ dashboard_metric("Tankvorgänge", month_fuel_count, "Diesen Monat", "", "/fuel") }}
+            {{ dashboard_metric("Kosten", format_number(month_cost_eur, 2), "Diesen Monat", "", cost_href, "€") }}
+            {{ dashboard_metric("Wartung fällig", service_reminders|length, "In 30 Tagen", "", maintenance_href) }}
         </section>
 
         {% if tank_stock_rows %}
-        <section id="tank-stock-mobile" class="mt-1">
-            {{ section_link_header("Hof-Tank Bestände", "/tanks") }}
-            <div class="mt-3 grid gap-3">
-                {% for row in tank_stock_rows %}
-                <div class="{{ glass_panel('p-4') }}{% if row.negative_stock %} negative-stock-warning border-red-200{% endif %}">
-                    <p class="font-semibold text-slate-950">{{ row.tank.name }}</p>
-                    <p class="mt-1 text-sm text-slate-500">{{ row.tank.fuel_type }}</p>
-                    <p class="mt-2 text-xl font-bold {% if row.negative_stock %}text-red-800{% else %}text-sky-800{% endif %}">{{ format_number(row.current_stock_l) }} L</p>
-                </div>
+        <section id="tank-stock-mobile" class="t-dashboard-panel">
+            <div class="t-dashboard-panel__header">
+                <h2>Hof-Tank Bestände</h2>
+                <a href="/tanks" class="t-dashboard-panel__link">Alle anzeigen</a>
+            </div>
+            <div class="t-dashboard-section-list">
+                {% for row in tank_stock_rows[:3] %}
+                {{ dashboard_inventory_row(row.tank.name, fuel_type_label(row.tank.fuel_type), format_number(row.current_stock_l), row.negative_stock, row.fill_percent) }}
                 {% endfor %}
             </div>
+            {% if tank_stock_rows|length > 3 %}
+            <a href="/tanks" class="t-dashboard-more-link">{{ tank_stock_rows|length - 3 }} weitere anzeigen</a>
+            {% endif %}
         </section>
         {% endif %}
 
-        <section>
-            {{ section_link_header("Letzte Tankvorgänge", "/fuel") }}
+        <section class="t-dashboard-panel">
+            <div class="t-dashboard-panel__header">
+                <h2>Letzte Tankvorgänge</h2>
+                <a href="/fuel" class="t-dashboard-panel__link">Alle anzeigen</a>
+            </div>
             {% if recent_entry_rows %}
-            <div class="mt-3 {{ glass_panel('t-mobile-list-card') }}">
+            <div class="t-dashboard-section-list">
                 {% for row in recent_entry_rows[:3] %}
-                {{ fuel_entry_row(row.entry, row.consumption, row.consumption_label) }}
+                {{ dashboard_activity_row(row.entry, row.consumption, row.consumption_label) }}
                 {% endfor %}
             </div>
             {% else %}
-            <p class="mt-3 text-sm text-slate-500">Noch keine Tankvorgänge erfasst.</p>
+            <p class="t-dashboard-panel__empty">Noch keine Tankvorgänge erfasst.</p>
             {% endif %}
         </section>
 
-        {% if service_reminders %}
-        <section>
-            {{ section_link_header("Wartungen", "/maintenance") }}
-            <div class="mt-3 {{ glass_panel('t-mobile-list-card') }}">
-                {% for reminder in service_reminders[:2] %}
-                {{ maintenance_reminder_compact(reminder) }}
-                {% endfor %}
-            </div>
-        </section>
-        {% endif %}
+        <div class="t-mobile-scroll-end" aria-hidden="true"></div>
     </div>
 
-    <div class="hidden lg:block space-y-5">
-    <section>
-        <div class="flex items-start justify-between gap-4">
+    <div class="t-dashboard-desktop hidden lg:block space-y-5">
+        <header class="t-dashboard-header">
             <div class="min-w-0">
-                <h1 class="text-2xl font-bold tracking-tight text-slate-950 sm:text-[28px]">{{ greeting }}, {{ user_first_name }}</h1>
-                <p class="mt-1 text-sm text-slate-500">Hier ist dein Überblick für heute.</p>
+                <h1 class="t-dashboard-header__title">{{ greeting }}, {{ user_first_name }}</h1>
+                <p class="t-dashboard-header__subtitle">Hier ist dein Überblick für heute.</p>
             </div>
-            {% if service_reminders %}
-            <a href="/maintenance" class="relative hidden shrink-0 rounded-[10px] border border-slate-200 bg-white p-2.5 text-slate-500 transition hover:bg-slate-50 sm:flex" aria-label="Wartungserinnerungen anzeigen">
-                {{ app_icon("wrench", "h-5 w-5") }}
-                <span class="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500"></span>
-            </a>
-            {% endif %}
+            <div class="t-dashboard-actions">
+                {% if can_edit %}
+                <a href="/fuel/new" class="t-dashboard-primary-action t-btn-primary">{{ app_icon("fuel", "h-4 w-4") }} Tankvorgang erfassen</a>
+                {% endif %}
+                {{ dashboard_action_menu(can_edit, can_maintenance, can_export) }}
+            </div>
+        </header>
+
+        {% if has_attention %}
+        <section id="dashboard-attention" class="t-dashboard-attention" aria-label="Aufmerksamkeit erforderlich">
+            {% for row in negative_tanks %}
+            {{ dashboard_attention_item("danger", "fuel", row.tank.name, "Negativer Bestand — Inventur prüfen", "/tanks", "negative-stock-warning") }}
+            {% endfor %}
+            {% for reminder in overdue_reminders %}
+            {{ dashboard_attention_item("danger", "wrench", reminder.description, reminder.vehicle_name ~ " · überfällig", "/maintenance") }}
+            {% endfor %}
+            {% for reminder in upcoming_reminders %}
+            {{ dashboard_attention_item(
+                "warning",
+                "wrench",
+                reminder.description,
+                reminder.vehicle_name ~ (
+                    " · heute" if reminder.days_until == 0 else (
+                        (" · in " ~ reminder.days_until ~ " Tag" ~ ("en" if reminder.days_until != 1 else ""))
+                        if reminder.days_until is not none else " · bald fällig"
+                    )
+                ),
+                "/maintenance",
+            ) }}
+            {% endfor %}
+        </section>
+        {% endif %}
+
+        <section class="t-dashboard-metrics" aria-label="Kennzahlen">
+            {{ dashboard_metric("Fahrzeuge", vehicle_count, "Alle aktiven Fahrzeuge", "stat-vehicles", "/vehicles") }}
+            {{ dashboard_metric("Tankvorgänge", month_fuel_count, "Diesen Monat", "stat-month-entries", "/fuel") }}
+            {{ dashboard_metric("Kosten", format_number(month_cost_eur, 2), "Diesen Monat", "stat-month-cost", cost_href, "€") }}
+            {{ dashboard_metric("Wartung fällig", service_reminders|length, "In den nächsten 30 Tagen", "stat-maintenance-due", maintenance_href) }}
+        </section>
+
+        <div class="t-dashboard-primary-grid">
+            <section id="recent-fuel-entries" class="t-dashboard-panel">
+                <div class="t-dashboard-panel__header">
+                    <h2>Letzte Tankvorgänge</h2>
+                    <a href="/fuel" class="t-dashboard-panel__link">Alle anzeigen</a>
+                </div>
+                {% if recent_entry_rows %}
+                <div class="t-dashboard-section-list">
+                    {% for row in recent_entry_rows %}
+                    {{ dashboard_activity_row(row.entry, row.consumption, row.consumption_label) }}
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ empty_state("Noch keine Tankvorgänge", "Starte jetzt mit deinem ersten Eintrag.", "/fuel/new" if can_edit else "", "Tankvorgang", "fuel") }}
+                {% endif %}
+            </section>
+
+            <section class="t-dashboard-panel t-dashboard-charts" aria-label="Diagramme"
+                data-default-tab="{{ default_chart_tab }}"
+                data-has-consumption="{{ 'true' if consumption_chart else 'false' }}"
+                data-has-cost="{{ 'true' if cost_chart else 'false' }}">
+                <div class="t-dashboard-panel__header">
+                    <h2>Auswertung</h2>
+                    <div class="t-dashboard-chart-tabs" role="tablist" aria-label="Diagramm wechseln">
+                        <button type="button" role="tab" id="dashboard-tab-consumption"
+                            class="t-dashboard-chart-tab"
+                            aria-controls="dashboard-chart-consumption"
+                            aria-selected="{{ 'true' if default_chart_tab == 'consumption' else 'false' }}"
+                            data-chart-tab="consumption">Verbrauch</button>
+                        <button type="button" role="tab" id="dashboard-tab-cost"
+                            class="t-dashboard-chart-tab"
+                            aria-controls="dashboard-chart-cost"
+                            aria-selected="{{ 'true' if default_chart_tab == 'cost' else 'false' }}"
+                            data-chart-tab="cost">Kosten</button>
+                    </div>
+                </div>
+
+                <div id="dashboard-chart-consumption"
+                    class="t-dashboard-chart-panel"
+                    role="tabpanel"
+                    aria-labelledby="dashboard-tab-consumption"
+                    data-chart-panel="consumption"
+                    {% if default_chart_tab != 'consumption' %}hidden{% endif %}>
+                    <p class="t-dashboard-chart-meta">L/100 km · 30 Tage</p>
+                    <div class="chart-wrap t-dashboard-chart-wrap">
+                        <canvas id="consumption-chart" aria-label="Verbrauch der letzten 30 Tage"></canvas>
+                    </div>
+                    <p class="t-dashboard-chart-empty" data-chart-empty="consumption" {% if consumption_chart %}hidden{% endif %}>Noch nicht genug Daten für Verbrauchstrend.</p>
+                </div>
+
+                <div id="dashboard-chart-cost"
+                    class="t-dashboard-chart-panel"
+                    role="tabpanel"
+                    aria-labelledby="dashboard-tab-cost"
+                    data-chart-panel="cost"
+                    {% if default_chart_tab != 'cost' %}hidden{% endif %}>
+                    <p class="t-dashboard-chart-meta">Letzte 6 Monate</p>
+                    <div class="chart-wrap t-dashboard-chart-wrap">
+                        <canvas id="cost-bar-chart" aria-label="Kosten der letzten 6 Monate"></canvas>
+                    </div>
+                    <p class="t-dashboard-chart-empty" data-chart-empty="cost" hidden>Noch keine Kostendaten vorhanden.</p>
+                </div>
+            </section>
         </div>
 
-        <div class="mt-4 flex flex-col gap-3 xl:flex-row xl:items-stretch xl:justify-between">
-            <div class="hidden sm:flex flex-wrap gap-2">
-                {% if can_edit %}
-                <a href="/fuel/new" class="inline-flex min-h-[38px] items-center gap-1.5 rounded-[10px] px-4 py-2 text-sm font-semibold text-white shadow-sm t-btn-primary">{{ app_icon("fuel", "h-4 w-4") }} + Tankvorgang</a>
-                {% if can_maintenance %}<a href="/maintenance/new" class="inline-flex min-h-[38px] items-center gap-1.5 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">{{ app_icon("wrench", "h-4 w-4") }} + Wartung</a>{% endif %}
-                <a href="/vehicles/new" class="inline-flex min-h-[38px] items-center gap-1.5 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">{{ app_icon("vehicle", "h-4 w-4") }} + Fahrzeug</a>
+        <div class="t-dashboard-detail-grid">
+            {% if tank_stock_rows %}
+            <section id="tank-stock" class="t-dashboard-panel">
+                <div class="t-dashboard-panel__header">
+                    <h2>Hof-Tank Bestände</h2>
+                    <a href="/tanks" class="t-dashboard-panel__link">Tanklager öffnen</a>
+                </div>
+                <div class="t-dashboard-section-list">
+                    {% for row in tank_stock_rows[:4] %}
+                    {{ dashboard_inventory_row(row.tank.name, fuel_type_label(row.tank.fuel_type), format_number(row.current_stock_l), row.negative_stock, row.fill_percent) }}
+                    {% endfor %}
+                </div>
+                {% if tank_stock_rows|length > 4 %}
+                <a href="/tanks" class="t-dashboard-more-link">{{ tank_stock_rows|length - 4 }} weitere anzeigen</a>
                 {% endif %}
-                {% if can_export %}<a href="/export/fuel-entries.csv" class="inline-flex min-h-[38px] items-center gap-1.5 rounded-[10px] border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"><span aria-hidden="true">📥</span> CSV exportieren</a>{% endif %}
-            </div>
+            </section>
+            {% endif %}
 
-            <div class="{{ glass_panel('flex w-full items-center gap-3 px-4 py-3 xl:ml-auto xl:min-w-[280px]') }}">
-                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] t-kpi-icon-emerald">{{ app_icon("fuel", "h-5 w-5") }}</div>
-                <div class="min-w-0">
-                    {% if today_fuel_count > 0 %}
-                    <p class="text-sm font-semibold text-slate-900">{{ today_fuel_count }} Tankung{% if today_fuel_count != 1 %}en{% endif %} heute</p>
-                    <p class="text-xs text-slate-500">Dein Protokoll wächst weiter.</p>
-                    {% else %}
-                    <p class="text-sm font-semibold text-slate-900">Noch keine Tankungen heute</p>
-                    <p class="text-xs text-slate-500">{% if can_edit %}Erfasse deinen ersten Eintrag des Tages.{% else %}Heute wurden noch keine Tankungen erfasst.{% endif %}</p>
+            <section class="t-dashboard-panel">
+                <div class="t-dashboard-panel__header">
+                    <h2>Wartungen</h2>
+                    {% if group_feature_enabled(request, "maintenance") %}
+                    <a href="/maintenance" class="t-dashboard-panel__link">Alle anzeigen</a>
                     {% endif %}
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
-        {{ kpi_card("vehicle", "Fahrzeuge", vehicle_count, "Alle aktiven Fahrzeuge", "stat-vehicles", "emerald") }}
-        {{ kpi_card("fuel", "Tankvorgänge", month_fuel_count, "Diesen Monat", "stat-month-entries", "sky") }}
-        {{ kpi_card("coin", "Kosten", format_number(month_cost_eur, 2), "Diesen Monat", "stat-month-cost", "amber") }}
-        {{ kpi_card("wrench", "Wartung fällig", service_reminders|length, "In den nächsten 30 Tagen", "stat-maintenance-due", "violet") }}
-    </section>
-
-    {% if tank_stock_rows %}
-    <section id="tank-stock" class="{{ glass_panel('p-4') }}">
-        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-sky-700">Lager</p>
-                <h2 class="text-base font-bold text-slate-950">Hof-Tank Bestände</h2>
-            </div>
-            <a href="/tanks" class="text-sm font-semibold text-emerald-800 hover:text-emerald-950">Tanklager öffnen</a>
-        </div>
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {% for row in tank_stock_rows %}
-            <div class="rounded-2xl border {% if row.negative_stock %}border-red-200 bg-red-50/80 negative-stock-warning{% else %}border-white/70 bg-white/70{% endif %} p-4">
-                <p class="font-semibold text-slate-950">{{ row.tank.name }}</p>
-                <p class="mt-1 text-sm text-slate-500">{{ row.tank.fuel_type }}</p>
-                <p class="mt-3 text-2xl font-bold {% if row.negative_stock %}text-red-800{% else %}text-sky-800{% endif %}">{{ format_number(row.current_stock_l) }} L</p>
-                {% if row.negative_stock %}
-                <p class="mt-2 text-sm font-medium text-red-700">Negativer Bestand — Inventur prüfen</p>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-    </section>
-    {% endif %}
-
-    <div class="dashboard-grid">
-
-        <div class="space-y-3">
-            <section class="{{ glass_panel('p-4') }}">
-                <div class="mb-1 flex items-baseline justify-between gap-2">
-                    <h2 class="text-base font-bold text-slate-950">Verbrauch</h2>
-                    <span class="text-xs text-slate-400">L/100 km · 30 Tage</span>
-                </div>
-                <div class="chart-wrap mt-2">
-                    <canvas id="consumption-chart" aria-label="Verbrauch der letzten 30 Tage"></canvas>
-                </div>
-            </section>
-
-            <section class="{{ glass_panel('p-4') }}">
-                <div class="mb-1 flex items-baseline justify-between gap-2">
-                    <h2 class="text-base font-bold text-slate-950">Kosten</h2>
-                    <span class="text-xs text-slate-400">Letzte 6 Monate</span>
-                </div>
-                <div class="chart-wrap mt-2">
-                    <canvas id="cost-bar-chart" aria-label="Kosten der letzten 6 Monate"></canvas>
-                </div>
-            </section>
-        </div>
-
-        <section id="recent-fuel-entries" class="{{ glass_panel('flex flex-col p-4') }}">
-            <h2 class="text-base font-bold text-slate-950">Letzte Tankvorgänge</h2>
-
-            {% if recent_entry_rows %}
-            <div class="mt-2">
-                {% for row in recent_entry_rows %}
-                {{ fuel_entry_row(row.entry, row.consumption, row.consumption_label) }}
-                {% endfor %}
-            </div>
-            <a href="/fuel" class="mt-3 inline-flex w-full items-center justify-center rounded-[10px] border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Alle Tankvorgänge anzeigen</a>
-            {% else %}
-            <div class="flex flex-1 flex-col justify-center">
-                {{ empty_state("Noch keine Tankvorgänge", "Starte jetzt mit deinem ersten Eintrag.", "/fuel/new" if can_edit else "", "Tankvorgang", "fuel") }}
-            </div>
-            {% endif %}
-        </section>
-
-        <div class="space-y-3">
-            <section class="{{ glass_panel('p-4') }}">
-                <h2 class="text-base font-bold text-slate-950">Wartungen</h2>
                 {% if service_reminders %}
-                <div class="mt-3 space-y-2.5">
-                    {% for reminder in service_reminders[:2] %}
-                    {{ maintenance_reminder_compact(reminder) }}
+                <div class="t-dashboard-section-list">
+                    {% for reminder in service_reminders[:3] %}
+                    {{ dashboard_maintenance_row(reminder) }}
                     {% endfor %}
                 </div>
-                <a href="/maintenance" class="mt-3 block text-center text-sm font-medium text-[#0d6b4f] hover:underline">Alle Wartungen</a>
                 {% else %}
-                <p class="mt-3 text-sm text-slate-500">Keine fälligen Wartungen in den nächsten 30 Tagen.</p>
-                {% endif %}
-            </section>
-
-            <section class="{{ glass_panel('p-4') }}">
-                <h2 class="text-base font-bold text-slate-950">Fahrzeuge</h2>
-                {% if vehicles_preview %}
-                <div class="mt-3 space-y-2.5">
-                    {% for vehicle in vehicles_preview %}
-                    <div class="flex items-center gap-3">
-                        {{ vehicle_thumb(vehicle.name) }}
-                        <div class="min-w-0 flex-1">
-                            <p class="truncate text-sm font-semibold text-slate-900">{{ vehicle.name }}</p>
-                            <p class="text-xs text-slate-500">{{ vehicle_type_label(vehicle.vtype) }}</p>
-                        </div>
-                        {{ status_chip("Aktiv", "success") }}
-                    </div>
-                    {% endfor %}
-                </div>
-                <a href="/vehicles" class="mt-3 inline-flex w-full items-center justify-center rounded-[10px] border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Alle Fahrzeuge anzeigen</a>
-                {% if can_edit %}
-                <a href="/vehicles/new" class="mt-3 flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">{{ app_icon("vehicle", "h-4 w-4") }} Fahrzeug hinzufügen</a>
-                {% endif %}
-                {% else %}
-                {{ empty_state("Noch keine Fahrzeuge", "Lege dein erstes Fahrzeug an.", "/vehicles/new" if can_edit else "", "Fahrzeug hinzufügen", "vehicle") }}
+                <p class="t-dashboard-panel__empty">Keine fälligen Wartungen in den nächsten 30 Tagen.</p>
                 {% endif %}
             </section>
         </div>
-    </div>
     </div>
 </div>
 
-<script src="/static/vendor/chart.umd.min.js"></script>
-<script>
-    const consumptionChart = {{ consumption_chart | tojson }};
-    const costChart = {{ cost_chart | tojson }};
-
-    const chartFont = { family: 'Inter, sans-serif', size: 11 };
-    const gridColor = 'rgba(148, 163, 184, 0.12)';
-    const primaryGreen = '#0d6b4f';
-
-    const consumptionCtx = document.getElementById('consumption-chart');
-    if (consumptionCtx && consumptionChart.length > 0) {
-        new Chart(consumptionCtx, {
-            type: 'line',
-            data: {
-                labels: consumptionChart.map((row) => row.label),
-                datasets: [{
-                    label: 'Verbrauch',
-                    data: consumptionChart.map((row) => row.consumption),
-                    borderColor: primaryGreen,
-                    backgroundColor: 'rgba(13, 107, 79, 0.12)',
-                    borderWidth: 2.5,
-                    pointRadius: 3,
-                    pointBackgroundColor: primaryGreen,
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    tension: 0.35,
-                    fill: true,
-                }],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { grid: { display: false }, ticks: { color: '#94a3b8', font: chartFont, maxTicksLimit: 5 } },
-                    y: { beginAtZero: false, grid: { color: gridColor }, ticks: { color: '#94a3b8', font: chartFont } },
-                },
-            },
-        });
-    } else if (consumptionCtx) {
-        consumptionCtx.parentElement.innerHTML = '<p class="flex h-full items-center justify-center text-sm text-slate-400">Noch nicht genug Daten für Verbrauchstrend.</p>';
-    }
-
-    const costBarCtx = document.getElementById('cost-bar-chart');
-    if (costBarCtx) {
-        new Chart(costBarCtx, {
-            type: 'bar',
-            data: {
-                labels: costChart.map((row) => row.label),
-                datasets: [{
-                    label: 'Kosten (€)',
-                    data: costChart.map((row) => row.cost_eur),
-                    backgroundColor: primaryGreen,
-                    borderRadius: 6,
-                    maxBarThickness: 32,
-                }],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { grid: { display: false }, ticks: { color: '#94a3b8', font: chartFont } },
-                    y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: '#94a3b8', font: chartFont } },
-                },
-            },
-        });
-    }
-</script>
+<script type="application/json" id="dashboard-consumption-data">{{ consumption_chart | tojson }}</script>
+<script type="application/json" id="dashboard-cost-data">{{ cost_chart | tojson }}</script>
+<script src="/static/vendor/chart.umd.min.js" defer></script>
+<script src="/static/dashboard.js" defer></script>
 {% endblock %}

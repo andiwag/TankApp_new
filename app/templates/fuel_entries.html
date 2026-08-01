@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import empty_state, fuel_entry_list_item, glass_panel, mobile_header_bar, page_header with context %}
+{% from "_macros.html" import empty_state, fuel_entry_list_item, lean_export_link, mobile_header_bar, app_icon with context %}
 
 {% block mobile_header %}
 {{ mobile_header_bar(
@@ -13,17 +13,57 @@
 {% block title %}Tankvorgänge – Tankly{% endblock %}
 
 {% block content %}
-<div>
-    <div class="hidden lg:block">
-        {{ page_header("Tankvorgänge", "", "Alle Tankvorgänge im Betrieb im Überblick.", "/fuel/new" if can_edit else "", "Tankvorgang erfassen", "/tanks/external/new" if can_edit else "", "Externe Abgabe", icon="fuel") }}
-        {% if can_export %}
-        <p class="mb-4 text-sm text-slate-500"><a href="/export/fuel-entries.csv" class="font-semibold text-emerald-800 hover:text-emerald-950">CSV exportieren</a></p>
-        {% endif %}
-    </div>
+<div class="t-lean space-y-4">
+    <header class="t-dashboard-header hidden lg:flex">
+        <div class="min-w-0">
+            <h1 class="t-dashboard-header__title">Tankvorgänge</h1>
+            <p class="t-dashboard-header__subtitle">Alle Tankvorgänge im Betrieb im Überblick.</p>
+        </div>
+        <div class="t-dashboard-actions">
+            {% if can_edit %}
+            <a href="/fuel/new" class="t-dashboard-primary-action t-btn-primary">{{ app_icon("fuel", "h-4 w-4") }} Tankvorgang erfassen</a>
+            {% endif %}
+            {% if can_edit or can_export %}
+            <div class="t-dashboard-action-menu relative" x-data="{ open: false }" @keydown.escape.window="if (open) { open = false; $refs.menuTrigger.focus() }">
+                <button type="button"
+                    class="t-dashboard-action-menu__trigger"
+                    x-ref="menuTrigger"
+                    @click="open = !open"
+                    :aria-expanded="open.toString()"
+                    aria-haspopup="menu"
+                    aria-controls="fuel-secondary-menu">
+                    Weitere Aktionen
+                    <span aria-hidden="true">▾</span>
+                </button>
+                <div id="fuel-secondary-menu"
+                    class="t-dashboard-action-menu__panel"
+                    role="menu"
+                    x-show="open"
+                    x-cloak
+                    @click.outside="open = false">
+                    {% if can_edit %}
+                    <a href="/tanks/external/new" role="menuitem" class="t-dashboard-action-menu__item" @click="open = false">
+                        Externe Abgabe
+                    </a>
+                    {% endif %}
+                    {% if can_export %}
+                    <a href="/export/fuel-entries.csv" role="menuitem" class="t-dashboard-action-menu__item" @click="open = false">
+                        CSV exportieren
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </header>
 
-    <div id="fuel-entry-list">
+    {% if can_export %}
+    <div class="lg:hidden">{{ lean_export_link("/export/fuel-entries.csv") }}</div>
+    {% endif %}
+
+    <section id="fuel-entry-list" class="t-dashboard-panel" aria-label="Tankvorgänge">
         {% if entries %}
-        <div class="{{ glass_panel('px-4 py-1 sm:px-5') }}">
+        <div class="t-dashboard-section-list">
             {% for e in entries %}
             {{ fuel_entry_list_item(e, can_edit, can_delete) }}
             {% endfor %}
@@ -31,6 +71,6 @@
         {% else %}
         {{ empty_state("Noch keine Tankvorgänge", "Beginne mit dem nächsten Tanken – Tankly baut deine Betriebshistorie auf.", "/fuel/new" if can_edit else "", "Ersten Tankvorgang erfassen", "fuel") }}
         {% endif %}
-    </div>
+    </section>
 </div>
 {% endblock %}

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% from "_macros.html" import button_class, csrf_field, glass_panel, mobile_header_bar, page_header with context %}
+{% from "_macros.html" import button_class, csrf_field, form_actions_footer, mobile_header_bar with context %}
 
 {% block mobile_header %}
 {{ mobile_header_bar(title=("Neuer Tank" if mode == "create" else "Tank bearbeiten"), back_href="/tanks" if mode == "create" else ("/tanks/" ~ tank.id)) }}
@@ -9,19 +9,22 @@
 {% block title %}{% if mode == 'create' %}Neuer Tank{% else %}Tank bearbeiten{% endif %} – Tankly{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-2xl">
-    <div class="hidden lg:block">
-        {{ page_header("Neuer Tank" if mode == "create" else "Tank bearbeiten", "Tanklager", "Hof-Tankstelle mit Kraftstofftyp und optionalem Anfangsbestand einrichten.") }}
-    </div>
+<div class="t-lean mx-auto max-w-2xl space-y-4">
+    <header class="t-dashboard-header hidden lg:block">
+        <div class="min-w-0">
+            <h1 class="t-dashboard-header__title">{% if mode == "create" %}Neuer Tank{% else %}Tank bearbeiten{% endif %}</h1>
+            <p class="t-dashboard-header__subtitle">Hof-Tankstelle mit Kraftstofftyp und optionalem Anfangsbestand einrichten.</p>
+        </div>
+    </header>
 
     {% if error %}
     <div class="mb-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">{{ error }}</div>
     {% endif %}
 
-    <form method="post" action="{% if mode == 'create' %}/tanks/new{% else %}/tanks/{{ tank.id }}/edit{% endif %}" class="{{ glass_panel('space-y-6 p-5 sm:p-6') }}" x-data="{ submitting: false }" @submit="submitting = true">
+    <form method="post" action="{% if mode == 'create' %}/tanks/new{% else %}/tanks/{{ tank.id }}/edit{% endif %}" class="t-dashboard-panel t-lean-form space-y-6" x-data="{ submitting: false }" @submit="submitting = true">
         {{ csrf_field() }}
 
-        <section class="rounded-2xl bg-white/60 p-4 space-y-4">
+        <section class="space-y-4">
             <label for="name" class="block text-sm font-medium text-slate-700">Name</label>
             <input type="text" name="name" id="name" required value="{% if tank %}{{ tank.name }}{% else %}{{ form_name }}{% endif %}" class="block min-h-[48px] w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500" />
 
@@ -46,10 +49,10 @@
             <textarea name="notes" id="notes" rows="3" maxlength="500" class="block w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-3 text-base shadow-sm focus:border-emerald-500 focus:ring-emerald-500">{% if tank %}{{ tank.notes or '' }}{% else %}{{ form_notes }}{% endif %}</textarea>
         </section>
 
-        <div class="sticky bottom-24 z-10 flex flex-col gap-3 rounded-2xl border border-white/70 bg-white/90 p-3 shadow-xl backdrop-blur-xl sm:static sm:flex-row sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+        {% call form_actions_footer() %}
             <button type="submit" class="{{ button_class('primary') }} min-h-[48px] flex-1">{% if mode == 'create' %}Speichern{% else %}Aktualisieren{% endif %}</button>
             <a href="{% if mode == 'edit' %}/tanks/{{ tank.id }}{% else %}/tanks{% endif %}" class="{{ button_class('secondary') }} min-h-[48px]">Abbrechen</a>
-        </div>
+        {% endcall %}
     </form>
 </div>
 {% endblock %}

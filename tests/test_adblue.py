@@ -274,7 +274,7 @@ class TestAdBlueRoutes:
             },
         )
         assert response.status_code == 200
-        assert "bg-red-50" in response.text
+        assert "t-form-alert--fault" in response.text or "bg-red-50" in response.text
         assert db.query(FuelEntry).count() == 0
 
 
