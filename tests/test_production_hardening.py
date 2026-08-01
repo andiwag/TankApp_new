@@ -83,6 +83,9 @@ class TestSecurityHeaders:
         assert "Content-Security-Policy" in response.headers
         csp = response.headers["Content-Security-Policy"]
         assert "script-src 'self'" in csp
+        assert "https://www.googletagmanager.com" in csp
+        assert "https://www.google-analytics.com" in csp
+        assert "https://region1.google-analytics.com" in csp
         assert "cdn.tailwindcss.com" not in csp
         assert "cdn.jsdelivr.net" not in csp
         assert "frame-ancestors 'none'" in csp
