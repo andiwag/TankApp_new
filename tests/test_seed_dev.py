@@ -3,7 +3,6 @@
 from datetime import date, timedelta
 
 import pytest
-
 from app.enums import FillSource, Role, VehicleType
 from app.models import (
     FuelEntry,
