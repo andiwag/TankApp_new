@@ -7,6 +7,15 @@
     {% if registration_invite_required() %}<meta name="robots" content="noindex, nofollow">{% endif %}
     <meta name="description" content="{% block meta_description %}{{ product_name() }} – Kraftstoff- und Flottenverwaltung für landwirtschaftliche Betriebe in Österreich.{% endblock %}">
     <title>{% block title %}{{ product_name() }}{% endblock %}</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-L05Y2CP723"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-L05Y2CP723');
+    </script>
     <link rel="manifest" href="/static/manifest.json">
     <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
