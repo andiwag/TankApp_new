@@ -75,7 +75,9 @@ class TestNavigationAffordances:
         assert 'href="/summary"' in response.text
         assert "Zusammenfassung" in response.text
 
-    async def test_desktop_nav_orders_fuel_tanks_before_vehicles(self, client, auth_group):
+    async def test_desktop_nav_orders_fuel_tanks_before_vehicles(
+        self, client, auth_group
+    ):
         auth_group()
         response = await client.get("/dashboard")
         assert response.status_code == 200
@@ -91,6 +93,7 @@ class TestNavigationAffordances:
         response = await client.get("/profile")
         assert response.status_code == 200
         assert 'action="/logout"' in response.text
+
 
 class TestReaderPermissionAffordances:
     async def test_reader_vehicle_card_has_no_quick_create_links(

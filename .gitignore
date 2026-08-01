@@ -27,6 +27,9 @@ venv/
 htmlcov/
 coverage.xml
 
+# Design review artifacts
+.docs/screenshots/
+
 # Ruff
 .ruff_cache/
 

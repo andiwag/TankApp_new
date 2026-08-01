@@ -7,7 +7,9 @@ class TestAttentionWrenchIcon:
     def test_wrench_icon_path_is_not_link_icon(self):
         macros = Path("app/templates/_macros.html").read_text(encoding="utf-8")
         wrench_start = macros.index("{% macro icon_wrench")
-        wrench_block = macros[wrench_start : macros.index("{%- endmacro %}", wrench_start)]
+        wrench_block = macros[
+            wrench_start : macros.index("{%- endmacro %}", wrench_start)
+        ]
         link_start = macros.index("{% macro icon_link")
         link_block = macros[link_start : macros.index("{%- endmacro %}", link_start)]
         # Distinct shapes: wrench must not reuse the link path.
@@ -85,15 +87,22 @@ class TestChipDeslop:
         html = response.text
         assert "Quiet Tank" in html
         assert "Diesel" in html
-        tank_block = html.split('aria-label="Tanklager"', 1)[1] if 'aria-label="Tanklager"' in html else html
+        tank_block = (
+            html.split('aria-label="Tanklager"', 1)[1]
+            if 'aria-label="Tanklager"' in html
+            else html
+        )
         assert tank_block.count("t-status-chip") == 0
+
 
 class TestCaptureFormCraft:
     async def test_create_form_uses_flat_capture_surface(self, client, auth_group):
         auth_group(role="admin")
         response = await client.get("/fuel/new")
         form_start = response.text.find('action="/fuel/new"')
-        form_html = response.text[form_start : response.text.find("</form>", form_start)]
+        form_html = response.text[
+            form_start : response.text.find("</form>", form_start)
+        ]
         assert "t-capture-flow" in form_html
         assert "t-capture-surface" in form_html
         # Avoid panel+section double carding on create.

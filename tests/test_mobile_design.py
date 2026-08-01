@@ -42,6 +42,7 @@ class TestPhase7Shell:
         )[0]
         assert 'href="/vehicles"' in more_html
         assert 'href="/tanks"' not in more_html
+
     async def test_mobile_bottom_nav_links_fuel_not_profile_tab(
         self, client, auth_group
     ):
@@ -54,6 +55,7 @@ class TestPhase7Shell:
         ]
         assert 'href="/profile"' not in nav_html
         assert 'href="/vehicles"' not in nav_html
+
     async def test_add_sheet_has_title_and_abbrechen(self, client, auth_group):
         auth_group(role="admin")
         response = await client.get("/dashboard")
@@ -213,7 +215,7 @@ class TestPhase8Dashboard:
             len(re.findall(r'class="t-dashboard-inventory-row(?:\s|")', tank_section))
             == 3
         )
-        assert '<h2>Wartungen</h2>' not in mobile
+        assert "<h2>Wartungen</h2>" not in mobile
         assert "t-dashboard-maintenance-row" not in mobile
         assert (
             len(re.findall(r"t-dashboard-attention-item--(?:danger|warning)", mobile))
@@ -345,9 +347,10 @@ class TestPhase11Secondary:
         assert 'href="/tanks/external/new"' in html
         assert "t-row-actions--mobile" in html
         assert 'aria-label="Aktionen"' in html
-        assert "t-status-chip" not in html.split('id="fuel-entry-list"', 1)[1] or html.count(
-            "t-status-chip"
-        ) <= html.count("Teilbefüllung") + 2
+        assert (
+            "t-status-chip" not in html.split('id="fuel-entry-list"', 1)[1]
+            or html.count("t-status-chip") <= html.count("Teilbefüllung") + 2
+        )
         assert "uppercase tracking-wide" not in html.split('id="fuel-entry-list"', 1)[1]
 
     async def test_fuel_form_uses_lean_shell(self, client, auth_group):
