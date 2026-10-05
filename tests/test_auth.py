@@ -4,11 +4,13 @@ import time
 from unittest.mock import patch
 
 from app.auth import (
+    SESSION_ABSOLUTE_MAX_AGE,
     create_password_reset_token,
     create_session_cookie,
     decode_password_reset_token,
     decode_session_cookie,
     hash_password,
+    set_session_cookie,
     verify_password,
 )
 from app.config import settings
@@ -17,6 +19,7 @@ from app.main import app
 from app.models import User, UserGroup
 from app.time_utils import utc_now
 from fastapi import Depends
+from starlette.responses import Response
 
 # ── Test-only routes for dependency testing ──────────────────────────────────
 
@@ -89,6 +92,12 @@ class TestSessionCookie:
         time.sleep(1.1)
         with patch("app.auth.SESSION_MAX_AGE", 0):
             assert decode_session_cookie(cookie) is None
+
+    def test_set_session_cookie_persists_for_absolute_lifetime(self):
+        response = Response()
+        set_session_cookie(response, user_id=1, session_id="sess-1")
+        header = response.headers["set-cookie"]
+        assert f"Max-Age={SESSION_ABSOLUTE_MAX_AGE}" in header
 
 
 # ── Integration tests: login route ───────────────────────────────────────────

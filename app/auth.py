@@ -3,7 +3,12 @@ from itsdangerous import URLSafeTimedSerializer
 
 from app.config import settings
 
-SESSION_MAX_AGE = 86400  # 24 hours
+_DAY = 24 * 60 * 60
+SESSION_IDLE_MAX_AGE = 30 * _DAY
+SESSION_ABSOLUTE_MAX_AGE = 90 * _DAY
+SESSION_SLIDE_INTERVAL = _DAY
+# The signature lasts until the absolute cap. Idle expiry is enforced on UserSession.
+SESSION_MAX_AGE = SESSION_ABSOLUTE_MAX_AGE
 RESET_TOKEN_MAX_AGE = 3600  # 1 hour
 _RESET_TOKEN_SALT = "password-reset"
 _PASSWORD_HASH_PREFIX_LEN = 16
@@ -90,6 +95,7 @@ def set_session_cookie(
     response.set_cookie(
         settings.SESSION_COOKIE_NAME,
         cookie,
+        max_age=SESSION_ABSOLUTE_MAX_AGE,
         httponly=True,
         samesite="lax",
         secure=settings.is_production,

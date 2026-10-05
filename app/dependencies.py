@@ -7,7 +7,7 @@ from app.database import get_db
 from app.enums import Role
 from app.models import Group, User, UserGroup
 from app.services.entitlements import effective_tier, tier_has_feature
-from app.services.sessions import get_active_session
+from app.services.sessions import get_active_session, slide_session_expiry
 
 ROLE_HIERARCHY: dict[str, int] = {
     Role.admin.value: 3,
@@ -141,6 +141,7 @@ def _resolve_user_from_request(request: Request, db: Session) -> User | None:
     if not user:
         return None
 
+    slide_session_expiry(db, session)
     return _attach_user_to_request(request, db, data, user)
 
 

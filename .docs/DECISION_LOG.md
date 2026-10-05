@@ -897,3 +897,15 @@ Architectural and design decisions for **Tankly**. Cookie names in older entries
 **Rationale:** Auth is the bridge into the farm app and should match craft language; marketing/legal remain a separate surface per product choice.
 
 **Trade-off:** Marketing and app still look different until a dedicated landing craft pass.
+
+---
+
+## D-070: Persistent sessions with an idle timeout and absolute cap
+
+**Decision:** Session cookies are persistent (`Max-Age` of 90 days). A `UserSession` stays valid for 30 days after the last activity and never longer than 90 days from login. Activity extends the idle deadline at most once per day. Revocation is unchanged.
+
+**Context:** The signed payload already allowed 24 hours, but the cookie had no `Max-Age`, so browsers dropped it when the app closed. Phones therefore asked for a login on every open.
+
+**Rationale:** The server-side row remains the source of truth, so logout, password changes, and the profile session list can still invalidate a device. The browser only needs to keep the cookie across restarts.
+
+**Trade-off:** A stolen cookie is usable until the idle deadline, the 90-day cap, or an explicit revoke. Shared or lost devices stay signed in until one of those happens.

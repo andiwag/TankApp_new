@@ -4,11 +4,17 @@ from datetime import date, timedelta
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from app.auth import SESSION_ABSOLUTE_MAX_AGE, SESSION_IDLE_MAX_AGE
 from app.config import settings
 from app.models import AuditLog, MaintenanceLog, UserSession
 from app.services.reminders import list_due_email_reminders, list_group_reminders
-from app.services.sessions import get_active_session, revoke_session
-from app.time_utils import utc_now
+from app.services.sessions import (
+    create_user_session,
+    get_active_session,
+    revoke_session,
+    slide_session_expiry,
+)
+from app.time_utils import UTC, utc_now
 
 from tests.conftest import create_authenticated_group
 
@@ -203,6 +209,81 @@ class TestServiceReminders:
         mock_send.assert_awaited_once()
         db.refresh(log)
         assert log.reminder_sent_at is not None
+
+
+def _as_utc(value):
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value
+
+
+class TestSessionLifetime:
+    def test_new_session_idles_out_after_thirty_days(self, db, create_test_user):
+        user = create_test_user()
+        before = utc_now()
+        session_id = create_user_session(db, user.id)
+        db.commit()
+
+        session = db.query(UserSession).filter(UserSession.id == session_id).one()
+        lifetime = _as_utc(session.expires_at) - before
+        assert timedelta(seconds=SESSION_IDLE_MAX_AGE - 5) <= lifetime
+        assert lifetime <= timedelta(seconds=SESSION_IDLE_MAX_AGE + 5)
+
+    def test_session_past_absolute_lifetime_is_inactive(self, db, create_test_user):
+        user = create_test_user()
+        session_id = create_user_session(db, user.id)
+        session = db.query(UserSession).filter(UserSession.id == session_id).one()
+        session.created_at = utc_now() - timedelta(
+            seconds=SESSION_ABSOLUTE_MAX_AGE + 60
+        )
+        session.expires_at = utc_now() + timedelta(days=1)
+        db.commit()
+
+        assert get_active_session(db, session_id) is None
+
+    def test_slide_extends_idle_deadline_up_to_absolute_cap(self, db, create_test_user):
+        user = create_test_user()
+        session_id = create_user_session(db, user.id)
+        session = db.query(UserSession).filter(UserSession.id == session_id).one()
+        created_at = utc_now() - timedelta(days=80)
+        session.created_at = created_at
+        session.expires_at = utc_now() + timedelta(days=1)
+        db.commit()
+
+        assert slide_session_expiry(db, session) is True
+        db.refresh(session)
+        assert _as_utc(session.expires_at) - _as_utc(session.created_at) == timedelta(
+            seconds=SESSION_ABSOLUTE_MAX_AGE
+        )
+
+    def test_slide_leaves_a_fresh_deadline_unchanged(self, db, create_test_user):
+        user = create_test_user()
+        session_id = create_user_session(db, user.id)
+        db.commit()
+        session = db.query(UserSession).filter(UserSession.id == session_id).one()
+        original_expiry = session.expires_at
+
+        assert slide_session_expiry(db, session) is False
+        db.refresh(session)
+        assert session.expires_at == original_expiry
+
+    async def test_authenticated_request_slides_idle_deadline(
+        self, client, create_test_user, auth_cookie, db
+    ):
+        user = create_test_user()
+        auth_cookie(client, user.id)
+        session = db.query(UserSession).one()
+        session.created_at = utc_now() - timedelta(days=10)
+        session.expires_at = utc_now() + timedelta(days=1)
+        db.commit()
+
+        response = await client.get("/profile")
+        assert response.status_code == 200
+
+        db.expire_all()
+        session = db.query(UserSession).one()
+        remaining = _as_utc(session.expires_at) - utc_now()
+        assert remaining > timedelta(days=29)
 
 
 class TestSessionRevocation:
