@@ -40,6 +40,14 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(default=_utcnow)
     deleted_at: Mapped[datetime | None] = mapped_column()
+    last_group_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "groups.id",
+            use_alter=True,
+            name="fk_users_last_group_id",
+            ondelete="SET NULL",
+        )
+    )
 
     user_groups: Mapped[list["UserGroup"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"

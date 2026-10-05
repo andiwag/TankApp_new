@@ -20,6 +20,43 @@ class GroupActionError(Exception):
     """User-recoverable group action error for SSR form rendering."""
 
 
+def live_memberships(db: Session, user: User) -> list[tuple[Group, UserGroup]]:
+    return (
+        db.query(Group, UserGroup)
+        .join(UserGroup, UserGroup.group_id == Group.id)
+        .filter(
+            UserGroup.user_id == user.id,
+            Group.deleted_at == None,  # noqa: E711
+        )
+        .order_by(UserGroup.joined_at.asc(), Group.id.asc())
+        .all()
+    )
+
+
+def default_group_for_user(db: Session, user: User) -> Group | None:
+    memberships = live_memberships(db, user)
+    if not memberships:
+        return None
+    if user.last_group_id is not None:
+        for group, _membership in memberships:
+            if group.id == user.last_group_id:
+                return group
+    return memberships[0][0]
+
+
+def remember_last_group(db: Session, user: User, group_id: int | None) -> None:
+    if user.last_group_id == group_id:
+        return
+    user.last_group_id = group_id
+    # The request still needs the user and farm already loaded for this response.
+    expire_on_commit = db.expire_on_commit
+    db.expire_on_commit = False
+    try:
+        db.commit()
+    finally:
+        db.expire_on_commit = expire_on_commit
+
+
 def user_groups_context(db: Session, user: User, active_group_id: int | None) -> dict:
     rows = (
         db.query(Group, UserGroup.role)

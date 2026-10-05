@@ -151,6 +151,7 @@ def auth_cookie(db):
         cookie_value = create_session_cookie(
             user_id, active_group_id, session_id=session_id
         )
+        client.cookies.clear()
         client.cookies.set(settings.SESSION_COOKIE_NAME, cookie_value)
 
     return _set

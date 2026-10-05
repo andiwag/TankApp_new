@@ -20,6 +20,20 @@ router = APIRouter()
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 
+def _open_group_response(user: User, session_id: str, group_id: int | None):
+    response = RedirectResponse(
+        url="/dashboard" if group_id is not None else "/groups",
+        status_code=303,
+    )
+    refresh_session_cookie(
+        response,
+        user.id,
+        group_id,
+        session_id=session_id,
+    )
+    return response
+
+
 def _render_groups_with_error(
     request: Request,
     db: Session,
@@ -82,18 +96,12 @@ async def create_group(
             "Einladungscode konnte nicht erzeugt werden. Bitte erneut versuchen.",
         )
 
-    response = RedirectResponse(url="/groups", status_code=303)
     log_event(db, group.id, user.id, "group.create", "group", group.id)
     db.commit()
     db.refresh(group)
+    group_service.remember_last_group(db, user, group.id)
     session_data = request.state.session_data
-    refresh_session_cookie(
-        response,
-        user.id,
-        group.id,
-        session_id=session_data["session_id"],
-    )
-    return response
+    return _open_group_response(user, session_data["session_id"], group.id)
 
 
 @router.post("/groups/join")
@@ -117,16 +125,10 @@ async def join_group(
             str(exc),
         )
 
-    response = RedirectResponse(url="/groups", status_code=303)
     log_event(db, group.id, user.id, "group.join", "group", group.id)
     db.commit()
-    refresh_session_cookie(
-        response,
-        user.id,
-        group.id,
-        session_id=session_data["session_id"],
-    )
-    return response
+    group_service.remember_last_group(db, user, group.id)
+    return _open_group_response(user, session_data["session_id"], group.id)
 
 
 @router.post("/groups/switch/{group_id}")
@@ -140,15 +142,9 @@ async def switch_group(
     if not group:
         return forbidden_response()
 
-    response = RedirectResponse(url="/dashboard", status_code=303)
     session_data = request.state.session_data
-    refresh_session_cookie(
-        response,
-        user.id,
-        group.id,
-        session_id=session_data["session_id"],
-    )
-    return response
+    group_service.remember_last_group(db, user, group.id)
+    return _open_group_response(user, session_data["session_id"], group.id)
 
 
 @router.post("/groups/leave/{group_id}")
@@ -173,17 +169,20 @@ async def leave_group(
         return forbidden_response()
 
     session_data = request.state.session_data
-    response = RedirectResponse(url="/groups", status_code=303)
     log_event(db, group_id, user.id, "group.leave", "group", group_id)
     db.commit()
-    if session_data.get("active_group_id") == group_id:
-        refresh_session_cookie(
-            response,
-            user.id,
-            None,
-            session_id=session_data["session_id"],
-        )
-    return response
+    if session_data.get("active_group_id") != group_id:
+        return RedirectResponse(url="/groups", status_code=303)
+
+    replacement = group_service.default_group_for_user(db, user)
+    group_service.remember_last_group(
+        db, user, replacement.id if replacement is not None else None
+    )
+    return _open_group_response(
+        user,
+        session_data["session_id"],
+        replacement.id if replacement is not None else None,
+    )
 
 
 @router.post("/groups/delete/{group_id}")
@@ -202,15 +201,17 @@ async def delete_group(
         return not_found_response()
 
     session_data = request.state.session_data
-    response = RedirectResponse(url="/groups", status_code=303)
     log_event(db, group.id, user.id, "group.delete", "group", group.id)
     db.commit()
-    db.refresh(group)
-    if session_data.get("active_group_id") == group_id:
-        refresh_session_cookie(
-            response,
-            user.id,
-            None,
-            session_id=session_data["session_id"],
-        )
-    return response
+    if session_data.get("active_group_id") != group_id:
+        return RedirectResponse(url="/groups", status_code=303)
+
+    replacement = group_service.default_group_for_user(db, user)
+    group_service.remember_last_group(
+        db, user, replacement.id if replacement is not None else None
+    )
+    return _open_group_response(
+        user,
+        session_data["session_id"],
+        replacement.id if replacement is not None else None,
+    )

@@ -909,3 +909,15 @@ Architectural and design decisions for **Tankly**. Cookie names in older entries
 **Rationale:** The server-side row remains the source of truth, so logout, password changes, and the profile session list can still invalidate a device. The browser only needs to keep the cookie across restarts.
 
 **Trade-off:** A stolen cookie is usable until the idle deadline, the 90-day cap, or an explicit revoke. Shared or lost devices stay signed in until one of those happens.
+
+---
+
+## D-056: Open the last-used farm instead of the farm list
+
+**Decision:** When a signed-in user has no selected farm, open `users.last_group_id` if they still belong to that live farm. Otherwise open the membership they joined first (lowest group id breaks ties). Zero farms still lands on `/groups`. Creating, joining, or switching saves that farm and opens its dashboard. Leaving or deleting the open farm opens the next one, or `/groups` when none remain. A farm already stored in the session cookie is kept. Platform support view does not update `last_group_id`.
+
+**Context:** Login stored no `active_group_id`, so every new session was sent to the farm list and had to press “switch”, including users with one farm.
+
+**Rationale:** The farm list stays the place to switch, create, or join. The saved farm is only a default for an empty selection, so an explicit switch on this device is not overwritten.
+
+**Trade-off:** The first visit after deploy, with an empty selection and several farms, opens the earliest membership until the user switches. Deleting the parent group row clears `last_group_id`.

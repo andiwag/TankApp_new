@@ -59,9 +59,53 @@ def _session_data_without_platform_view(data: dict) -> dict:
     }
 
 
+def _live_group(db: Session, group_id: int) -> Group | None:
+    return (
+        db.query(Group)
+        .filter(
+            Group.id == group_id,
+            Group.deleted_at == None,  # noqa: E711
+        )
+        .first()
+    )
+
+
+def _membership(db: Session, user_id: int, group_id: int) -> UserGroup | None:
+    return (
+        db.query(UserGroup)
+        .filter(
+            UserGroup.user_id == user_id,
+            UserGroup.group_id == group_id,
+        )
+        .first()
+    )
+
+
+def _bind_group(
+    request: Request,
+    db: Session,
+    group: Group,
+    membership: UserGroup | None,
+    *,
+    platform_view: bool,
+) -> None:
+    request.state.active_group = group
+    tier = effective_tier(db, group.id)
+    request.state.group_tier = tier
+    request.state.can_maintenance = tier_has_feature(tier, "maintenance")
+    request.state.can_analytics = tier_has_feature(tier, "analytics")
+    if membership is not None:
+        request.state.user_role = membership.role
+    if platform_view:
+        request.state.platform_view = True
+        request.state.platform_view_group = group
+
+
 def _attach_user_to_request(
     request: Request, db: Session, data: dict, user: User
 ) -> User:
+    from app.services.groups import default_group_for_user, remember_last_group
+
     request.state.user = user
     request.state.platform_view = False
 
@@ -74,39 +118,46 @@ def _attach_user_to_request(
         request.state.clear_invalid_platform_view = True
 
     request.state.session_data = session_data
-    effective_active_group_id: int | None = None
+
+    group: Group | None = None
+    membership: UserGroup | None = None
+    opened_platform_view = False
     if active_group_id:
-        group = db.query(Group).filter(Group.id == active_group_id).first()
-        if group:
-            membership = (
-                db.query(UserGroup)
-                .filter(
-                    UserGroup.user_id == user.id,
-                    UserGroup.group_id == group.id,
-                )
-                .first()
-            )
-            is_member = membership is not None
-            if is_member or platform_view_valid:
-                request.state.active_group = group
-                tier = effective_tier(db, group.id)
-                request.state.group_tier = tier
-                request.state.can_maintenance = tier_has_feature(tier, "maintenance")
-                request.state.can_analytics = tier_has_feature(tier, "analytics")
-                effective_active_group_id = active_group_id
-                if membership:
-                    request.state.user_role = membership.role
-                if platform_view_valid:
-                    request.state.platform_view = True
-                    request.state.platform_view_group = group
-            else:
-                request.state.clear_stale_active_group = True
+        group = _live_group(db, active_group_id)
+        membership = (
+            _membership(db, user.id, active_group_id) if group is not None else None
+        )
+        if group is not None and (membership is not None or platform_view_valid):
+            opened_platform_view = platform_view_valid
         else:
+            group = None
+            membership = None
+
+    if group is None:
+        fallback = default_group_for_user(db, user)
+        if fallback is not None:
+            group = fallback
+            membership = _membership(db, user.id, fallback.id)
+            request.state.persist_active_group = True
+        elif active_group_id:
             request.state.clear_stale_active_group = True
 
+    if group is not None:
+        _bind_group(
+            request,
+            db,
+            group,
+            membership,
+            platform_view=opened_platform_view,
+        )
+        if not opened_platform_view:
+            # Support view must not become the farm opened on the next login.
+            remember_last_group(db, user, group.id)
+
+    effective_active_group_id = group.id if group is not None else None
     if effective_active_group_id != active_group_id:
         request.state.session_data = {
-            **session_data,
+            **request.state.session_data,
             "active_group_id": effective_active_group_id,
         }
 

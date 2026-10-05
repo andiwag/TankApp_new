@@ -14,7 +14,7 @@ class TestListFuelEntries:
         assert response.status_code == 303
         assert response.headers.get("location") == "/login"
 
-    async def test_list_fuel_entries_requires_active_group(
+    async def test_list_fuel_entries_opens_sole_farm_without_explicit_switch(
         self,
         client,
         create_test_user,
@@ -27,8 +27,7 @@ class TestListFuelEntries:
         create_test_user_group(user.id, group.id, role="admin")
         auth_cookie(client, user.id, None)
         response = await client.get("/fuel", follow_redirects=False)
-        assert response.status_code == 303
-        assert response.headers.get("location") == "/groups"
+        assert response.status_code == 200
 
     async def test_list_fuel_entries_returns_200(
         self,
