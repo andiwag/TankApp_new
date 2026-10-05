@@ -912,7 +912,7 @@ Architectural and design decisions for **Tankly**. Cookie names in older entries
 
 ---
 
-## D-056: Open the last-used farm instead of the farm list
+## D-071: Open the last-used farm instead of the farm list
 
 **Decision:** When a signed-in user has no selected farm, open `users.last_group_id` if they still belong to that live farm. Otherwise open the membership they joined first (lowest group id breaks ties). Zero farms still lands on `/groups`. Creating, joining, or switching saves that farm and opens its dashboard. Leaving or deleting the open farm opens the next one, or `/groups` when none remain. A farm already stored in the session cookie is kept. Platform support view does not update `last_group_id`.
 
