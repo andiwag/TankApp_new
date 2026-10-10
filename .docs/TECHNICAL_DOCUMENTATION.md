@@ -768,6 +768,12 @@ Displays:
 
 GET /vehicles
 
+GET /vehicles/qr-labels — print labels for all active vehicles in the active group (contributor+)
+
+GET /vehicles/{id}/qr-label — print one active vehicle label (contributor+)
+
+GET /vehicles/{id}/qr.svg — locally generated SVG for an active vehicle (contributor+)
+
 GET /vehicles/new
 
 POST /vehicles/new
@@ -787,6 +793,10 @@ GET /fuel
 GET /fuel/new
 
 POST /fuel/new
+
+GET /fuel/quick/{group_id}/{vehicle_id} — authenticated vehicle-specific form; checks membership in the target group without switching active group
+
+POST /fuel/quick/{group_id}/{vehicle_id} — creates a normal fuel entry for the route vehicle and target group
 
 GET /fuel/{id}/edit
 

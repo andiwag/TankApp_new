@@ -1,3 +1,5 @@
+import re
+
 import bcrypt
 from itsdangerous import URLSafeTimedSerializer
 
@@ -12,8 +14,15 @@ SESSION_MAX_AGE = SESSION_ABSOLUTE_MAX_AGE
 RESET_TOKEN_MAX_AGE = 3600  # 1 hour
 _RESET_TOKEN_SALT = "password-reset"
 _PASSWORD_HASH_PREFIX_LEN = 16
+_QR_RETURN_PATH = re.compile(r"^/fuel/quick/[1-9][0-9]*/[1-9][0-9]*$")
 
 _serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
+
+
+def safe_qr_return_path(path: str | None) -> str:
+    if not path or not _QR_RETURN_PATH.fullmatch(path):
+        return ""
+    return path
 
 
 def hash_password(plain: str) -> str:

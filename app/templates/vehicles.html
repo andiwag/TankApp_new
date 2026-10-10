@@ -16,6 +16,7 @@
         </div>
         <div class="t-dashboard-actions">
             {% if can_edit %}
+            <a href="/vehicles/qr-labels" class="t-dashboard-action-menu__trigger">QR-Etiketten drucken</a>
             <a href="/vehicles/new" class="t-dashboard-primary-action t-btn-primary">{{ app_icon("vehicle", "h-4 w-4") }} Fahrzeug hinzufügen</a>
             {% endif %}
             {% if can_export %}
@@ -23,6 +24,10 @@
             {% endif %}
         </div>
     </header>
+
+    {% if can_edit %}
+    <a href="/vehicles/qr-labels" class="t-dashboard-action-menu__trigger lg:hidden">QR-Etiketten drucken</a>
+    {% endif %}
 
     {% if can_export %}
     <div class="lg:hidden">{{ lean_export_link("/export/vehicles.csv") }}</div>

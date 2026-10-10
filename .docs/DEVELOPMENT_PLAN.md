@@ -1,6 +1,6 @@
 # Tankly – Test-Driven Development Plan
 
-Phased plan for **Tankly** (product name; GitHub folder may still be `TankApp_new`). Phases **0–16** = original MVP (complete). **17–21** = post-MVP delivery (complete). **22–28** = complete (platform admin, Stripe billing, tank inventory). Go-live ops: [STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md).
+Phased plan for **Tankly** (product name; GitHub folder may still be `TankApp_new`). Phases **0–16** = original MVP (complete). **17–21** = post-MVP delivery (complete). **22–28** = complete (platform admin, Stripe billing, tank inventory). **29** = vehicle QR labels and quick fuel capture. Go-live ops: [STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md).
 
 ## Documentation index
 
@@ -15,6 +15,7 @@ Phased plan for **Tankly** (product name; GitHub folder may still be `TankApp_ne
 | [STRIPE_BILLING.md](./STRIPE_BILLING.md) | Stripe billing per group — implemented (Phase 23) |
 | [STRIPE_GO_LIVE.md](./STRIPE_GO_LIVE.md) | Production Stripe go-live checklist |
 | [TANK_INVENTORY_AND_ADBLUE.md](./TANK_INVENTORY_AND_ADBLUE.md) | Farm tank inventory, fill sources, AdBlue — implemented (Phases 24–28) |
+| [VEHICLE_QR_FUEL_CAPTURE.md](./VEHICLE_QR_FUEL_CAPTURE.md) | Vehicle QR labels and authenticated quick fuel capture — Phase 29 |
 | [DASHBOARD_REDESIGN.md](./DASHBOARD_REDESIGN.md) | Dashboard redesign — implemented |
 
 All development follows a strict **Red → Green → Refactor** TDD cycle:
@@ -1208,6 +1209,62 @@ test_export_tank_ledger_csv_scoped_to_group
 
 ### Acceptance criteria
 - [x] Users see Hof-Tank levels on dashboard; exports include new fields
+
+---
+
+## Phase 29: Vehicle QR Labels & Quick Fuel Capture
+
+**Status:** ✅ Complete
+
+Full specification: [VEHICLE_QR_FUEL_CAPTURE.md](./VEHICLE_QR_FUEL_CAPTURE.md)
+
+### Tasks
+- [x] Add pinned Segno dependency; generate QR SVG locally from configured `BASE_URL`.
+- [x] Add target-group role authorization without changing the signed-in active farm.
+- [x] Add QR quick-capture GET/POST routes; derive vehicle identity from the route and reuse existing fuel validation/service behavior.
+- [x] Preserve only allowlisted QR capture paths through login; reject open redirects.
+- [x] Add per-vehicle and all-active-vehicle A4 label print views scoped to the active farm.
+- [x] Add print-only label layout with farm/vehicle identification and QR quiet zones.
+- [x] No database migration or QR/token persistence.
+
+### Tests (write FIRST)
+```
+test_scan_requires_login_and_preserves_quick_capture_destination
+test_quick_capture_uses_target_farm_without_switching_active_farm
+test_quick_capture_post_uses_route_vehicle_and_target_farm
+test_quick_capture_denies_reader
+test_quick_capture_hides_nonmember_target
+test_quick_capture_rejects_vehicle_from_different_farm
+test_quick_capture_rejects_soft_deleted_vehicle
+test_print_all_labels_only_includes_active_vehicles_in_active_farm
+test_print_one_vehicle_label_is_scoped_to_active_farm
+test_qr_svg_is_generated_locally_from_canonical_base_url
+test_printing_without_base_url_shows_setup_error
+test_reader_cannot_open_print_labels
+test_login_returns_to_safe_vehicle_quick_capture
+test_login_rejects_external_return_url
+test_quick_capture_farm_fill_uses_target_farm_ledger
+test_quick_capture_post_denies_reader_without_creating_entry
+test_quick_capture_post_requires_csrf
+test_quick_capture_rejects_foreign_farm_tank
+test_quick_capture_rejects_wrong_fuel_type_tank
+test_quick_capture_post_rechecks_membership_after_form_load
+test_quick_capture_post_rejects_vehicle_deleted_after_form_load
+test_quick_capture_url_uses_configured_canonical_origin
+test_quick_capture_url_rejects_invalid_base_url
+test_production_qr_url_requires_https
+test_development_qr_url_allows_http
+```
+
+### Acceptance criteria
+- [x] Contributors/admins can print one vehicle label or all active labels for the active farm.
+- [x] Scans require login and contributor-or-higher membership in the vehicle's farm.
+- [x] Quick capture creates a fuel entry for only the URL's vehicle and farm, after explicit form submission.
+- [x] Scanning another farm's vehicle does not change the user's active farm.
+- [x] Existing farm-tank ledger synchronization, validation, and CSRF protection remain intact.
+- [x] Segno generates local SVGs with no paid QR API or external QR-provider request.
+- [x] All focused tests, full pytest suite, and lint/format checks pass.
+- [ ] Manually scan a printed sample on supported phone camera apps and confirm A4 print dimensions before release.
 
 ---
 

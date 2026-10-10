@@ -13,7 +13,7 @@ class TestPhase1Guardrails:
     async def test_base_template_links_app_css_v10(self, client):
         response = await client.get("/login")
         assert response.status_code == 200
-        assert "/static/app.css?v=23" in response.text
+        assert "/static/app.css?v=28" in response.text
 
     async def test_main_content_wrapper_has_min_w_0(self, client, auth_group):
         auth_group()

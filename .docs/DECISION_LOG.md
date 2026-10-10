@@ -921,3 +921,15 @@ Architectural and design decisions for **Tankly**. Cookie names in older entries
 **Rationale:** The farm list stays the place to switch, create, or join. The saved farm is only a default for an empty selection, so an explicit switch on this device is not overwritten.
 
 **Trade-off:** The first visit after deploy, with an empty selection and several farms, opens the earliest membership until the user switches. Deleting the parent group row clears `last_group_id`.
+
+---
+
+## D-072: Vehicle QR labels and target-farm quick capture
+
+**Decision:** Use Segno 1.6.6, a pure-Python QR generator under the 3-Clause BSD license, to create SVG codes locally from `BASE_URL`. Require an HTTPS origin in production while allowing HTTP for local development. Add no QR provider/API and store no generated images, tokens, or QR-specific database rows. Print one vehicle label or all active labels for the active farm. QR URLs identify both the target farm and vehicle. Capture routes authorize the user against that target farm and leave the signed session's active farm unchanged. Only the normal fuel-entry POST creates data; it derives the vehicle from the route and reuses existing fuel-entry validation and ledger synchronization. Preserve the exact QR route through login using a strict local-path allowlist.
+
+**Context:** Farmers need to reach a vehicle-specific fuel form from a printed code. The current create form requires vehicle selection and all existing routes assume the session's active farm. QR codes are public-facing and can be photographed or shared.
+
+**Rationale:** Local SVG generation is free, works without an external service, and stays sharp when printed. Target-farm authorization allows a valid scan from another farm without changing session state. Reusing the existing service preserves domain validation and farm-tank stock accounting. A route-derived vehicle prevents form tampering. Segno payload overflow is translated into a QR-specific error and controlled 503; unexpected encoder/runtime errors remain visible through the global error handler.
+
+**Trade-off:** Tankly adds and maintains one runtime package and must retain Segno's BSD license notices in source/binary distribution materials. Printed links depend on the configured canonical HTTPS production `BASE_URL`; changing the deployment domain requires reprinting labels. Login continuation is intentionally limited to QR capture paths, not arbitrary return URLs.

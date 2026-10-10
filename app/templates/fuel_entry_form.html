@@ -2,13 +2,14 @@
 {% from "_macros.html" import button_class, csrf_field, form_actions_footer, form_error, form_input_class, mobile_header_bar, status_chip with context %}
 
 {% block mobile_header %}
-{{ mobile_header_bar(title=("Tankvorgang" if mode == "create" else "Bearbeiten"), back_href="/fuel") }}
+{{ mobile_header_bar(title=("Tankvorgang" if mode in ("create", "quick") else "Bearbeiten"), back_href="/fuel") }}
 {% endblock %}
 
-{% block title %}{% if mode == 'create' %}Neuer Tankvorgang{% else %}Tankvorgang bearbeiten{% endif %} – Tankly{% endblock %}
+{% block title %}{% if mode in ('create', 'quick') %}Neuer Tankvorgang{% else %}Tankvorgang bearbeiten{% endif %} – Tankly{% endblock %}
 
 {% block content %}
-{% set is_create = mode == 'create' %}
+{% set is_create = mode in ('create', 'quick') %}
+{% set is_quick = mode == 'quick' %}
 {% set initial_fill = form_fill_source or (entry.fill_source if entry else 'external') %}
 <div class="t-lean mx-auto max-w-2xl space-y-4">
     <header class="t-dashboard-header hidden lg:block">
@@ -18,18 +19,27 @@
         </div>
     </header>
 
+    {% if target_group %}
+    <div class="rounded-[8px] border border-[var(--seam)] bg-[var(--plate)] px-4 py-3 text-sm" role="status">
+        <p class="font-semibold text-[var(--ink)]">{{ vehicle.name }} · {{ target_group.name }}</p>
+        {% if request.state.active_group and request.state.active_group.id != target_group.id %}
+        <p class="mt-1 text-[var(--mist)]">Der aktive Betrieb bleibt {{ request.state.active_group.name }}.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
     {% if error %}{{ form_error(error) }}{% endif %}
 
     <script type="application/json" id="storage-tanks-data">{{ storage_tanks | tojson }}</script>
-    <form method="post" action="{% if is_create %}/fuel/new{% else %}/fuel/{{ entry.id }}/edit{% endif %}"
+    <form method="post" action="{% if form_action %}{{ form_action }}{% elif is_create %}/fuel/new{% else %}/fuel/{{ entry.id }}/edit{% endif %}"
           class="t-lean-form space-y-5{% if is_create %} t-capture-flow t-capture-surface{% else %} t-dashboard-panel{% endif %}"
           x-data="{
             submitting: false,
             captureStep: 1,
             selectedVehicleId: '{{ form_vehicle_id or (vehicle.id if vehicle else '') }}',
             selectedTankId: '{{ form_fuel_tank_id or (entry.fuel_tank_id if entry and entry.fuel_tank_id else '') }}',
-            vehicleVtypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.vtype }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode == 'edit' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.vtype }}'{% endif %} },
-            vehicleFuelTypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.fuel_type }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode == 'edit' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.fuel_type }}'{% endif %} },
+            vehicleVtypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.vtype }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode != 'create' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.vtype }}'{% endif %} },
+            vehicleFuelTypes: { {% for v in vehicles %}{{ v.id }}: '{{ v.fuel_type }}'{% if not loop.last %}, {% endif %}{% endfor %}{% if vehicle and mode != 'create' %}{% if vehicles %}, {% endif %}{{ vehicle.id }}: '{{ vehicle.fuel_type }}'{% endif %} },
             fillSource: '{{ initial_fill }}',
             tanks: [],
             isTractor() {
@@ -38,7 +48,7 @@
             },
             isFarm() { return this.fillSource === 'farm'; },
             currentFuelType() {
-              {% if mode == 'edit' %}return '{{ vehicle.fuel_type }}';
+              {% if mode != 'create' %}return '{{ vehicle.fuel_type }}';
               {% else %}const id = String(this.selectedVehicleId || ''); return this.vehicleFuelTypes[id] || '';{% endif %}
             },
             matchingTanks() {
@@ -107,7 +117,9 @@
              class="t-capture-step space-y-5">
             <section class="{% if is_create %}t-capture-block{% else %}t-form-section{% endif %}">
                 <h2 class="mb-3 text-sm font-semibold text-[var(--ink)]">Fahrzeug</h2>
-                {% if is_create %}
+                {% if is_quick %}
+                <p class="inline-flex">{{ status_chip(vehicle.name, "success") }}</p>
+                {% elif is_create %}
                 <label for="vehicle_id" class="block text-sm font-medium text-[var(--mist)]">Fahrzeug wählen</label>
                 <select name="vehicle_id" id="vehicle_id" required class="mt-1.5 {{ form_input_class() }}" x-model="selectedVehicleId" x-ref="vehicleSelect">
                     <option value="">Fahrzeug auswählen</option>

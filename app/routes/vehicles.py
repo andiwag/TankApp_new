@@ -1,5 +1,7 @@
+import logging
+
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse, Response
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
@@ -13,9 +15,21 @@ from app.responses import not_found_response
 from app.schemas import VehicleCreate, VehicleUpdate, first_validation_error_message
 from app.services import vehicles as vehicle_service
 from app.services.entitlements import can_add_vehicle
+from app.services.vehicle_qr import (
+    QrConfigurationError,
+    QrGenerationError,
+    validate_qr_configuration,
+    vehicle_qr_svg,
+)
 from app.templating import templates
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+_QR_SVG_VERSION = 2
+
+
+def _vehicle_qr_svg_url(vehicle_id: int) -> str:
+    return f"/vehicles/{vehicle_id}/qr.svg?v={_QR_SVG_VERSION}"
 
 
 def _vehicle_form_response(
@@ -51,6 +65,91 @@ async def vehicles_list_page(
     user = request.state.user
     ctx = vehicle_service.vehicles_page_context(db, user, group.id)
     return templates.TemplateResponse(request, "vehicles.html", context=ctx)
+
+
+@router.get("/vehicles/qr-labels")
+async def all_vehicle_qr_labels(
+    request: Request,
+    db: Session = Depends(get_db),
+    group: Group = Depends(get_active_group),
+    _user=Depends(require_role(Role.contributor.value)),
+):
+    try:
+        validate_qr_configuration()
+        vehicles = vehicle_service.list_vehicles_for_group(db, group.id)
+        qr_svg_urls = {
+            vehicle.id: _vehicle_qr_svg_url(vehicle.id) for vehicle in vehicles
+        }
+    except QrConfigurationError as exc:
+        return PlainTextResponse(str(exc), status_code=503)
+    return templates.TemplateResponse(
+        request,
+        "vehicle_qr_labels.html",
+        {
+            "vehicles": vehicles,
+            "group": group,
+            "qr_svg_urls": qr_svg_urls,
+            "back_url": "/vehicles",
+        },
+    )
+
+
+@router.get("/vehicles/{vehicle_id}/qr-label")
+async def vehicle_qr_label(
+    request: Request,
+    vehicle_id: int,
+    db: Session = Depends(get_db),
+    group: Group = Depends(get_active_group),
+    _user=Depends(require_role(Role.contributor.value)),
+):
+    vehicle = vehicle_service.get_active_vehicle_in_group(db, vehicle_id, group.id)
+    if not vehicle:
+        return not_found_response()
+    try:
+        validate_qr_configuration()
+    except QrConfigurationError as exc:
+        return PlainTextResponse(str(exc), status_code=503)
+    return templates.TemplateResponse(
+        request,
+        "vehicle_qr_labels.html",
+        {
+            "vehicles": [vehicle],
+            "group": group,
+            "qr_svg_urls": {vehicle.id: _vehicle_qr_svg_url(vehicle.id)},
+            "back_url": "/vehicles",
+        },
+    )
+
+
+@router.get("/vehicles/{vehicle_id}/qr.svg")
+async def vehicle_qr_image(
+    vehicle_id: int,
+    db: Session = Depends(get_db),
+    group: Group = Depends(get_active_group),
+    _user=Depends(require_role(Role.contributor.value)),
+):
+    vehicle = vehicle_service.get_active_vehicle_in_group(db, vehicle_id, group.id)
+    if not vehicle:
+        return not_found_response()
+    try:
+        svg = vehicle_qr_svg(group.id, vehicle.id)
+    except QrConfigurationError as exc:
+        return PlainTextResponse(str(exc), status_code=503)
+    except QrGenerationError as exc:
+        logger.exception(
+            "Vehicle QR generation failed for vehicle_id=%s group_id=%s",
+            vehicle.id,
+            group.id,
+        )
+        return PlainTextResponse(str(exc), status_code=503)
+    return Response(
+        content=svg,
+        media_type="image/svg+xml",
+        headers={
+            "Cache-Control": "private, no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
 
 @router.get("/vehicles/new")

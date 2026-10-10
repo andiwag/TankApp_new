@@ -6,7 +6,12 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies import get_active_group, require_role
+from app.dependencies import (
+    get_active_group,
+    get_current_user,
+    require_group_role,
+    require_role,
+)
 from app.enums import FillSource, Role
 from app.flash import set_flash
 from app.form_parsing import (
@@ -16,7 +21,7 @@ from app.form_parsing import (
     parse_int,
     parse_optional_float,
 )
-from app.models import Group
+from app.models import Group, Vehicle
 from app.responses import not_found_response
 from app.schemas import FuelEntryCreate, FuelEntryUpdate, first_validation_error_message
 from app.services import fuel_entries as fuel_entry_service
@@ -45,6 +50,8 @@ def _fuel_form_response(
     form_adblue_amount_l: str = "",
     form_fill_source: str = "external",
     form_fuel_tank_id: str = "",
+    form_action: str | None = None,
+    target_group: Group | None = None,
 ):
     return templates.TemplateResponse(
         request,
@@ -66,7 +73,42 @@ def _fuel_form_response(
             "form_adblue_amount_l": form_adblue_amount_l,
             "form_fill_source": form_fill_source,
             "form_fuel_tank_id": form_fuel_tank_id,
+            "form_action": form_action,
+            "target_group": target_group,
         },
+    )
+
+
+def _fuel_entry_data(
+    vehicle: Vehicle,
+    *,
+    fuel_amount_l: str,
+    usage_reading: str,
+    entry_date: str,
+    notes: str,
+    full_tank: str,
+    total_cost_eur: str,
+    adblue_amount_l: str,
+    fill_source: str,
+    fuel_tank_id: str,
+) -> FuelEntryCreate:
+    adblue = (
+        parse_optional_float(adblue_amount_l, "AdBlue")
+        if adblue_amount_l.strip()
+        else None
+    )
+    tank_id = parse_int(fuel_tank_id, "Hof-Tank") if fuel_tank_id.strip() else None
+    return FuelEntryCreate(
+        vehicle_id=vehicle.id,
+        fuel_amount_l=parse_float(fuel_amount_l, "Kraftstoffmenge"),
+        usage_reading=parse_float(usage_reading, "Betriebsstand"),
+        entry_date=parse_date(entry_date, "Datum"),
+        full_tank=parse_bool(full_tank),
+        total_cost_eur=parse_optional_float(total_cost_eur, "Gesamtkosten"),
+        adblue_amount_l=adblue,
+        fill_source=fill_source,
+        fuel_tank_id=tank_id,
+        notes=notes.strip() or None,
     )
 
 
@@ -148,23 +190,17 @@ async def create_fuel_entry_post(
         return _error_form("Bitte ein gültiges Fahrzeug aus dieser Gruppe wählen.")
 
     try:
-        adblue = (
-            parse_optional_float(adblue_amount_l, "AdBlue")
-            if adblue_amount_l.strip()
-            else None
-        )
-        tank_id = parse_int(fuel_tank_id, "Hof-Tank") if fuel_tank_id.strip() else None
-        data = FuelEntryCreate(
-            vehicle_id=vehicle.id,
-            fuel_amount_l=parse_float(fuel_amount_l, "Kraftstoffmenge"),
-            usage_reading=parse_float(usage_reading, "Betriebsstand"),
-            entry_date=parse_date(entry_date, "Datum"),
-            full_tank=parse_bool(full_tank),
-            total_cost_eur=parse_optional_float(total_cost_eur, "Gesamtkosten"),
-            adblue_amount_l=adblue,
+        data = _fuel_entry_data(
+            vehicle,
+            fuel_amount_l=fuel_amount_l,
+            usage_reading=usage_reading,
+            entry_date=entry_date,
+            notes=notes,
+            full_tank=full_tank,
+            total_cost_eur=total_cost_eur,
+            adblue_amount_l=adblue_amount_l,
             fill_source=fill_source,
-            fuel_tank_id=tank_id,
-            notes=notes.strip() or None,
+            fuel_tank_id=fuel_tank_id,
         )
     except ValueError as exc:
         return _error_form(str(exc))
@@ -176,6 +212,98 @@ async def create_fuel_entry_post(
     except ValueError as exc:
         return _error_form(str(exc))
     response = RedirectResponse(url="/fuel", status_code=303)
+    set_flash(response, "Tankvorgang hinzugefügt.", "success")
+    return response
+
+
+@router.get("/fuel/quick/{group_id}/{vehicle_id}")
+async def quick_fuel_entry_form(
+    request: Request,
+    group_id: int,
+    vehicle_id: int,
+    db: Session = Depends(get_db),
+    group: Group = Depends(require_group_role(Role.contributor.value)),
+):
+    vehicle = vehicle_service.get_active_vehicle_in_group(db, vehicle_id, group.id)
+    if not vehicle:
+        return not_found_response()
+    return _fuel_form_response(
+        request,
+        mode="quick",
+        vehicles=[],
+        vehicle=vehicle,
+        target_group=group,
+        form_action=f"/fuel/quick/{group.id}/{vehicle.id}",
+        form_entry_date=date.today().isoformat(),
+        **fuel_entry_service.fuel_entry_form_context(db, group.id),
+    )
+
+
+@router.post("/fuel/quick/{group_id}/{vehicle_id}")
+async def quick_fuel_entry_post(
+    request: Request,
+    group_id: int,
+    vehicle_id: int,
+    fuel_amount_l: str = Form(""),
+    usage_reading: str = Form(""),
+    entry_date: str = Form(""),
+    notes: str = Form(""),
+    full_tank: str = Form("1"),
+    total_cost_eur: str = Form(""),
+    adblue_amount_l: str = Form(""),
+    fill_source: str = Form("external"),
+    fuel_tank_id: str = Form(""),
+    db: Session = Depends(get_db),
+    group: Group = Depends(require_group_role(Role.contributor.value)),
+    user=Depends(get_current_user),
+):
+    target = f"/fuel/quick/{group.id}/{vehicle_id}"
+    vehicle = vehicle_service.get_active_vehicle_in_group(db, vehicle_id, group.id)
+    if not vehicle:
+        return not_found_response()
+    tank_ctx = fuel_entry_service.fuel_entry_form_context(db, group.id)
+
+    def _error_form(message: str):
+        return _fuel_form_response(
+            request,
+            mode="quick",
+            vehicles=[],
+            vehicle=vehicle,
+            target_group=group,
+            form_action=target,
+            error=message,
+            form_fuel_amount_l=fuel_amount_l,
+            form_usage_reading=usage_reading,
+            form_entry_date=entry_date,
+            form_notes=notes,
+            form_full_tank=parse_bool(full_tank),
+            form_total_cost_eur=total_cost_eur,
+            form_adblue_amount_l=adblue_amount_l,
+            form_fill_source=fill_source,
+            form_fuel_tank_id=fuel_tank_id,
+            **tank_ctx,
+        )
+
+    try:
+        data = _fuel_entry_data(
+            vehicle,
+            fuel_amount_l=fuel_amount_l,
+            usage_reading=usage_reading,
+            entry_date=entry_date,
+            notes=notes,
+            full_tank=full_tank,
+            total_cost_eur=total_cost_eur,
+            adblue_amount_l=adblue_amount_l,
+            fill_source=fill_source,
+            fuel_tank_id=fuel_tank_id,
+        )
+        fuel_entry_service.create_fuel_entry(db, user.id, group.id, vehicle, data)
+    except ValueError as exc:
+        return _error_form(str(exc))
+    except ValidationError as exc:
+        return _error_form(first_validation_error_message(exc))
+
+    response = RedirectResponse(url=target, status_code=303)
     set_flash(response, "Tankvorgang hinzugefügt.", "success")
     return response
 

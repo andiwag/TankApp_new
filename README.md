@@ -1,18 +1,22 @@
 # Tankly
 
-Collaborative fuel and fleet tracking for farms and small businesses. Server-rendered FastAPI app with Jinja2 templates, PostgreSQL (production), and SQLite (local dev).
+Collaborative fuel and fleet tracking for farms and small businesses. Server-rendered FastAPI app with Jinja2 templates and PostgreSQL in production and local development. SQLite remains available for lightweight tests.
 
 **Plan status:** Phases 0–22 complete (~402 tests). Next: [Stripe billing](.docs/STRIPE_BILLING.md) (Phase 23).
 
 ## Quick start
 
 **Python 3.12** required (matches CI and Docker). Check with `python --version`.
+Docker Desktop is required for the local PostgreSQL service.
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt
 copy .env.example .env
+docker compose up -d db
+python -m alembic upgrade head
+python scripts/seed_dev.py
 uvicorn app.main:app --reload
 ```
 
@@ -24,10 +28,11 @@ Copy `.env.example` to `.env` (or `.env.beta.example` for Northflank). Key setti
 
 | Variable | Default | Notes |
 |----------|---------|-------|
-| `DATABASE_URL` | `sqlite:///./dev.db` | Postgres in production |
+| `DATABASE_URL` | local PostgreSQL URL | Application database; default local DB is `tankly_dev` |
+| `TEST_DATABASE_URL` | local PostgreSQL URL | Dedicated test database; tests migrate and clear its tables, never point it at `tankly_dev` |
 | `SECRET_KEY` | dev default | **Required** unique value when `ENV=production` |
 | `ENV` | `development` | `production` for deploy |
-| `BASE_URL` | — | Public URL for password-reset links |
+| `BASE_URL` | `http://127.0.0.1:8000` | Canonical URL for local QR labels and password-reset links; use HTTPS in production |
 | `REDIS_URL` | — | Required in production unless `SINGLE_WORKER_MODE=true` |
 | `CRON_SECRET` | — | Required when `ENV=production`; cron uses `Authorization: Bearer …` |
 | `REGISTRATION_INVITE_CODE` | — | Optional private-beta registration gate |
@@ -57,6 +62,8 @@ pip install -r requirements-prod.txt  # production image only
 pytest
 ```
 
+The test suite uses `TEST_DATABASE_URL` from `.env`, separate from the app's `DATABASE_URL`. It clears test tables and keeps the migrated test schema for reuse; never point it at `tankly_dev`.
+
 With coverage:
 
 ```powershell
@@ -66,11 +73,11 @@ pytest --cov=app --cov-report=term-missing
 Mirror CI (Postgres):
 
 ```powershell
-$env:DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/tankapp_test"
+$env:TEST_DATABASE_URL = "postgresql://tankly:tankly_local@localhost:5433/tankly_test"
 pytest
 ```
 
-(`tankapp_test` is the CI database name — local only.)
+Use a disposable test database; the suite applies migrations and clears its tables.
 
 ## Lint
 

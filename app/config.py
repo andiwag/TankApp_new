@@ -15,6 +15,8 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "sqlite:///./dev.db"
 
+    TEST_DATABASE_URL: str = ""
+
     SECRET_KEY: str = "supersecretkey"
 
     SESSION_COOKIE_NAME: str = SESSION_COOKIE_DEFAULT

@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tankly_dev
+      POSTGRES_USER: tankly
+      POSTGRES_PASSWORD: tankly_local
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - tankly-postgres-data:/var/lib/postgresql/data
+      - ./scripts/postgres-init.sql:/docker-entrypoint-initdb.d/10-create-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tankly -d tankly_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  tankly-postgres-data:

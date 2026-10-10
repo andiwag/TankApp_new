@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_macros.html" import button_class %}
+
+{% block title %}QR-Etiketten – {{ group.name }} – Tankly{% endblock %}
+
+{% block content %}
+<div class="t-qr-print-page">
+    <header class="t-qr-print-toolbar">
+        <div>
+            <p class="text-xs font-semibold uppercase text-[var(--mist)]">{{ group.name }}</p>
+            <h1 class="mt-1 text-xl font-bold text-[var(--ink)]">QR-Etiketten</h1>
+            <p class="mt-1 text-sm text-[var(--mist)]">{{ vehicles|length }} Fahrzeug{% if vehicles|length != 1 %}e{% endif %}</p>
+        </div>
+        <div class="t-qr-print-toolbar__actions">
+            <a href="{{ back_url }}" class="{{ button_class('secondary') }}">Zurück</a>
+            <button type="button" class="{{ button_class('primary') }}" onclick="window.print()">Drucken</button>
+        </div>
+    </header>
+
+    {% if vehicles %}
+    <section class="t-qr-label-grid{% if vehicles|length == 1 %} t-qr-label-grid--single{% endif %}" aria-label="Fahrzeug-QR-Etiketten">
+        {% for vehicle in vehicles %}
+        <article class="t-qr-label">
+            <div class="t-qr-label__code">
+                <img src="{{ qr_svg_urls[vehicle.id] }}" alt="QR-Code für {{ vehicle.name }}" />
+            </div>
+            <div class="t-qr-label__details">
+                <p class="t-qr-label__farm">{{ group.name }}</p>
+                <h2 class="t-qr-label__vehicle">{{ vehicle.name }}</h2>
+                <p class="t-qr-label__meta">{{ vehicle_type_label(vehicle.vtype) }} · {{ fuel_type_label(vehicle.fuel_type) }}</p>
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+    {% else %}
+    <p class="rounded-[8px] border border-[var(--seam)] bg-[var(--plate)] p-5 text-sm text-[var(--mist)]">In diesem Betrieb sind keine aktiven Fahrzeuge vorhanden.</p>
+    {% endif %}
+</div>
+{% endblock %}

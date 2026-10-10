@@ -13,6 +13,7 @@ from app.auth import (
     decode_password_reset_token,
     decode_session_cookie,
     hash_password,
+    safe_qr_return_path,
     verify_password,
     verify_reset_token_data,
 )
@@ -111,8 +112,10 @@ async def _deliver_reset_token(email: str, token: str) -> None:
 
 
 @router.get("/login")
-async def login_page(request: Request):
-    return templates.TemplateResponse(request, "login.html")
+async def login_page(request: Request, next: str = ""):
+    return templates.TemplateResponse(
+        request, "login.html", context={"next": safe_qr_return_path(next)}
+    )
 
 
 @router.get("/register")
@@ -158,6 +161,7 @@ async def login(
     request: Request,
     email: str = Form(...),
     password: str = Form(...),
+    next: str = Form(""),
     db: Session = Depends(get_db),
 ):
     email = email.lower().strip()
@@ -167,7 +171,7 @@ async def login(
         return templates.TemplateResponse(
             request,
             "login.html",
-            context={"error": RATE_LIMIT_MESSAGE},
+            context={"error": RATE_LIMIT_MESSAGE, "next": safe_qr_return_path(next)},
             status_code=429,
         )
 
@@ -185,11 +189,16 @@ async def login(
         return templates.TemplateResponse(
             request,
             "login.html",
-            context={"error": "Ungültige E-Mail oder Passwort"},
+            context={
+                "error": "Ungültige E-Mail oder Passwort",
+                "next": safe_qr_return_path(next),
+            },
         )
 
     login_rate_limiter.clear(rate_limit_key)
-    response = RedirectResponse(url="/dashboard", status_code=303)
+    response = RedirectResponse(
+        url=safe_qr_return_path(next) or "/dashboard", status_code=303
+    )
     start_user_session(response, db, user.id)
     return response
 

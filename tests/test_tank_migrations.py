@@ -9,7 +9,17 @@ from pathlib import Path
 from urllib.parse import urlparse, urlunparse
 
 import pytest
-from sqlalchemy import create_engine, text
+from app.config import settings
+from sqlalchemy import (
+    Column,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    create_engine,
+    inspect,
+    text,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 TANK_MIGRATION = (
@@ -19,7 +29,11 @@ FILL_SOURCE_MIGRATION = (
     ROOT / "alembic" / "versions" / "a7b9c1d3e5f6_add_fill_source_to_fuel_entries.py"
 )
 
-TEST_DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite://")
+TEST_DATABASE_URL = (
+    os.environ.get("TEST_DATABASE_URL")
+    or settings.TEST_DATABASE_URL
+    or os.environ.get("DATABASE_URL", "sqlite://")
+)
 _USE_POSTGRES = TEST_DATABASE_URL.startswith("postgresql")
 PARENT_REVISION = "c8d0e2f4a6b8"
 
@@ -74,6 +88,77 @@ def _run_alembic(database_url: str, *args: str) -> None:
             part for part in (result.stderr, result.stdout) if part
         ).strip()
         raise RuntimeError(detail or f"alembic {' '.join(args)} failed")
+
+
+@pytest.mark.parametrize("column_already_added", [False, True])
+def test_user_last_group_migration_supports_sqlite_and_partial_upgrade(
+    tmp_path, column_already_added
+):
+    database_path = tmp_path / "last_group_migration.db"
+    database_url = f"sqlite:///{database_path.as_posix()}"
+    engine = create_engine(database_url)
+    metadata = MetaData()
+    groups = Table("groups", metadata, Column("id", Integer, primary_key=True))
+    user_columns = [
+        Column("id", Integer, primary_key=True),
+        Column("email", String(320), nullable=False),
+    ]
+    if column_already_added:
+        user_columns.append(Column("last_group_id", Integer, nullable=True))
+    users = Table("users", metadata, *user_columns)
+    revisions = Table(
+        "alembic_version",
+        metadata,
+        Column("version_num", String(32), primary_key=True),
+    )
+    metadata.create_all(engine)
+    with engine.begin() as connection:
+        connection.execute(groups.insert().values(id=1))
+        user_data = {"id": 1, "email": "local@example.test"}
+        if column_already_added:
+            user_data["last_group_id"] = 1
+        connection.execute(users.insert().values(**user_data))
+        connection.execute(revisions.insert().values(version_num="a7b9c1d3e5f6"))
+    engine.dispose()
+
+    _run_alembic(database_url, "upgrade", "d1e3f5a7b9c2")
+
+    upgraded_engine = create_engine(database_url)
+    upgraded_inspector = inspect(upgraded_engine)
+    user_columns = {
+        column["name"] for column in upgraded_inspector.get_columns("users")
+    }
+    foreign_keys = upgraded_inspector.get_foreign_keys("users")
+    with upgraded_engine.connect() as connection:
+        saved_user = connection.execute(
+            text("SELECT id, email, last_group_id FROM users WHERE id = 1")
+        ).one()
+        revision = connection.execute(
+            text("SELECT version_num FROM alembic_version")
+        ).scalar_one()
+    upgraded_engine.dispose()
+
+    assert "last_group_id" in user_columns
+    assert any(
+        foreign_key["name"] == "fk_users_last_group_id" for foreign_key in foreign_keys
+    )
+    assert saved_user == (1, "local@example.test", 1 if column_already_added else None)
+    assert revision == "d1e3f5a7b9c2"
+
+    _run_alembic(database_url, "downgrade", "a7b9c1d3e5f6")
+
+    downgraded_engine = create_engine(database_url)
+    downgraded_inspector = inspect(downgraded_engine)
+    with downgraded_engine.connect() as connection:
+        revision = connection.execute(
+            text("SELECT version_num FROM alembic_version")
+        ).scalar_one()
+    downgraded_engine.dispose()
+
+    assert "last_group_id" not in {
+        column["name"] for column in downgraded_inspector.get_columns("users")
+    }
+    assert revision == "a7b9c1d3e5f6"
 
 
 @pytest.mark.skipif(not _USE_POSTGRES, reason="Postgres-only deploy simulation")

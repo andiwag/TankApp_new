@@ -1,4 +1,4 @@
-from fastapi import Depends, Request
+from fastapi import Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.auth import decode_session_cookie
@@ -79,6 +79,29 @@ def _membership(db: Session, user_id: int, group_id: int) -> UserGroup | None:
         )
         .first()
     )
+
+
+def _group_role_level(
+    db: Session,
+    user: User,
+    group_id: int,
+    session_data: dict,
+    membership: UserGroup | None = None,
+) -> int | None:
+    if (
+        platform_view_is_valid(user, session_data)
+        and session_data.get("platform_view_group_id") == group_id
+    ):
+        return ROLE_HIERARCHY[Role.reader.value]
+    if membership is None:
+        membership = _membership(db, user.id, group_id)
+    if membership is None:
+        return None
+    return ROLE_HIERARCHY.get(membership.role, 0)
+
+
+def _meets_minimum_role(role_level: int, min_role: str) -> bool:
+    return role_level >= ROLE_HIERARCHY.get(min_role, 0)
 
 
 def _bind_group(
@@ -238,32 +261,36 @@ def require_role(min_role: str):
         if not active_group_id:
             raise NoActiveGroupException()
 
-        if (
-            platform_view_is_valid(user, session_data)
-            and session_data.get("platform_view_group_id") == active_group_id
-        ):
-            user_role_level = ROLE_HIERARCHY[Role.reader.value]
-        else:
-            user_group = (
-                db.query(UserGroup)
-                .filter(
-                    UserGroup.user_id == user.id,
-                    UserGroup.group_id == active_group_id,
-                )
-                .first()
-            )
-
-            if not user_group:
-                raise InsufficientRoleException()
-
-            user_role_level = ROLE_HIERARCHY.get(user_group.role, 0)
-
-        min_role_level = ROLE_HIERARCHY.get(min_role, 0)
-
-        if user_role_level < min_role_level:
+        role_level = _group_role_level(db, user, active_group_id, session_data)
+        if role_level is None:
+            raise InsufficientRoleException()
+        if not _meets_minimum_role(role_level, min_role):
             raise InsufficientRoleException()
 
         return user
+
+    return _check_role
+
+
+def require_group_role(min_role: str):
+    def _check_role(
+        group_id: int,
+        request: Request,
+        db: Session = Depends(get_db),
+        user: User = Depends(get_current_user),
+    ) -> Group:
+        group = _live_group(db, group_id)
+        membership = _membership(db, user.id, group_id)
+        if not group or not membership:
+            raise HTTPException(status_code=404)
+
+        session_data = request.state.session_data
+        role_level = _group_role_level(
+            db, user, group_id, session_data, membership=membership
+        )
+        if role_level is None or not _meets_minimum_role(role_level, min_role):
+            raise InsufficientRoleException()
+        return group
 
     return _check_role
 

@@ -28,7 +28,11 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-TEST_DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite://")
+TEST_DATABASE_URL = (
+    os.environ.get("TEST_DATABASE_URL")
+    or settings.TEST_DATABASE_URL
+    or os.environ.get("DATABASE_URL", "sqlite://")
+)
 _USE_POSTGRES = TEST_DATABASE_URL.startswith("postgresql")
 
 
@@ -112,7 +116,8 @@ def setup_database():
     else:
         Base.metadata.create_all(bind=test_engine)
     yield
-    Base.metadata.drop_all(bind=test_engine)
+    if not _USE_POSTGRES:
+        Base.metadata.drop_all(bind=test_engine)
     app.dependency_overrides.clear()
 
 

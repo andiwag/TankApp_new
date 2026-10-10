@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+from app.auth import safe_qr_return_path
 from app.branding import PRODUCT_NAME
 from app.config import settings
 from app.csrf import CsrfTokenMiddleware, validate_csrf
@@ -90,6 +91,13 @@ from app.dependencies import (  # noqa: E402
 
 @app.exception_handler(NotAuthenticatedException)
 async def not_authenticated_handler(request, exc):
+    next_path = safe_qr_return_path(request.url.path)
+    if next_path:
+        from urllib.parse import urlencode
+
+        return RedirectResponse(
+            url=f"/login?{urlencode({'next': next_path})}", status_code=303
+        )
     return RedirectResponse(url="/login", status_code=303)
 
 
